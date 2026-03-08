@@ -361,7 +361,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
                     title={c.enableACL ? '已开启 ACL 鉴权' : '未开启 ACL'}
                   >
                     <Shield className={cn('h-3.5 w-3.5', c.enableACL && 'text-foreground/70')} />
-                    {c.enableACL ? 'ACL' : '—'}
+                    {c.enableACL ? 'ACL' : '未开启'}
                   </span>
                   <span
                     className="flex items-center gap-1 text-xs text-muted-foreground"

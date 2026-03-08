@@ -3,6 +3,7 @@ module rocket-leaf
 go 1.25
 
 require (
+	github.com/apache/rocketmq-client-go/v2 v2.1.2
 	github.com/codermast/rocketmq-admin-go v1.0.0
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.71
 )
@@ -12,7 +13,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v1.3.0 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
-	github.com/apache/rocketmq-client-go/v2 v2.1.2 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/coder/websocket v1.8.14 // indirect

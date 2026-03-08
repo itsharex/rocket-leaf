@@ -1,18 +1,24 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { toast } from 'sonner'
-import { Search, X, Loader2, Copy, CalendarIcon, Maximize2, Code, FileText, Binary } from 'lucide-react'
+import { Search, Loader2, Copy, CalendarIcon, Maximize2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { cn, formatErrorMessage } from '@/lib/utils'
 import type { MessageItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { MessageStatus } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as messageApi from '@/api/message'
+import type { QueryCondition } from '@/api/message'
 import * as topicApi from '@/api/topic'
 import * as clusterApi from '@/api/cluster'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const DEFAULT_MAX_RESULTS = 32
+
+/** 当前列表数据来源：未拉取 / 自动偷窥最新 / 用户点击进阶查询 */
+type FetchKind = 'none' | 'latest' | 'condition'
 
 /** 尝试解析 JSON，返回解析结果或 null */
 function tryParseJSON(s: string): unknown | null {
@@ -273,30 +279,49 @@ function TopicCombobox({
     }
   }, [showList])
 
-  const ariaExpandedValue = showList ? 'true' : 'false'
-
   return (
     <div ref={containerRef} className="relative">
-      {/* aria-expanded 使用字符串 'true'|'false' 以符合 ARIA 规范，静态检查对变量误报 */}
-      <input
-        id={id}
-        type="text"
-        role="combobox"
-        value={value}
-        onChange={(e) => {
-          onChange(e.target.value)
-          setOpen(true)
-        }}
-        onFocus={() => setOpen(true)}
-        onBlur={() => setTimeout(() => setOpen(false), 150)}
-        placeholder={placeholder}
-        title={placeholder}
-        className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-        aria-labelledby={labelId}
-        aria-expanded={ariaExpandedValue}
-        aria-autocomplete="list"
-        aria-controls={showList ? `${id}-listbox` : undefined}
-      />
+      {showList ? (
+        <input
+          id={id}
+          type="text"
+          role="combobox"
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder={placeholder}
+          title={placeholder}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+          aria-labelledby={labelId}
+          aria-expanded="true"
+          aria-autocomplete="list"
+          aria-controls={`${id}-listbox`}
+        />
+      ) : (
+        <input
+          id={id}
+          type="text"
+          role="combobox"
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value)
+            setOpen(true)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          placeholder={placeholder}
+          title={placeholder}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+          aria-labelledby={labelId}
+          aria-expanded="false"
+          aria-autocomplete="list"
+          aria-controls={undefined}
+        />
+      )}
       {showList && (
         <ul
           id={`${id}-listbox`}
@@ -305,24 +330,39 @@ function TopicCombobox({
         >
           {filtered.map((name) => {
             const isSelected = value === name
-            const ariaSelectedValue = isSelected ? 'true' : 'false'
             return (
-              <li
-                key={name}
-                role="option"
-                aria-selected={ariaSelectedValue}
-                onPointerDown={(e) => {
-                  e.preventDefault()
-                  onChange(name)
-                  setOpen(false)
-                }}
-                className={cn(
-                  'cursor-pointer px-3 py-2 font-mono text-sm text-foreground transition-colors hover:bg-accent/70',
-                  isSelected && 'bg-accent/50'
-                )}
-              >
-                {name}
-              </li>
+              isSelected ? (
+                <li
+                  key={name}
+                  role="option"
+                  aria-selected="true"
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    onChange(name)
+                    setOpen(false)
+                  }}
+                  className={cn(
+                    'cursor-pointer px-3 py-2 font-mono text-sm text-foreground transition-colors hover:bg-accent/70',
+                    'bg-accent/50'
+                  )}
+                >
+                  {name}
+                </li>
+              ) : (
+                <li
+                  key={name}
+                  role="option"
+                  aria-selected="false"
+                  onPointerDown={(e) => {
+                    e.preventDefault()
+                    onChange(name)
+                    setOpen(false)
+                  }}
+                  className="cursor-pointer px-3 py-2 font-mono text-sm text-foreground transition-colors hover:bg-accent/70"
+                >
+                  {name}
+                </li>
+              )
             )
           })}
         </ul>
@@ -334,14 +374,15 @@ function TopicCombobox({
 export function MessageView() {
   const [clusterName, setClusterName] = useState('')
   const [topicOptions, setTopicOptions] = useState<string[]>([])
-  const [topic, setTopic] = useState('')
+  const [selectedTopic, setSelectedTopic] = useState('')
   const [messageId, setMessageId] = useState('')
   const [messageKey, setMessageKey] = useState('')
   const [startTimeInput, setStartTimeInput] = useState('')
   const [endTimeInput, setEndTimeInput] = useState('')
   const [maxResults, setMaxResults] = useState(DEFAULT_MAX_RESULTS)
-  const [loading, setLoading] = useState(false)
-  const [list, setList] = useState<MessageItem[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [messages, setMessages] = useState<MessageItem[]>([])
+  const [lastFetchKind, setLastFetchKind] = useState<FetchKind>('none')
   const [selectedMessage, setSelectedMessage] = useState<MessageItem | null>(null)
   const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'hex' | 'json'>('raw')
   const [bodyFormatted, setBodyFormatted] = useState<string | null>(null)
@@ -354,7 +395,7 @@ export function MessageView() {
     }
   }, [selectedMessage])
 
-  // 默认拉取所有 Topic 供下拉选择；并拉取当前集群名用于展示
+  // 拉取 Topic 列表与集群名
   useEffect(() => {
     let cancelled = false
     topicApi.getTopics().then((items) => {
@@ -372,39 +413,70 @@ export function MessageView() {
     return () => { cancelled = true }
   }, [])
 
-  const runQuery = useCallback(async () => {
-    const t = topic.trim()
+  // 1. 默认状态：选 Topic 即静默拉取最新 32 条，不等待点击「查询」
+  useEffect(() => {
+    const t = selectedTopic.trim()
     if (!t) {
-      toast.error('请选择或输入 Topic')
+      setMessages([])
+      setLastFetchKind('none')
+      setSelectedMessage(null)
       return
     }
-    setLoading(true)
-    setList([])
+    let cancelled = false
+    setIsLoading(true)
     setSelectedMessage(null)
+    messageApi
+      .fetchLatestMessages(t, DEFAULT_MAX_RESULTS)
+      .then((items) => {
+        if (cancelled) return
+        setMessages(items)
+        setLastFetchKind('latest')
+      })
+      .catch((e) => {
+        if (cancelled) return
+        const msg = (() => {
+          try {
+            return formatErrorMessage(e)
+          } catch {
+            return '拉取最新消息失败'
+          }
+        })()
+        toast.error(msg.trim().startsWith('{') ? '拉取失败' : msg)
+        setMessages([])
+        setLastFetchKind('latest')
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [selectedTopic])
+
+  // 2. 进阶搜索：仅当用户点击「查询」时按条件拉取
+  const runConditionQuery = useCallback(async () => {
+    const t = selectedTopic.trim()
+    if (!t) {
+      toast.error('请先选择 Topic')
+      return
+    }
+    setIsLoading(true)
+    setSelectedMessage(null)
+    const condition: QueryCondition = {
+      messageId: messageId.trim() || undefined,
+      messageKey: messageKey.trim() || undefined,
+      startTimeMs: fromDatetimeLocalInput(startTimeInput) || undefined,
+      endTimeMs: fromDatetimeLocalInput(endTimeInput) || undefined,
+    }
+    if (condition.startTimeMs === 0) delete condition.startTimeMs
+    if (condition.endTimeMs === 0) delete condition.endTimeMs
     try {
-      const msgIdTrim = messageId.trim()
-      if (msgIdTrim) {
-        const data = await messageApi.queryMessageByID(t, msgIdTrim)
-        if (data) {
-          setList([data])
-          setSelectedMessage(data)
-        } else {
-          toast.info('未查询到消息')
-        }
-        return
-      }
-      const startMs = fromDatetimeLocalInput(startTimeInput)
-      const endMs = fromDatetimeLocalInput(endTimeInput)
-      const data = await messageApi.queryMessages(
+      const items = await messageApi.queryMessagesByCondition(
         t,
-        messageKey.trim(),
-        maxResults > 0 ? maxResults : DEFAULT_MAX_RESULTS,
-        startMs,
-        endMs
+        condition,
+        maxResults > 0 ? maxResults : DEFAULT_MAX_RESULTS
       )
-      const items = data.filter((m): m is MessageItem => m != null)
-      setList(items)
-      if (items.length === 0) toast.info('未查询到消息')
+      setMessages(items)
+      setLastFetchKind('condition')
+      if (items.length === 0) toast.info('未查询到匹配的消息')
     } catch (e) {
       const msg = (() => {
         try {
@@ -414,10 +486,12 @@ export function MessageView() {
         }
       })()
       toast.error(msg.trim().startsWith('{') ? '查询失败' : msg)
+      setMessages([])
+      setLastFetchKind('condition')
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
-  }, [topic, messageId, messageKey, maxResults, startTimeInput, endTimeInput])
+  }, [selectedTopic, messageId, messageKey, maxResults, startTimeInput, endTimeInput])
 
   const copyMessageId = useCallback((e: React.MouseEvent, id: string) => {
     e.stopPropagation()
@@ -430,412 +504,278 @@ export function MessageView() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="shrink-0 border-b border-border/40 px-4 py-3 -[--wails-draggable:drag]">
-        <h1 className="text-sm font-medium text-foreground">消息</h1>
-      </div>
-      <div className="flex min-h-0 flex-1">
-        <div className="flex flex-1 flex-col overflow-y-auto scroll-thin p-4">
-          <div className="mx-auto max-w-4xl space-y-4">
-            {/* 多维条件检索表单 */}
-            <section className="rounded-md border border-border/40 bg-card p-4">
-              <h2 className="mb-3 text-xs font-medium text-muted-foreground">多维条件检索</h2>
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-end gap-3">
-                  {clusterName && (
-                    <div className="min-w-[100px]">
-                      <span className="mb-1 block text-xs text-muted-foreground">集群</span>
-                      <span className="block rounded-md border border-border/40 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
-                        {clusterName}
-                      </span>
-                    </div>
-                  )}
-                  <div className="min-w-[160px] flex-1">
-                    <label id="msg-topic-label" className="mb-1 block text-xs text-muted-foreground">Topic（必选）</label>
-                    <TopicCombobox
-                      id="msg-topic"
-                      labelId="msg-topic-label"
-                      value={topic}
-                      onChange={setTopic}
-                      options={topicOptions}
-                    />
-                  </div>
-                  <div className="min-w-[140px] flex-1">
-                    <label id="msg-msgid-label" className="mb-1 block text-xs text-muted-foreground">Message ID</label>
-                    <input
-                      id="msg-msgid"
-                      type="text"
-                      value={messageId}
-                      onChange={(e) => setMessageId(e.target.value)}
-                      placeholder="精确查询"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-                      aria-labelledby="msg-msgid-label"
-                    />
-                  </div>
-                  <div className="min-w-[140px] flex-1">
-                    <label id="msg-key-label" className="mb-1 block text-xs text-muted-foreground">Message Key</label>
-                    <input
-                      id="msg-key"
-                      type="text"
-                      value={messageKey}
-                      onChange={(e) => setMessageKey(e.target.value)}
-                      placeholder="如订单号"
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-                      aria-labelledby="msg-key-label"
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-end gap-3">
-                  <div className="min-w-[180px]">
-                    <label id="msg-start-label" className="mb-1 block text-xs text-muted-foreground">开始时间</label>
-                    <DateTimePicker
-                      id="msg-start"
-                      labelId="msg-start-label"
-                      value={startTimeInput}
-                      onChange={setStartTimeInput}
-                      placeholder="选择开始时间"
-                    />
-                  </div>
-                  <div className="min-w-[180px]">
-                    <label id="msg-end-label" className="mb-1 block text-xs text-muted-foreground">结束时间</label>
-                    <DateTimePicker
-                      id="msg-end"
-                      labelId="msg-end-label"
-                      value={endTimeInput}
-                      onChange={setEndTimeInput}
-                      placeholder="选择结束时间"
-                    />
-                  </div>
-                  <div className="w-20 shrink-0">
-                    <label id="msg-max-label" className="mb-1 block text-xs text-muted-foreground">条数</label>
-                    <input
-                      id="msg-max"
-                      type="number"
-                      min={1}
-                      max={64}
-                      value={maxResults}
-                      onChange={(e) => setMaxResults(Number(e.target.value) || DEFAULT_MAX_RESULTS)}
-                      className="w-full rounded-md border border-input bg-background px-2 py-2 text-sm"
-                      aria-labelledby="msg-max-label"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={runQuery}
-                    disabled={loading}
-                    className="inline-flex shrink-0 items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                    查询
-                  </button>
-                </div>
-              </div>
-            </section>
-
-            {/* 消息列表：有数据时展示表格，无数据时展示占位 */}
-            <section>
-              <h2 className="mb-2 text-xs font-medium text-muted-foreground">
-                {list.length > 0 ? `查询结果（共 ${list.length} 条）` : '消息列表'}
-              </h2>
-              <div className="rounded-md border border-border/40 bg-card overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border/40 bg-muted/20">
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Message ID</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Tag</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Keys</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Store Time</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">Born Host</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-muted-foreground">状态</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/30">
-                      {list.length > 0 ? (
-                        list.map((m) => (
-                          <tr
-                            key={m.messageId ?? m.id}
-                            onClick={() => setSelectedMessage(m)}
-                            className={cn(
-                              'cursor-pointer transition-colors hover:bg-accent/50',
-                              selectedMessage?.messageId === m.messageId && 'bg-accent/50'
-                            )}
-                          >
-                            <td className="px-3 py-2 font-mono text-foreground">
-                              <span className="flex items-center gap-1.5">
-                                <span className="truncate max-w-[180px]" title={m.messageId ?? ''}>
-                                  {m.messageId ?? '—'}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => copyMessageId(e, m.messageId ?? '')}
-                                  className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                                  title="复制 Message ID"
-                                  aria-label="复制"
-                                >
-                                  <Copy className="h-3.5 w-3.5" />
-                                </button>
-                              </span>
-                            </td>
-                            <td className="px-3 py-2 font-mono text-muted-foreground truncate max-w-[100px]" title={m.tags ?? ''}>
-                              {m.tags ?? '—'}
-                            </td>
-                            <td className="px-3 py-2 font-mono text-muted-foreground truncate max-w-[120px]" title={m.keys ?? ''}>
-                              {m.keys ?? '—'}
-                            </td>
-                            <td className="px-3 py-2 text-muted-foreground whitespace-nowrap">{m.storeTime ?? '—'}</td>
-                            <td className="px-3 py-2 font-mono text-muted-foreground truncate max-w-[120px]" title={m.bornHost ?? ''}>
-                              {m.bornHost ?? '—'}
-                            </td>
-                            <td className="px-3 py-2">
-                              <MessageBadge type={getMessageBadgeType(m)} />
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={6} className="px-3 py-8 text-center text-sm text-muted-foreground">
-                            {loading ? '查询中…' : '请选择 Topic 并点击「查询」获取消息列表'}
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              {list.length > 0 && (
-                <p className="mt-1.5 text-xs text-muted-foreground">点击行查看详情 · 支持基于时间范围与条数分页拉取</p>
-              )}
-            </section>
-          </div>
-        </div>
-
-        {/* 详情抽屉 */}
-        {selectedMessage && (
-          <div className="flex w-[400px] shrink-0 flex-col border-l border-border/40 bg-card">
-            <div className="flex shrink-0 items-center justify-between border-b border-border/30 px-3 py-2.5">
-              <span className="truncate text-sm font-medium text-foreground">消息详情</span>
-              <button
-                type="button"
-                onClick={() => setSelectedMessage(null)}
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                aria-label="关闭"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto scroll-thin p-3">
-              <div className="space-y-4 text-sm">
-                <div className="space-y-1.5">
-                  <p>
-                    <span className="text-muted-foreground">Topic：</span>
-                    <span className="font-mono text-foreground">{selectedMessage.topic}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Message ID：</span>
-                    <span className="break-all font-mono text-foreground">{selectedMessage.messageId}</span>
-                  </p>
-                  {selectedMessage.tags != null && selectedMessage.tags !== '' && (
-                    <p>
-                      <span className="text-muted-foreground">Tags：</span>
-                      <span className="font-mono text-foreground">{selectedMessage.tags}</span>
-                    </p>
-                  )}
-                  {selectedMessage.keys != null && selectedMessage.keys !== '' && (
-                    <p>
-                      <span className="text-muted-foreground">Keys：</span>
-                      <span className="font-mono text-foreground">{selectedMessage.keys}</span>
-                    </p>
-                  )}
-                  <p>
-                    <span className="text-muted-foreground">存储时间：</span>
-                    <span className="text-foreground">{selectedMessage.storeTime ?? '—'}</span>
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">队列：</span>
-                    <span className="text-foreground">{selectedMessage.queueId} / offset {selectedMessage.queueOffset}</span>
-                  </p>
-                  {selectedMessage.storeHost && (
-                    <p>
-                      <span className="text-muted-foreground">存储节点：</span>
-                      <span className="font-mono text-muted-foreground">{selectedMessage.storeHost}</span>
-                    </p>
-                  )}
-                  {selectedMessage.bornHost && (
-                    <p>
-                      <span className="text-muted-foreground">生产节点：</span>
-                      <span className="font-mono text-muted-foreground">{selectedMessage.bornHost}</span>
-                    </p>
-                  )}
-                </div>
-                {/* 智能 Payload 解析器：Raw / Hex / JSON 切换 + 格式化 + 复制 + 全屏 */}
-                <div>
-                  <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-xs font-medium text-muted-foreground">消息体</h3>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setBodyViewMode('raw')}
-                        className={cn(
-                          'rounded px-2 py-1 text-[10px] font-medium transition-colors',
-                          bodyViewMode === 'raw' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'
-                        )}
-                        title="原始文本"
-                      >
-                        <FileText className="mr-0.5 inline h-3 w-3" /> Raw
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBodyViewMode('hex')}
-                        className={cn(
-                          'rounded px-2 py-1 text-[10px] font-medium transition-colors',
-                          bodyViewMode === 'hex' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'
-                        )}
-                        title="十六进制"
-                      >
-                        <Binary className="mr-0.5 inline h-3 w-3" /> Hex
-                      </button>
-                      {tryParseJSON(selectedMessage.body ?? '') != null && (
-                        <button
-                          type="button"
-                          onClick={() => setBodyViewMode('json')}
-                          className={cn(
-                            'rounded px-2 py-1 text-[10px] font-medium transition-colors',
-                            bodyViewMode === 'json' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted'
-                          )}
-                          title="JSON"
-                        >
-                          <Code className="mr-0.5 inline h-3 w-3" /> JSON
-                        </button>
-                      )}
-                      {bodyViewMode === 'json' && (
-                        <button
-                          type="button"
-                          onClick={() => setBodyFormatted((prev) => (prev != null ? null : formatJSONString(selectedMessage.body ?? '')))}
-                          className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-muted"
-                          title={bodyFormatted != null ? '恢复压缩' : '格式化'}
-                        >
-                          {bodyFormatted != null ? '压缩' : 'Format'}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => copyBody(selectedMessage.body ?? '')}
-                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="复制 Body"
-                        aria-label="复制 Body"
-                      >
-                        <Copy className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setBodyFullscreenOpen(true)}
-                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        title="全屏查看"
-                        aria-label="全屏"
-                      >
-                        <Maximize2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                  <pre className="max-h-48 overflow-auto rounded-md border border-border/40 bg-muted/30 p-3 font-mono text-xs text-foreground whitespace-pre-wrap wrap-anywhere scroll-thin">
-                    {bodyViewMode === 'hex'
-                      ? toHexView(selectedMessage.body ?? '')
-                      : bodyViewMode === 'json'
-                        ? highlightJSON(
-                            bodyFormatted ?? (tryParseJSON(selectedMessage.body ?? '') != null ? formatJSONString(selectedMessage.body ?? '') : selectedMessage.body ?? '（空）')
-                          )
-                        : (selectedMessage.body != null && selectedMessage.body !== '' ? selectedMessage.body : '（空）')}
-                  </pre>
-                </div>
-
-                {/* 全屏 Body 弹层 */}
-                {bodyFullscreenOpen && (
-                  <div
-                    className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm"
-                    role="dialog"
-                    aria-modal="true"
-                    aria-label="消息体全屏"
-                  >
-                    <div className="flex shrink-0 items-center justify-between border-b border-border/40 px-4 py-2">
-                      <span className="text-sm font-medium text-foreground">消息体</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => copyBody(selectedMessage.body ?? '')}
-                          className="rounded-md border border-border/40 px-2 py-1.5 text-xs hover:bg-accent"
-                        >
-                          复制
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setBodyFullscreenOpen(false)}
-                          className="rounded-md border border-border/40 px-2 py-1.5 text-xs hover:bg-accent"
-                        >
-                          关闭
-                        </button>
-                      </div>
-                    </div>
-                    <pre className="flex-1 overflow-auto p-4 font-mono text-xs text-foreground whitespace-pre-wrap wrap-anywhere scroll-thin">
-                      {bodyViewMode === 'hex'
-                        ? toHexView(selectedMessage.body ?? '')
-                        : bodyViewMode === 'json'
-                          ? highlightJSON(bodyFormatted ?? formatJSONString(selectedMessage.body ?? ''))
-                          : (selectedMessage.body ?? '（空）')}
-                    </pre>
-                  </div>
-                )}
-
-                {/* 全景 Properties：系统属性 + 业务属性 */}
-                {selectedMessage.properties != null && Object.keys(selectedMessage.properties).length > 0 && (() => {
-                  const entries = Object.entries(selectedMessage.properties)
-                  const systemEntries = entries.filter(([k]) => SYSTEM_PROP_KEYS.has(k))
-                  const userEntries = entries.filter(([k]) => !SYSTEM_PROP_KEYS.has(k))
-                  return (
-                    <>
-                      {systemEntries.length > 0 && (
-                        <div>
-                          <h3 className="mb-1.5 text-xs font-medium text-muted-foreground">系统属性 (System Properties)</h3>
-                          <ul className="space-y-1.5 rounded-md border border-border/40 bg-muted/20 py-2">
-                            {systemEntries.map(([k, v]) => (
-                              <li key={k} className="flex justify-between gap-2 px-3 text-xs">
-                                <span className="font-medium text-muted-foreground">{k}</span>
-                                <span className="truncate font-mono text-foreground">{v ?? '—'}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {userEntries.length > 0 && (
-                        <div>
-                          <h3 className="mb-1.5 text-xs font-medium text-muted-foreground">业务属性 (User Properties)</h3>
-                          <div className="overflow-hidden rounded-md border border-border/40">
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="border-b border-border/40 bg-muted/20">
-                                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Key</th>
-                                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">Value</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-border/30">
-                                {userEntries.map(([k, v]) => (
-                                  <tr key={k}>
-                                    <td className="px-3 py-2 font-mono text-muted-foreground">{k}</td>
-                                    <td className="max-w-[200px] truncate px-3 py-2 font-mono text-foreground" title={String(v ?? '')}>{v ?? '—'}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
-              </div>
-            </div>
-          </div>
+      {/* 紧凑单行 Toolbar */}
+      <div className="shrink-0 flex items-center gap-2 border-b border-border/40 px-3 py-2 -[--wails-draggable:drag]">
+        {clusterName && (
+          <span className="shrink-0 text-xs text-muted-foreground">{clusterName}</span>
         )}
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <div className="w-36 shrink-0 [&_input]:h-8 [&_input]:py-1.5 [&_input]:text-xs">
+            <TopicCombobox
+              id="msg-topic"
+              labelId="msg-topic-label"
+              value={selectedTopic}
+              onChange={setSelectedTopic}
+              options={topicOptions}
+              placeholder="Topic"
+            />
+          </div>
+          <input
+            id="msg-msgid"
+            type="text"
+            value={messageId}
+            onChange={(e) => setMessageId(e.target.value)}
+            placeholder="Message ID"
+            className="h-8 w-40 shrink-0 rounded-md border border-border/40 bg-background px-2.5 text-xs font-mono"
+            aria-label="Message ID"
+          />
+          <input
+            id="msg-key"
+            type="text"
+            value={messageKey}
+            onChange={(e) => setMessageKey(e.target.value)}
+            placeholder="Key"
+            className="h-8 w-28 shrink-0 rounded-md border border-border/40 bg-background px-2.5 text-xs font-mono"
+            aria-label="Message Key"
+          />
+          <div className="w-32 shrink-0">
+            <DateTimePicker
+              id="msg-start"
+              labelId="msg-start-label"
+              value={startTimeInput}
+              onChange={setStartTimeInput}
+              placeholder="开始"
+            />
+          </div>
+          <div className="w-32 shrink-0">
+            <DateTimePicker
+              id="msg-end"
+              labelId="msg-end-label"
+              value={endTimeInput}
+              onChange={setEndTimeInput}
+              placeholder="结束"
+            />
+          </div>
+          <input
+            id="msg-max"
+            type="number"
+            min={1}
+            max={64}
+            value={maxResults}
+            onChange={(e) => setMaxResults(Number(e.target.value) || DEFAULT_MAX_RESULTS)}
+            className="h-8 w-14 shrink-0 rounded-md border border-border/40 bg-background px-2 text-center text-xs"
+            aria-label="条数"
+          />
+          <button
+            type="button"
+            onClick={runConditionQuery}
+            disabled={isLoading}
+            className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-primary px-2.5 text-xs text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+          >
+            {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+            查询
+          </button>
+        </div>
       </div>
+
+      {/* 主内容区：Resizable 左右分栏 */}
+      <div className="min-h-0 flex-1">
+        <ResizablePanelGroup direction="horizontal" className="h-full" defaultLayout={{ 'msg-list': 40, 'msg-inspector': 60 }}>
+          <ResizablePanel id="msg-list" defaultSize={40} minSize={25} className="flex flex-col min-w-0">
+            <div className="shrink-0 border-b border-border/40 px-3 py-1.5">
+              <span className="text-xs text-muted-foreground">
+                {messages.length > 0 ? `共 ${messages.length} 条` : '消息列表'}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto scroll-thin">
+              {isLoading ? (
+                <div className="p-2 space-y-1" aria-busy="true" aria-label="加载中">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="rounded-md border border-border/40 px-2.5 py-2 flex items-center gap-2"
+                    >
+                      <div className="h-3 flex-1 rounded bg-muted/60 animate-pulse max-w-[180px]" />
+                      <div className="h-3 w-12 rounded bg-muted/40 animate-pulse" />
+                      <div className="h-4 w-8 rounded bg-muted/40 animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : messages.length > 0 ? (
+                <ul className="p-2 space-y-1">
+                  {messages.map((m) => (
+                    <li
+                      key={m.messageId ?? m.id}
+                      onClick={() => setSelectedMessage(m)}
+                      className={cn(
+                        'rounded-md border border-border/40 px-2.5 py-2 cursor-pointer transition-colors hover:bg-accent/50',
+                        selectedMessage?.messageId === m.messageId && 'bg-accent/50 border-border/60'
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="truncate flex-1 font-mono text-xs text-foreground" title={m.messageId ?? ''}>
+                          {m.messageId ?? '—'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); copyMessageId(e, m.messageId ?? '') }}
+                          className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title="复制 Message ID"
+                          aria-label="复制"
+                        >
+                          <Copy className="h-3 w-3" />
+                        </button>
+                        <MessageBadge type={getMessageBadgeType(m)} />
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-[11px] text-muted-foreground">
+                        {m.tags != null && m.tags !== '' && (
+                          <span className="truncate font-mono" title={m.tags}>{m.tags}</span>
+                        )}
+                        <span className="shrink-0">{m.storeTime ?? '—'}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full min-h-[120px] px-4 text-center text-xs text-muted-foreground">
+                  {!selectedTopic.trim()
+                    ? '请选择 Topic 开始检索'
+                    : lastFetchKind === 'condition'
+                      ? '未查询到匹配的消息'
+                      : '该 Topic 暂无消息'}
+                </div>
+              )}
+            </div>
+          </ResizablePanel>
+          <ResizableHandle withHandle />
+          <ResizablePanel id="msg-inspector" defaultSize={60} minSize={30} className="flex flex-col min-w-0">
+            <div className="shrink-0 border-b border-border/40 px-3 py-1.5">
+              <span className="text-xs text-muted-foreground">消息详情</span>
+            </div>
+            <div className="flex-1 overflow-y-auto scroll-thin min-h-0">
+              {selectedMessage ? (
+                <div className="p-3">
+                  <div className="mb-3 space-y-1 text-xs">
+                    <p><span className="text-muted-foreground">Topic </span><span className="font-mono text-foreground">{selectedMessage.topic}</span></p>
+                    <p><span className="text-muted-foreground">Message ID </span><span className="break-all font-mono text-foreground">{selectedMessage.messageId}</span></p>
+                    {(selectedMessage.tags != null && selectedMessage.tags !== '') && (
+                      <p><span className="text-muted-foreground">Tags </span><span className="font-mono text-foreground">{selectedMessage.tags}</span></p>
+                    )}
+                    {(selectedMessage.keys != null && selectedMessage.keys !== '') && (
+                      <p><span className="text-muted-foreground">Keys </span><span className="font-mono text-foreground">{selectedMessage.keys}</span></p>
+                    )}
+                    <p><span className="text-muted-foreground">存储 </span><span className="text-foreground">{selectedMessage.storeTime ?? '—'}</span></p>
+                  </div>
+                  <Tabs defaultValue="body" className="w-full">
+                    <TabsList className="h-8 w-full justify-start rounded-md bg-muted/30 p-0.5">
+                      <TabsTrigger value="body" className="text-xs">Body</TabsTrigger>
+                      <TabsTrigger value="properties" className="text-xs">Properties</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="body" className="mt-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setBodyViewMode('raw')}
+                            className={cn('rounded px-2 py-1 text-[10px] font-medium transition-colors', bodyViewMode === 'raw' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted')}
+                            title="原始"
+                          >Raw</button>
+                          <button
+                            type="button"
+                            onClick={() => setBodyViewMode('hex')}
+                            className={cn('rounded px-2 py-1 text-[10px] font-medium transition-colors', bodyViewMode === 'hex' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted')}
+                            title="十六进制"
+                          >Hex</button>
+                          {tryParseJSON(selectedMessage.body ?? '') != null && (
+                            <button
+                              type="button"
+                              onClick={() => setBodyViewMode('json')}
+                              className={cn('rounded px-2 py-1 text-[10px] font-medium transition-colors', bodyViewMode === 'json' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted')}
+                              title="JSON"
+                            >JSON</button>
+                          )}
+                          {bodyViewMode === 'json' && (
+                            <button
+                              type="button"
+                              onClick={() => setBodyFormatted((prev) => (prev != null ? null : formatJSONString(selectedMessage.body ?? '')))}
+                              className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-muted"
+                              title={bodyFormatted != null ? '压缩' : '格式化'}
+                            >{bodyFormatted != null ? '压缩' : 'Format'}</button>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-0.5">
+                          <button type="button" onClick={() => copyBody(selectedMessage.body ?? '')} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" title="复制"><Copy className="h-3.5 w-3.5" /></button>
+                          <button type="button" onClick={() => setBodyFullscreenOpen(true)} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" title="全屏"><Maximize2 className="h-3.5 w-3.5" /></button>
+                        </div>
+                      </div>
+                      <pre className="max-h-64 overflow-auto rounded-md border border-border/40 bg-muted/30 p-3 font-mono text-xs text-foreground whitespace-pre-wrap wrap-break-word scroll-thin">
+                        {bodyViewMode === 'hex'
+                          ? toHexView(selectedMessage.body ?? '')
+                          : bodyViewMode === 'json'
+                            ? highlightJSON(bodyFormatted ?? (tryParseJSON(selectedMessage.body ?? '') != null ? formatJSONString(selectedMessage.body ?? '') : selectedMessage.body ?? '（空）'))
+                            : (selectedMessage.body != null && selectedMessage.body !== '' ? selectedMessage.body : '（空）')}
+                      </pre>
+                    </TabsContent>
+                    <TabsContent value="properties" className="mt-2">
+                      {selectedMessage.properties != null && Object.keys(selectedMessage.properties).length > 0 ? (() => {
+                        const entries = Object.entries(selectedMessage.properties)
+                        const systemEntries = entries.filter(([k]) => SYSTEM_PROP_KEYS.has(k))
+                        const userEntries = entries.filter(([k]) => !SYSTEM_PROP_KEYS.has(k))
+                        return (
+                          <div className="space-y-3 text-xs">
+                            {systemEntries.length > 0 && (
+                              <div>
+                                <h3 className="mb-1.5 text-[11px] font-medium text-muted-foreground">系统属性</h3>
+                                <ul className="space-y-1 rounded-md border border-border/40 bg-muted/20 py-2">
+                                  {systemEntries.map(([k, v]) => (
+                                    <li key={k} className="flex justify-between gap-2 px-2.5"><span className="text-muted-foreground">{k}</span><span className="truncate font-mono text-foreground">{v ?? '—'}</span></li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            {userEntries.length > 0 && (
+                              <div>
+                                <h3 className="mb-1.5 text-[11px] font-medium text-muted-foreground">业务属性</h3>
+                                <ul className="space-y-1 rounded-md border border-border/40 bg-muted/20 py-2">
+                                  {userEntries.map(([k, v]) => (
+                                    <li key={k} className="flex justify-between gap-2 px-2.5"><span className="text-muted-foreground">{k}</span><span className="truncate font-mono text-foreground">{v ?? '—'}</span></li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })() : (
+                        <p className="py-4 text-center text-xs text-muted-foreground">无属性</p>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full min-h-[160px] px-4 text-center text-xs text-muted-foreground">
+                  选择左侧一条消息查看详情
+                </div>
+              )}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
+      </div>
+
+      {/* 全屏 Body 弹层 */}
+      {selectedMessage && bodyFullscreenOpen && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="消息体全屏">
+          <div className="flex shrink-0 items-center justify-between border-b border-border/40 px-4 py-2">
+            <span className="text-sm font-medium text-foreground">消息体</span>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => copyBody(selectedMessage.body ?? '')} className="rounded-md border border-border/40 px-2 py-1.5 text-xs hover:bg-accent">复制</button>
+              <button type="button" onClick={() => setBodyFullscreenOpen(false)} className="rounded-md border border-border/40 px-2 py-1.5 text-xs hover:bg-accent">关闭</button>
+            </div>
+          </div>
+          <pre className="flex-1 overflow-auto p-4 font-mono text-xs text-foreground whitespace-pre-wrap wrap-break-word scroll-thin">
+            {bodyViewMode === 'hex' ? toHexView(selectedMessage.body ?? '') : bodyViewMode === 'json' ? highlightJSON(bodyFormatted ?? formatJSONString(selectedMessage.body ?? '')) : (selectedMessage.body ?? '（空）')}
+          </pre>
+        </div>
+      )}
     </div>
   )
 }

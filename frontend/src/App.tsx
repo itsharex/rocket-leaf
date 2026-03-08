@@ -7,6 +7,7 @@ import { ConnectionGate } from '@/components/ConnectionGate'
 import { ConnectionManagement } from '@/components/ConnectionManagement'
 import { TopicList } from '@/components/TopicList'
 import { PlaceholderView } from '@/components/PlaceholderView'
+import { SettingsView } from '@/components/SettingsView'
 import { useConnections } from '@/hooks/useConnections'
 import { useTopics } from '@/hooks/useTopics'
 import * as connectionApi from '@/api/connection'
@@ -65,7 +66,7 @@ function App(): React.ReactElement {
       case 'cluster':
         return <PlaceholderView title="集群" description="集群状态与 TPS 监控" />
       case 'settings':
-        return <PlaceholderView title="设置" description="软件设置" />
+        return <SettingsView />
       default:
         return null
     }

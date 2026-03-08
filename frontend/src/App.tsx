@@ -7,10 +7,12 @@ import { ConnectionGate } from '@/components/ConnectionGate'
 import { ConnectionManagement } from '@/components/ConnectionManagement'
 import { OverviewView } from '@/components/OverviewView'
 import { TopicList } from '@/components/TopicList'
+import { ConsumerGroupList } from '@/components/ConsumerGroupList'
 import { PlaceholderView } from '@/components/PlaceholderView'
 import { SettingsView } from '@/components/SettingsView'
 import { useConnections } from '@/hooks/useConnections'
 import { useTopics } from '@/hooks/useTopics'
+import { useConsumerGroups } from '@/hooks/useConsumerGroups'
 import * as connectionApi from '@/api/connection'
 import { ConnectionStatus } from '../bindings/rocket-leaf/internal/model/models.js'
 import { cn } from '@/lib/utils'
@@ -22,6 +24,7 @@ function App(): React.ReactElement {
 
   const { list: connections, loading: connectionsLoading, error: connectionsError, refresh: refreshConnections } = useConnections()
   const { list: topics, loading: topicsLoading, error: topicsError, refresh: refreshTopics } = useTopics()
+  const { list: consumerGroups, loading: consumerGroupsLoading, error: consumerGroupsError, refresh: refreshConsumerGroups } = useConsumerGroups()
 
   const hasConnected = connections.some((c) => c.status === ConnectionStatus.StatusOnline)
 
@@ -39,6 +42,7 @@ function App(): React.ReactElement {
         await connectionApi.setDefaultConnection(id)
         await refreshConnections()
         await refreshTopics()
+        await refreshConsumerGroups()
         setActiveNav('home')
         toast.success('连接成功')
       } catch (e) {
@@ -48,7 +52,7 @@ function App(): React.ReactElement {
         setConnectingId(null)
       }
     },
-    [connections, refreshConnections, refreshTopics]
+    [connections, refreshConnections, refreshTopics, refreshConsumerGroups]
   )
 
   const handleDisconnect = useCallback(async (id: number) => {
@@ -75,6 +79,7 @@ function App(): React.ReactElement {
         await connectionApi.setDefaultConnection(id)
         await refreshConnections()
         await refreshTopics()
+        await refreshConsumerGroups()
         setActiveNav('home')
         toast.success('已切换到该实例')
       } catch (e) {
@@ -82,7 +87,7 @@ function App(): React.ReactElement {
         toast.error(e instanceof Error ? e.message : String(e))
       }
     },
-    [refreshConnections, refreshTopics]
+    [refreshConnections, refreshTopics, refreshConsumerGroups]
   )
 
   const renderContent = () => {
@@ -95,6 +100,7 @@ function App(): React.ReactElement {
           <OverviewView
             connections={connections}
             topicCount={topics.length}
+            consumerGroupCount={consumerGroups.length}
             onSelectNav={setActiveNav}
           />
         )
@@ -115,7 +121,14 @@ function App(): React.ReactElement {
       case 'topics':
         return <TopicList list={topics} loading={topicsLoading} error={topicsError} onRefresh={refreshTopics} />
       case 'consumers':
-        return <PlaceholderView title="消费者组" description="消费者组列表与消费进度" />
+        return (
+          <ConsumerGroupList
+            list={consumerGroups}
+            loading={consumerGroupsLoading}
+            error={consumerGroupsError}
+            onRefresh={refreshConsumerGroups}
+          />
+        )
       case 'messages':
         return <PlaceholderView title="消息" description="按 Topic / Key / MessageId 查询与发送" />
       case 'cluster':

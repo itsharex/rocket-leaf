@@ -7,6 +7,7 @@ import type { NavId } from './IconSidebar'
 type Props = {
   connections: Connection[]
   topicCount: number
+  consumerGroupCount?: number
   onSelectNav: (id: NavId) => void
 }
 
@@ -17,7 +18,7 @@ const SHORTCUTS: { id: NavId; icon: React.ElementType; label: string; descriptio
   { id: 'cluster', icon: BarChart3, label: '集群', description: '状态与 TPS' },
 ]
 
-export function OverviewView({ connections, topicCount, onSelectNav }: Props) {
+export function OverviewView({ connections, topicCount, consumerGroupCount = 0, onSelectNav }: Props) {
   const currentConn = connections.find((c) => c.status === ConnectionStatus.StatusOnline)
   const defaultConn = connections.find((c) => c.isDefault)
 
@@ -78,7 +79,7 @@ export function OverviewView({ connections, topicCount, onSelectNav }: Props) {
                 <p className="mt-0.5 text-xs text-muted-foreground">Topic</p>
               </div>
               <div className="rounded-md border border-border/40 bg-card px-4 py-3">
-                <p className="text-2xl font-semibold tabular-nums text-muted-foreground">—</p>
+                <p className="text-2xl font-semibold tabular-nums text-foreground">{consumerGroupCount}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">消费者组</p>
               </div>
               <div className="rounded-md border border-border/40 bg-card px-4 py-3">

@@ -43,10 +43,10 @@ export function QueryMessageByID(topic: string, msgID: string): $CancellableProm
 }
 
 /**
- * QueryMessages 查询消息
+ * QueryMessages 查询消息，startTime/endTime 为 Unix 毫秒时间戳，0 表示不限制
  */
-export function QueryMessages(topic: string, key: string, maxResults: number): $CancellablePromise<(model$0.MessageItem | null)[]> {
-    return $Call.ByID(1433538526, topic, key, maxResults).then(($result: any) => {
+export function QueryMessages(topic: string, key: string, maxResults: number, startTime: number, endTime: number): $CancellablePromise<(model$0.MessageItem | null)[]> {
+    return $Call.ByID(1433538526, topic, key, maxResults, startTime, endTime).then(($result: any) => {
         return $$createType4($result);
     });
 }

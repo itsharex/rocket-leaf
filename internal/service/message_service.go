@@ -26,8 +26,8 @@ func (s *MessageService) getNextID() int {
 	return int(atomic.AddInt64(&s.nextID, 1))
 }
 
-// QueryMessages 查询消息
-func (s *MessageService) QueryMessages(topic string, key string, maxResults int) ([]*model.MessageItem, error) {
+// QueryMessages 查询消息，startTime/endTime 为 Unix 毫秒时间戳，0 表示不限制
+func (s *MessageService) QueryMessages(topic string, key string, maxResults int, startTime, endTime int64) ([]*model.MessageItem, error) {
 	client, err := rocketmq.GetClientManager().GetDefaultClient()
 	if err != nil {
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
@@ -39,8 +39,14 @@ func (s *MessageService) QueryMessages(topic string, key string, maxResults int)
 	if maxResults <= 0 {
 		maxResults = 32
 	}
+	if endTime <= 0 {
+		endTime = time.Now().UnixMilli()
+	}
+	if startTime < 0 {
+		startTime = 0
+	}
 
-	msgs, err := client.QueryMessage(ctx, topic, key, maxResults, 0, time.Now().UnixMilli())
+	msgs, err := client.QueryMessage(ctx, topic, key, maxResults, startTime, endTime)
 	if err != nil {
 		return nil, fmt.Errorf("查询消息失败: %w", err)
 	}

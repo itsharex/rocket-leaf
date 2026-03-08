@@ -10,6 +10,15 @@ export async function getTopics(): Promise<(TopicItem | null)[]> {
   }
 }
 
+export async function getTopicsByCluster(clusterName: string): Promise<(TopicItem | null)[]> {
+  try {
+    return await TopicService.GetTopicsByCluster(clusterName)
+  } catch (e) {
+    console.error('GetTopicsByCluster', e)
+    throw e
+  }
+}
+
 export async function getTopicDetail(topicName: string): Promise<TopicItem | null> {
   try {
     return await TopicService.GetTopicDetail(topicName)

@@ -4,10 +4,12 @@ import type { MessageItem } from '../../bindings/rocket-leaf/internal/model/mode
 export async function queryMessages(
   topic: string,
   key: string,
-  maxResults: number
+  maxResults: number,
+  startTimeMs = 0,
+  endTimeMs = 0
 ): Promise<(MessageItem | null)[]> {
   try {
-    return await MessageService.QueryMessages(topic, key, maxResults)
+    return await MessageService.QueryMessages(topic, key, maxResults, startTimeMs, endTimeMs)
   } catch (e) {
     console.error('QueryMessages', e)
     throw e

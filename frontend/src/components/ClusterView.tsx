@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { toast } from 'sonner'
-import { RefreshCw, Server, Loader2, X } from 'lucide-react'
+import { RefreshCw, Loader2, X } from 'lucide-react'
 import { cn, formatErrorMessage } from '@/lib/utils'
 import type { BrokerNode, ClusterInfo } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { BrokerRole, NodeStatus } from '../../bindings/rocket-leaf/internal/model/models.js'

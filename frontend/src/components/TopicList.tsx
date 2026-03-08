@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import { RefreshCw, Plus, Search, X, Trash2, Loader2, AlertTriangle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatErrorMessage } from '@/lib/utils'
 import type { TopicItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { TopicPerm } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as topicApi from '@/api/topic'
@@ -79,7 +79,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
       })
       .catch((e) => {
         if (!cancelled) {
-          setDetailError(e instanceof Error ? e.message : String(e))
+          setDetailError(formatErrorMessage(e))
           setDetail(null)
         }
       })
@@ -149,7 +149,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
         if (selectedTopic === topic) setSelectedTopic(null)
         onRefresh()
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : String(err))
+        toast.error(formatErrorMessage(err))
       } finally {
         setDeletingTopic(null)
       }

@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
 import { RefreshCw, Search, X, Trash2, Loader2, AlertTriangle } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatErrorMessage } from '@/lib/utils'
 import type { ConsumerGroupItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { GroupStatus, ConsumeMode } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as consumerApi from '@/api/consumer'
@@ -115,7 +115,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
         if (selectedGroup === groupName) setSelectedGroup(null)
         onRefresh()
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : String(err))
+        toast.error(formatErrorMessage(err))
       } finally {
         setDeletingGroup(null)
       }

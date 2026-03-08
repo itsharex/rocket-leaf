@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { TopicItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as topicApi from '@/api/topic'
+import { formatErrorMessage } from '@/lib/utils'
 
 export function useTopics() {
   const [list, setList] = useState<(TopicItem | null)[]>([])
@@ -14,7 +15,7 @@ export function useTopics() {
       const data = await topicApi.getTopics()
       setList(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(formatErrorMessage(e))
       setList([])
     } finally {
       setLoading(false)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Connection } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as connectionApi from '@/api/connection'
+import { formatErrorMessage } from '@/lib/utils'
 
 export function useConnections() {
   const [list, setList] = useState<(Connection | null)[]>([])
@@ -14,7 +15,7 @@ export function useConnections() {
       const data = await connectionApi.getConnections()
       setList(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(formatErrorMessage(e))
       setList([])
     } finally {
       setLoading(false)

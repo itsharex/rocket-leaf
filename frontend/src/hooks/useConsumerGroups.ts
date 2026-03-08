@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ConsumerGroupItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as consumerApi from '@/api/consumer'
+import { formatErrorMessage } from '@/lib/utils'
 
 export function useConsumerGroups() {
   const [list, setList] = useState<(ConsumerGroupItem | null)[]>([])
@@ -14,7 +15,7 @@ export function useConsumerGroups() {
       const data = await consumerApi.getConsumerGroups()
       setList(data)
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e))
+      setError(formatErrorMessage(e))
       setList([])
     } finally {
       setLoading(false)

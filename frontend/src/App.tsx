@@ -8,6 +8,7 @@ import { ConnectionManagement } from '@/components/ConnectionManagement'
 import { OverviewView } from '@/components/OverviewView'
 import { TopicList } from '@/components/TopicList'
 import { ConsumerGroupList } from '@/components/ConsumerGroupList'
+import { MessageView } from '@/components/MessageView'
 import { PlaceholderView } from '@/components/PlaceholderView'
 import { SettingsView } from '@/components/SettingsView'
 import { useConnections } from '@/hooks/useConnections'
@@ -15,7 +16,7 @@ import { useTopics } from '@/hooks/useTopics'
 import { useConsumerGroups } from '@/hooks/useConsumerGroups'
 import * as connectionApi from '@/api/connection'
 import { ConnectionStatus } from '../bindings/rocket-leaf/internal/model/models.js'
-import { cn } from '@/lib/utils'
+import { cn, formatErrorMessage } from '@/lib/utils'
 
 function App(): React.ReactElement {
   const [activeNav, setActiveNav] = useState<NavId>('home')
@@ -47,7 +48,7 @@ function App(): React.ReactElement {
         toast.success('连接成功')
       } catch (e) {
         await refreshConnections()
-        toast.error(e instanceof Error ? e.message : String(e))
+        toast.error(formatErrorMessage(e))
       } finally {
         setConnectingId(null)
       }
@@ -63,7 +64,7 @@ function App(): React.ReactElement {
       toast.success('已断开连接')
     } catch (e) {
       await refreshConnections()
-      toast.error(e instanceof Error ? e.message : String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setDisconnectingId(null)
     }
@@ -84,7 +85,7 @@ function App(): React.ReactElement {
         toast.success('已切换到该实例')
       } catch (e) {
         await refreshConnections()
-        toast.error(e instanceof Error ? e.message : String(e))
+        toast.error(formatErrorMessage(e))
       }
     },
     [refreshConnections, refreshTopics, refreshConsumerGroups]
@@ -130,7 +131,7 @@ function App(): React.ReactElement {
           />
         )
       case 'messages':
-        return <PlaceholderView title="消息" description="按 Topic / Key / MessageId 查询与发送" />
+        return <MessageView />
       case 'cluster':
         return <PlaceholderView title="集群" description="集群状态与 TPS 监控" />
       case 'settings':

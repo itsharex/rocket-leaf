@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2, Play, Check, Loader2, Link2, Link2Off, RefreshCw, Shield, Timer, Circle, CircleDot } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatErrorMessage } from '@/lib/utils'
 import type { Connection } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { ConnectionStatus } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as connectionApi from '@/api/connection'
@@ -140,7 +140,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
       onRefresh()
       closeDialog()
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : String(e))
+      setActionError(formatErrorMessage(e))
     } finally {
       setSubmitting(false)
     }
@@ -158,7 +158,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
       onRefresh()
       toast.success('已删除连接')
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : String(e))
+      setActionError(formatErrorMessage(e))
     }
   }
 
@@ -168,7 +168,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
       onRefresh()
       toast.success('已设为默认')
     } catch (e) {
-      setActionError(e instanceof Error ? e.message : String(e))
+      setActionError(formatErrorMessage(e))
     }
   }
 
@@ -186,7 +186,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
         !msg || /^online$/i.test(msg) ? '连接成功' : msg
       toast.success(successText)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setTestingId(null)
     }

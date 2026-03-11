@@ -5,11 +5,13 @@ import * as ClusterService from "./clusterservice.js";
 import * as ConnectionService from "./connectionservice.js";
 import * as ConsumerService from "./consumerservice.js";
 import * as MessageService from "./messageservice.js";
+import * as SettingsService from "./settingsservice.js";
 import * as TopicService from "./topicservice.js";
 export {
     ClusterService,
     ConnectionService,
     ConsumerService,
     MessageService,
+    SettingsService,
     TopicService
 };

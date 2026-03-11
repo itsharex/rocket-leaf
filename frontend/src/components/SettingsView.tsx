@@ -10,6 +10,7 @@ import {
   Upload,
   Trash2,
   RefreshCw,
+  RotateCcw,
   ExternalLink,
   Github,
   Network,
@@ -177,7 +178,7 @@ function Toggle({
 export function SettingsView() {
   const [activeTab, setActiveTab] = useState<SettingsTabId>('general')
   const { mode, setTheme } = useTheme()
-  const { settings, setSetting } = useSettings()
+  const { settings, setSetting, resetAllSettings, loading } = useSettings()
 
   const copyPath = useCallback(async (path: string) => {
     try {
@@ -197,6 +198,14 @@ export function SettingsView() {
   const handleClearCache = useCallback(() => {
     toast.info('清理缓存功能开发中')
   }, [])
+  const handleResetSettings = useCallback(async () => {
+    try {
+      await resetAllSettings()
+      toast.success('已恢复默认设置')
+    } catch {
+      toast.error('恢复默认设置失败')
+    }
+  }, [resetAllSettings])
   const handleCheckUpdate = useCallback(() => {
     toast.info('检查更新功能开发中')
   }, [])
@@ -461,6 +470,14 @@ export function SettingsView() {
             >
               <Trash2 className="h-4 w-4" />
               清理缓存
+            </button>
+            <button
+              type="button"
+              onClick={handleResetSettings}
+              className="flex items-center gap-2 rounded-md border border-destructive/50 bg-background px-3 py-2 text-sm text-destructive hover:bg-destructive/10 transition-colors"
+            >
+              <RotateCcw className="h-4 w-4" />
+              恢复默认设置
             </button>
           </div>
             </div>

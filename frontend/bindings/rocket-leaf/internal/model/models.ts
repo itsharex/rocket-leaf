@@ -6,6 +6,172 @@
 import { Create as $Create } from "@wailsio/runtime";
 
 /**
+ * AppSettings 应用设置
+ */
+export class AppSettings {
+    /**
+     * 通用设置
+     * 语言: "en" | "zh"
+     */
+    "language": string;
+
+    /**
+     * 字体大小: "small" | "medium" | "large"
+     */
+    "fontSize": string;
+
+    /**
+     * 等宽字体
+     */
+    "monospaceFont": string;
+
+    /**
+     * 启动时自动连接上次集群
+     */
+    "autoConnectLast": boolean;
+
+    /**
+     * 连接与网络
+     * 连接超时(ms)
+     */
+    "connectTimeoutMs": number;
+
+    /**
+     * 请求超时(ms)
+     */
+    "requestTimeoutMs": number;
+
+    /**
+     * 默认 AccessKey
+     */
+    "globalAccessKey": string;
+
+    /**
+     * 默认 SecretKey
+     */
+    "globalSecretKey": string;
+
+    /**
+     * 跳过 TLS 校验
+     */
+    "skipTlsVerify": boolean;
+
+    /**
+     * 启用代理
+     */
+    "proxyEnabled": boolean;
+
+    /**
+     * 代理类型: "http" | "socks5"
+     */
+    "proxyType": string;
+
+    /**
+     * 代理地址
+     */
+    "proxyHost": string;
+
+    /**
+     * 代理端口
+     */
+    "proxyPort": string;
+
+    /**
+     * 消息与显示
+     * 时区: "local" | "utc"
+     */
+    "timezone": string;
+
+    /**
+     * 时间戳格式: "datetime" | "ms"
+     */
+    "timestampFormat": string;
+
+    /**
+     * JSON 自动格式化
+     */
+    "autoFormatJson": boolean;
+
+    /**
+     * 消息截断阈值(字节)
+     */
+    "maxPayloadRenderBytes": number;
+
+    /**
+     * 单页拉取数量
+     */
+    "fetchLimit": number;
+
+    /** Creates a new AppSettings instance. */
+    constructor($$source: Partial<AppSettings> = {}) {
+        if (!("language" in $$source)) {
+            this["language"] = "";
+        }
+        if (!("fontSize" in $$source)) {
+            this["fontSize"] = "";
+        }
+        if (!("monospaceFont" in $$source)) {
+            this["monospaceFont"] = "";
+        }
+        if (!("autoConnectLast" in $$source)) {
+            this["autoConnectLast"] = false;
+        }
+        if (!("connectTimeoutMs" in $$source)) {
+            this["connectTimeoutMs"] = 0;
+        }
+        if (!("requestTimeoutMs" in $$source)) {
+            this["requestTimeoutMs"] = 0;
+        }
+        if (!("globalAccessKey" in $$source)) {
+            this["globalAccessKey"] = "";
+        }
+        if (!("globalSecretKey" in $$source)) {
+            this["globalSecretKey"] = "";
+        }
+        if (!("skipTlsVerify" in $$source)) {
+            this["skipTlsVerify"] = false;
+        }
+        if (!("proxyEnabled" in $$source)) {
+            this["proxyEnabled"] = false;
+        }
+        if (!("proxyType" in $$source)) {
+            this["proxyType"] = "";
+        }
+        if (!("proxyHost" in $$source)) {
+            this["proxyHost"] = "";
+        }
+        if (!("proxyPort" in $$source)) {
+            this["proxyPort"] = "";
+        }
+        if (!("timezone" in $$source)) {
+            this["timezone"] = "";
+        }
+        if (!("timestampFormat" in $$source)) {
+            this["timestampFormat"] = "";
+        }
+        if (!("autoFormatJson" in $$source)) {
+            this["autoFormatJson"] = false;
+        }
+        if (!("maxPayloadRenderBytes" in $$source)) {
+            this["maxPayloadRenderBytes"] = 0;
+        }
+        if (!("fetchLimit" in $$source)) {
+            this["fetchLimit"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new AppSettings instance from a string or object.
+     */
+    static createFrom($$source: any = {}): AppSettings {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new AppSettings($$parsedSource as Partial<AppSettings>);
+    }
+}
+
+/**
  * BrokerNode Broker 节点信息
  */
 export class BrokerNode {

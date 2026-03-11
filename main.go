@@ -26,6 +26,7 @@ var (
 	topicService      *service.TopicService
 	consumerService   *service.ConsumerService
 	messageService    *service.MessageService
+	settingsService   *service.SettingsService
 )
 
 func init() {
@@ -40,6 +41,7 @@ func init() {
 	topicService = service.NewTopicService()
 	consumerService = service.NewConsumerService()
 	messageService = service.NewMessageService()
+	settingsService = service.NewSettingsService()
 
 	// 配置默认连接的懒初始化，业务接口首次访问时自动尝试连接默认连接
 	rocketmq.GetClientManager().SetDefaultClientInitializer(connectionService.ConnectDefault)
@@ -64,6 +66,7 @@ func main() {
 			application.NewService(topicService),      // Topic 管理服务
 			application.NewService(consumerService),   // 消费者组服务
 			application.NewService(messageService),    // 消息查询服务
+			application.NewService(settingsService),   // 设置管理服务
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

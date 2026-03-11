@@ -90,8 +90,8 @@ const SETTINGS_NAV: { id: SettingsTabId; label: string; icon: React.ElementType 
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2">
-      <span className="text-sm text-foreground">{label}</span>
+    <div className="flex items-center gap-4 py-2">
+      <span className="w-40 shrink-0 text-sm text-foreground">{label}</span>
       <div className="shrink-0">{children}</div>
     </div>
   )
@@ -538,6 +538,7 @@ export function SettingsView() {
           </div>
             </div>
           )}
+
         </main>
       </div>
     </div>

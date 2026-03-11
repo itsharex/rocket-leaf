@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode } from 'react'
 import { toast } from 'sonner'
-import { Search, Loader2, Copy, CalendarIcon, Maximize2 } from 'lucide-react'
+import { Search, Loader2, Copy, CalendarIcon, Maximize2, Send } from 'lucide-react'
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { cn, formatErrorMessage } from '@/lib/utils'
@@ -387,6 +387,12 @@ export function MessageView() {
   const [bodyViewMode, setBodyViewMode] = useState<'raw' | 'hex' | 'json'>('raw')
   const [bodyFormatted, setBodyFormatted] = useState<string | null>(null)
   const [bodyFullscreenOpen, setBodyFullscreenOpen] = useState(false)
+  const [showSendPanel, setShowSendPanel] = useState(false)
+  const [sendTopic, setSendTopic] = useState('')
+  const [sendTags, setSendTags] = useState('')
+  const [sendKeys, setSendKeys] = useState('')
+  const [sendBody, setSendBody] = useState('')
+  const [isSending, setIsSending] = useState(false)
 
   useEffect(() => {
     if (selectedMessage) {
@@ -502,6 +508,28 @@ export function MessageView() {
     navigator.clipboard.writeText(text).then(() => toast.success('已复制 Body')).catch(() => toast.error('复制失败'))
   }, [])
 
+  const handleSendMessage = useCallback(async () => {
+    const t = sendTopic.trim() || selectedTopic.trim()
+    if (!t) {
+      toast.error('请填写 Topic')
+      return
+    }
+    if (!sendBody.trim()) {
+      toast.error('请填写消息内容')
+      return
+    }
+    setIsSending(true)
+    try {
+      const result = await messageApi.sendMessage(t, sendTags.trim(), sendKeys.trim(), sendBody)
+      toast.success(result)
+      setSendBody('')
+    } catch (e) {
+      toast.error(formatErrorMessage(e))
+    } finally {
+      setIsSending(false)
+    }
+  }, [sendTopic, selectedTopic, sendTags, sendKeys, sendBody])
+
   return (
     <div className="flex h-full flex-col">
       {/* 紧凑单行 Toolbar */}
@@ -575,8 +603,76 @@ export function MessageView() {
             {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
             查询
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowSendPanel((v) => !v)
+              if (!sendTopic && selectedTopic) setSendTopic(selectedTopic)
+            }}
+            className={cn(
+              'inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-border/40 px-2.5 text-xs transition-colors hover:bg-accent',
+              showSendPanel && 'bg-accent text-accent-foreground'
+            )}
+          >
+            <Send className="h-3.5 w-3.5" />
+            发送
+          </button>
         </div>
       </div>
+
+      {/* 发送消息面板 */}
+      {showSendPanel && (
+        <div className="shrink-0 border-b border-border/40 px-3 py-2.5 bg-muted/20">
+          <div className="flex items-start gap-2">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+              <div className="w-36 shrink-0 [&_input]:h-8 [&_input]:py-1.5 [&_input]:text-xs">
+                <TopicCombobox
+                  id="send-topic"
+                  labelId="send-topic-label"
+                  value={sendTopic}
+                  onChange={setSendTopic}
+                  options={topicOptions}
+                  placeholder="Topic"
+                />
+              </div>
+              <input
+                type="text"
+                value={sendTags}
+                onChange={(e) => setSendTags(e.target.value)}
+                placeholder="Tags"
+                className="h-8 w-24 shrink-0 rounded-md border border-border/40 bg-background px-2.5 text-xs font-mono"
+                aria-label="Tags"
+              />
+              <input
+                type="text"
+                value={sendKeys}
+                onChange={(e) => setSendKeys(e.target.value)}
+                placeholder="Keys"
+                className="h-8 w-24 shrink-0 rounded-md border border-border/40 bg-background px-2.5 text-xs font-mono"
+                aria-label="Keys"
+              />
+              <input
+                type="text"
+                value={sendBody}
+                onChange={(e) => setSendBody(e.target.value)}
+                placeholder="消息内容"
+                className="h-8 min-w-0 flex-1 rounded-md border border-border/40 bg-background px-2.5 text-xs font-mono"
+                aria-label="消息内容"
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() } }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleSendMessage}
+              disabled={isSending}
+              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700 disabled:opacity-50"
+            >
+              {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              发送
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 主内容区：Resizable 左右分栏 */}
       <div className="min-h-0 flex-1">

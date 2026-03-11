@@ -29,18 +29,20 @@ type connectionStore struct {
 
 // ConnectionService 连接管理服务
 type ConnectionService struct {
-	mu           sync.RWMutex
-	connections  map[int]*model.Connection // 连接配置列表
-	nextID       int                       // 下一个连接ID
-	dataFilePath string                    // 连接配置持久化文件路径
+	mu              sync.RWMutex
+	connections     map[int]*model.Connection // 连接配置列表
+	nextID          int                       // 下一个连接ID
+	dataFilePath    string                    // 连接配置持久化文件路径
+	settingsService *SettingsService          // 设置服务
 }
 
 // NewConnectionService 创建连接管理服务
-func NewConnectionService() *ConnectionService {
+func NewConnectionService(settingsService *SettingsService) *ConnectionService {
 	service := &ConnectionService{
-		connections:  make(map[int]*model.Connection),
-		nextID:       1,
-		dataFilePath: resolveConnectionDataFilePath(),
+		connections:     make(map[int]*model.Connection),
+		nextID:          1,
+		dataFilePath:    resolveConnectionDataFilePath(),
+		settingsService: settingsService,
 	}
 
 	if err := service.loadConnectionsFromFile(); err != nil {
@@ -379,7 +381,7 @@ func (s *ConnectionService) TestConnection(id int) (string, error) {
 		return "", fmt.Errorf("连接不存在: %d", id)
 	}
 	nameServer := conn.NameServer
-	timeout := time.Duration(conn.TimeoutSec) * time.Second
+	timeout := s.getConnectTimeout(conn)
 	enableACL := conn.EnableACL
 	accessKey := conn.AccessKey
 	secretKey := conn.SecretKey
@@ -404,6 +406,17 @@ func (s *ConnectionService) TestConnection(id int) (string, error) {
 	}
 
 	return "offline", err
+}
+
+// getConnectTimeout 获取连接超时时间，优先使用连接配置的超时，否则使用全局设置
+func (s *ConnectionService) getConnectTimeout(conn *model.Connection) time.Duration {
+	if conn.TimeoutSec > 0 {
+		return time.Duration(conn.TimeoutSec) * time.Second
+	}
+	if s.settingsService != nil {
+		return s.settingsService.GetConnectTimeout()
+	}
+	return time.Duration(defaultConnectionTimeout) * time.Second
 }
 
 // SetDefaultConnection 设置默认连接
@@ -459,6 +472,11 @@ func (s *ConnectionService) SetDefaultConnection(id int) error {
 
 // ConnectDefault 连接默认连接
 func (s *ConnectionService) ConnectDefault() error {
+	// 检查是否启用自动连接
+	if s.settingsService != nil && !s.settingsService.GetAutoConnectLast() {
+		return nil
+	}
+
 	s.mu.RLock()
 	var defaultConn *model.Connection
 	for _, conn := range s.connections {
@@ -473,7 +491,7 @@ func (s *ConnectionService) ConnectDefault() error {
 		return fmt.Errorf("无默认连接配置")
 	}
 
-	timeout := time.Duration(defaultConn.TimeoutSec) * time.Second
+	timeout := s.getConnectTimeout(defaultConn)
 	_, err := rocketmq.GetClientManager().CreateClient(
 		defaultConn.NameServer,
 		timeout,
@@ -497,7 +515,7 @@ func (s *ConnectionService) Connect(id int) error {
 		return fmt.Errorf("连接不存在: %d", id)
 	}
 	nameServer := conn.NameServer
-	timeout := time.Duration(conn.TimeoutSec) * time.Second
+	timeout := s.getConnectTimeout(conn)
 	enableACL := conn.EnableACL
 	accessKey := conn.AccessKey
 	secretKey := conn.SecretKey

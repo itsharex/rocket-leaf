@@ -189,14 +189,48 @@ export function SettingsView() {
     }
   }, [])
 
-  const handleExport = useCallback(() => {
-    toast.info('配置导出功能开发中')
+  const handleExport = useCallback(async () => {
+    try {
+      const { exportAllConfig } = await import('@/api/settings')
+      const jsonStr = await exportAllConfig()
+      const blob = new Blob([jsonStr], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `rocket-leaf-config-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success('配置已导出')
+    } catch {
+      toast.error('导出配置失败')
+    }
   }, [])
   const handleImport = useCallback(() => {
-    toast.info('配置导入功能开发中')
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) return
+      try {
+        const text = await file.text()
+        const { importAllConfig } = await import('@/api/settings')
+        await importAllConfig(text)
+        toast.success('配置已导入，重启应用后生效')
+      } catch {
+        toast.error('导入配置失败')
+      }
+    }
+    input.click()
   }, [])
-  const handleClearCache = useCallback(() => {
-    toast.info('清理缓存功能开发中')
+  const handleClearCache = useCallback(async () => {
+    try {
+      const { clearCache } = await import('@/api/settings')
+      await clearCache()
+      toast.success('缓存已清理')
+    } catch {
+      toast.error('清理缓存失败')
+    }
   }, [])
   const handleResetSettings = useCallback(async () => {
     try {

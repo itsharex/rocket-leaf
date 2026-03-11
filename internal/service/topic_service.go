@@ -15,13 +15,15 @@ import (
 
 // TopicService Topic 管理服务
 type TopicService struct {
-	nextID int64
+	nextID          int64
+	settingsService *SettingsService
 }
 
 // NewTopicService 创建 Topic 管理服务
-func NewTopicService() *TopicService {
+func NewTopicService(settingsService *SettingsService) *TopicService {
 	return &TopicService{
-		nextID: 1,
+		nextID:          1,
+		settingsService: settingsService,
 	}
 }
 
@@ -39,7 +41,7 @@ func (s *TopicService) GetTopics() ([]*model.TopicItem, error) {
 
 	result := make([]*model.TopicItem, 0)
 	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 		defer cancel()
 
 		topicList, callErr := retryClient.FetchAllTopicList(ctx)
@@ -82,7 +84,7 @@ func (s *TopicService) GetTopicTotal() (int, error) {
 
 	total := 0
 	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 		defer cancel()
 
 		topicList, callErr := retryClient.FetchAllTopicList(ctx)
@@ -117,7 +119,7 @@ func (s *TopicService) GetTopicsByCluster(clusterName string) ([]*model.TopicIte
 
 	result := make([]*model.TopicItem, 0)
 	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 		defer cancel()
 
 		topicList, callErr := retryClient.FetchTopicsByCluster(ctx, clusterName)
@@ -158,7 +160,7 @@ func (s *TopicService) GetTopicDetail(topicName string) (*model.TopicItem, error
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	routeInfo, err := client.ExamineTopicRouteInfo(ctx, topicName)
@@ -242,7 +244,7 @@ func (s *TopicService) CreateTopic(topic string, brokerAddr string, readQueue in
 		writeQueue = 4
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	// 使用 CreateTopic 方法
@@ -299,7 +301,7 @@ func (s *TopicService) DeleteTopic(topic string, clusterName string) error {
 	}
 
 	_ = executeWithClientRetry(client, func(retryClient *admin.Client) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 		defer cancel()
 
 		routeInfo, routeErr := retryClient.ExamineTopicRouteInfo(ctx, topic)
@@ -319,7 +321,7 @@ func (s *TopicService) DeleteTopic(topic string, clusterName string) error {
 
 	if len(clusterCandidates) == 0 {
 		_ = executeWithClientRetry(client, func(retryClient *admin.Client) error {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 			defer cancel()
 
 			clusterInfo, clusterErr := retryClient.ExamineBrokerClusterInfo(ctx)
@@ -342,7 +344,7 @@ func (s *TopicService) DeleteTopic(topic string, clusterName string) error {
 	var lastErr error
 	for _, candidate := range clusterCandidates {
 		callErr := executeWithClientRetry(client, func(retryClient *admin.Client) error {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 			defer cancel()
 			return retryClient.DeleteTopic(ctx, topic, candidate)
 		})
@@ -370,7 +372,7 @@ func (s *TopicService) GetTopicStats(topic string) (map[string]interface{}, erro
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	stats, err := client.ExamineTopicStats(ctx, topic)

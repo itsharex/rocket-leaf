@@ -29,3 +29,30 @@ export async function resetSettings(): Promise<AppSettings | null> {
     throw e
   }
 }
+
+export async function exportAllConfig(): Promise<string> {
+  try {
+    return await SettingsService.ExportAllConfig()
+  } catch (e) {
+    console.error('ExportAllConfig', e)
+    throw e
+  }
+}
+
+export async function importAllConfig(jsonStr: string): Promise<void> {
+  try {
+    await SettingsService.ImportAllConfig(jsonStr)
+  } catch (e) {
+    console.error('ImportAllConfig', e)
+    throw e
+  }
+}
+
+export async function clearCache(): Promise<void> {
+  try {
+    await SettingsService.ClearCache()
+  } catch (e) {
+    console.error('ClearCache', e)
+    throw e
+  }
+}

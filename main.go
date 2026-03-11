@@ -35,13 +35,13 @@ func init() {
 	// and provide a strongly typed JS/TS API for them.
 	application.RegisterEvent[string]("time")
 
-	// 初始化后端服务
-	connectionService = service.NewConnectionService()
-	clusterService = service.NewClusterService(connectionService)
-	topicService = service.NewTopicService()
-	consumerService = service.NewConsumerService()
-	messageService = service.NewMessageService()
+	// 初始化后端服务（settingsService 最先，其他 service 依赖它）
 	settingsService = service.NewSettingsService()
+	connectionService = service.NewConnectionService(settingsService)
+	clusterService = service.NewClusterService(connectionService, settingsService)
+	topicService = service.NewTopicService(settingsService)
+	consumerService = service.NewConsumerService(settingsService)
+	messageService = service.NewMessageService(settingsService)
 
 	// 配置默认连接的懒初始化，业务接口首次访问时自动尝试连接默认连接
 	rocketmq.GetClientManager().SetDefaultClientInitializer(connectionService.ConnectDefault)
@@ -115,6 +115,9 @@ func main() {
 
 	// Run the application. This blocks until the application has been exited.
 	err := app.Run()
+
+	// 应用退出时清理所有 RocketMQ 客户端资源
+	rocketmq.GetClientManager().CloseAll()
 
 	// If an error occurred while running the application, log it and exit.
 	if err != nil {

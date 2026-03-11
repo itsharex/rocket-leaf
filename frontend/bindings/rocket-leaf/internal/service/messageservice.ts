@@ -58,6 +58,13 @@ export function ResendMessage(consumerGroup: string, clientID: string, topic: st
     return $Call.ByID(1358375348, consumerGroup, clientID, topic, msgID);
 }
 
+/**
+ * SendMessage 发送消息到指定 Topic
+ */
+export function SendMessage(topic: string, tags: string, keys: string, body: string): $CancellablePromise<string> {
+    return $Call.ByID(1221390803, topic, tags, keys, body);
+}
+
 // Private type creation functions
 const $$createType0 = model$0.MessageItem.createFrom;
 const $$createType1 = $Create.Nullable($$createType0);

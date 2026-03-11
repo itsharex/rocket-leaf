@@ -3,22 +3,29 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync/atomic"
 	"time"
 
 	"rocket-leaf/internal/model"
 	"rocket-leaf/internal/rocketmq"
+
+	rocketmqClient "github.com/apache/rocketmq-client-go/v2"
+	"github.com/apache/rocketmq-client-go/v2/primitive"
+	"github.com/apache/rocketmq-client-go/v2/producer"
 )
 
 // MessageService 消息查询服务
 type MessageService struct {
-	nextID int64
+	nextID          int64
+	settingsService *SettingsService
 }
 
 // NewMessageService 创建消息查询服务
-func NewMessageService() *MessageService {
+func NewMessageService(settingsService *SettingsService) *MessageService {
 	return &MessageService{
-		nextID: 1,
+		nextID:          1,
+		settingsService: settingsService,
 	}
 }
 
@@ -33,11 +40,11 @@ func (s *MessageService) QueryMessages(topic string, key string, maxResults int,
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	if maxResults <= 0 {
-		maxResults = 32
+		maxResults = s.settingsService.GetFetchLimit()
 	}
 	if endTime <= 0 {
 		endTime = time.Now().UnixMilli()
@@ -95,7 +102,7 @@ func (s *MessageService) QueryMessageByID(topic string, msgID string) (*model.Me
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	msg, err := client.ViewMessage(ctx, topic, msgID)
@@ -153,7 +160,7 @@ func (s *MessageService) ResendMessage(consumerGroup string, clientID string, to
 		return "", fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	result, err := client.ConsumeMessageDirectly(ctx, consumerGroup, clientID, topic, msgID)
@@ -162,4 +169,55 @@ func (s *MessageService) ResendMessage(consumerGroup string, clientID string, to
 	}
 
 	return fmt.Sprintf("消息重投结果: %v", result), nil
+}
+
+// SendMessage 发送消息到指定 Topic
+func (s *MessageService) SendMessage(topic string, tags string, keys string, body string) (string, error) {
+	topic = strings.TrimSpace(topic)
+	if topic == "" {
+		return "", fmt.Errorf("发送消息失败: Topic 不能为空")
+	}
+	if strings.TrimSpace(body) == "" {
+		return "", fmt.Errorf("发送消息失败: 消息体不能为空")
+	}
+
+	// 获取默认连接的 NameServer 地址
+	manager := rocketmq.GetClientManager()
+	nameServer := manager.GetDefaultConnection()
+	if nameServer == "" {
+		return "", fmt.Errorf("发送消息失败: 未设置默认连接")
+	}
+
+	// 创建 Producer
+	p, err := rocketmqClient.NewProducer(
+		producer.WithNameServer([]string{nameServer}),
+		producer.WithRetry(2),
+		producer.WithSendMsgTimeout(s.settingsService.GetRequestTimeout()),
+	)
+	if err != nil {
+		return "", fmt.Errorf("创建 Producer 失败: %w", err)
+	}
+
+	if err := p.Start(); err != nil {
+		return "", fmt.Errorf("启动 Producer 失败: %w", err)
+	}
+	defer p.Shutdown()
+
+	msg := &primitive.Message{
+		Topic: topic,
+		Body:  []byte(body),
+	}
+	if tags != "" {
+		msg.WithTag(tags)
+	}
+	if keys != "" {
+		msg.WithKeys([]string{keys})
+	}
+
+	result, err := p.SendSync(context.Background(), msg)
+	if err != nil {
+		return "", fmt.Errorf("发送消息失败: %w", err)
+	}
+
+	return fmt.Sprintf("发送成功, MsgID: %s", result.MsgID), nil
 }

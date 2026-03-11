@@ -14,13 +14,15 @@ import (
 
 // ConsumerService 消费者组服务
 type ConsumerService struct {
-	nextID int64
+	nextID          int64
+	settingsService *SettingsService
 }
 
 // NewConsumerService 创建消费者组服务
-func NewConsumerService() *ConsumerService {
+func NewConsumerService(settingsService *SettingsService) *ConsumerService {
 	return &ConsumerService{
-		nextID: 1,
+		nextID:          1,
+		settingsService: settingsService,
 	}
 }
 
@@ -36,7 +38,7 @@ func (s *ConsumerService) GetConsumerGroups() ([]*model.ConsumerGroupItem, error
 		return []*model.ConsumerGroupItem{}, nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	clusterInfo, err := client.ExamineBrokerClusterInfo(ctx)
@@ -124,7 +126,7 @@ func (s *ConsumerService) GetConsumerGroupDetail(groupName string) (*model.Consu
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	item := &model.ConsumerGroupItem{
@@ -178,7 +180,7 @@ func (s *ConsumerService) GetConsumeStats(groupName string) (map[string]interfac
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	// ExamineConsumeStats 只有一个参数
@@ -209,7 +211,7 @@ func (s *ConsumerService) CreateConsumerGroup(group string, brokerAddr string, c
 		return fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	// 使用 CreateSubscriptionGroup
@@ -236,7 +238,7 @@ func (s *ConsumerService) DeleteConsumerGroup(group string, brokerAddr string) e
 		return fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	err = client.DeleteSubscriptionGroup(ctx, brokerAddr, group)
@@ -254,7 +256,7 @@ func (s *ConsumerService) ResetOffset(group string, topic string, timestamp int6
 		return fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	_, err = client.ResetOffsetByTimestamp(ctx, topic, group, timestamp, force)

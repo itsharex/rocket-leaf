@@ -15,12 +15,14 @@ import (
 // ClusterService 集群状态服务
 type ClusterService struct {
 	connectionService *ConnectionService
+	settingsService   *SettingsService
 }
 
 // NewClusterService 创建集群状态服务
-func NewClusterService(connService *ConnectionService) *ClusterService {
+func NewClusterService(connService *ConnectionService, settingsService *SettingsService) *ClusterService {
 	return &ClusterService{
 		connectionService: connService,
+		settingsService:   settingsService,
 	}
 }
 
@@ -37,7 +39,7 @@ func (s *ClusterService) GetClusterInfo() (*model.ClusterInfo, error) {
 
 	var result *model.ClusterInfo
 	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 		defer cancel()
 
 		clusterInfo, callErr := retryClient.ExamineBrokerClusterInfo(ctx)
@@ -139,7 +141,7 @@ func (s *ClusterService) GetBrokerDetail(brokerAddr string) (*model.BrokerNode, 
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
 	stats, err := client.FetchBrokerRuntimeStats(ctx, brokerAddr)

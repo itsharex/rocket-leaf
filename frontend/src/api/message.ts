@@ -122,3 +122,17 @@ export async function resendMessage(
     throw e
   }
 }
+
+export async function sendMessage(
+  topic: string,
+  tags: string,
+  keys: string,
+  body: string
+): Promise<string> {
+  try {
+    return await MessageService.SendMessage(topic, tags, keys, body)
+  } catch (e) {
+    console.error('SendMessage', e)
+    throw e
+  }
+}

@@ -13,6 +13,51 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as model$0 from "../model/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as time$0 from "../../../time/models.js";
+
+/**
+ * ClearCache 清理缓存（重置临时数据）
+ */
+export function ClearCache(): $CancellablePromise<void> {
+    return $Call.ByID(935887909);
+}
+
+/**
+ * ExportAllConfig 导出全部配置（设置 + 连接）为 JSON 字符串
+ */
+export function ExportAllConfig(): $CancellablePromise<string> {
+    return $Call.ByID(3919737823);
+}
+
+/**
+ * GetAutoConnectLast 获取是否自动连接上次集群
+ */
+export function GetAutoConnectLast(): $CancellablePromise<boolean> {
+    return $Call.ByID(2710643303);
+}
+
+/**
+ * GetConnectTimeout 获取连接超时时间
+ */
+export function GetConnectTimeout(): $CancellablePromise<time$0.Duration> {
+    return $Call.ByID(2956504717);
+}
+
+/**
+ * GetFetchLimit 获取单页拉取数量
+ */
+export function GetFetchLimit(): $CancellablePromise<number> {
+    return $Call.ByID(3477379839);
+}
+
+/**
+ * GetRequestTimeout 获取请求超时时间
+ */
+export function GetRequestTimeout(): $CancellablePromise<time$0.Duration> {
+    return $Call.ByID(174043552);
+}
 
 /**
  * GetSettings 获取全部设置
@@ -21,6 +66,13 @@ export function GetSettings(): $CancellablePromise<model$0.AppSettings | null> {
     return $Call.ByID(2095924521).then(($result: any) => {
         return $$createType1($result);
     });
+}
+
+/**
+ * ImportAllConfig 导入全部配置
+ */
+export function ImportAllConfig(jsonStr: string): $CancellablePromise<void> {
+    return $Call.ByID(3033237922, jsonStr);
 }
 
 /**

@@ -1,4 +1,13 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import { getSettings, updateSettings, resetSettings as apiResetSettings } from '@/api/settings'
 import type { AppSettings } from '@/api/settings'
 
@@ -52,6 +61,12 @@ const DEFAULTS: FrontendSettings = {
   fetchLimit: 64,
 }
 
+const FONT_SIZE_MAP: Record<FontSize, string> = {
+  small: '13px',
+  medium: '14px',
+  large: '16px',
+}
+
 // 将后端返回的 AppSettings 转为前端类型
 function toFrontend(s: AppSettings): FrontendSettings {
   return {
@@ -81,7 +96,23 @@ function toBackend(s: FrontendSettings): AppSettings {
   return { ...s } as unknown as AppSettings
 }
 
-export function useSettings() {
+type SettingsContextValue = {
+  settings: FrontendSettings
+  setSetting: <K extends keyof FrontendSettings>(key: K, value: FrontendSettings[K]) => void
+  resetAllSettings: () => Promise<void>
+  loading: boolean
+}
+
+const SettingsContext = createContext<SettingsContextValue | null>(null)
+
+function applySettingsToDocument(settings: FrontendSettings) {
+  const root = document.documentElement
+  root.style.setProperty('--app-font-size', FONT_SIZE_MAP[settings.fontSize] ?? FONT_SIZE_MAP.medium)
+  root.style.setProperty('--app-monospace-font', settings.monospaceFont.trim() || DEFAULTS.monospaceFont)
+  root.lang = settings.language === 'en' ? 'en' : 'zh-CN'
+}
+
+function useSettingsStore(): SettingsContextValue {
   const [settings, setSettingsState] = useState<FrontendSettings>(DEFAULTS)
   const [loading, setLoading] = useState(true)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -105,6 +136,10 @@ export function useSettings() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    applySettingsToDocument(settings)
+  }, [settings])
 
   // 防抖保存到后端
   const saveToBackend = useCallback((newSettings: FrontendSettings) => {
@@ -139,4 +174,17 @@ export function useSettings() {
   }, [])
 
   return { settings, setSetting, resetAllSettings, loading }
+}
+
+export function SettingsProvider({ children }: { children: ReactNode }) {
+  const value = useSettingsStore()
+  return createElement(SettingsContext.Provider, { value }, children)
+}
+
+export function useSettings() {
+  const context = useContext(SettingsContext)
+  if (context == null) {
+    throw new Error('useSettings 必须在 SettingsProvider 内使用')
+  }
+  return context
 }

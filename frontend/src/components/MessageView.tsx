@@ -4,6 +4,7 @@ import { Search, Loader2, Copy, CalendarIcon, Maximize2, Send } from 'lucide-rea
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { cn, formatErrorMessage } from '@/lib/utils'
+import { useSettings } from '@/hooks/useSettings'
 import type { MessageItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { MessageStatus } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as messageApi from '@/api/message'
@@ -16,6 +17,8 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const DEFAULT_MAX_RESULTS = 32
+const textEncoder = new TextEncoder()
+const textDecoder = new TextDecoder()
 
 /** 当前列表数据来源：未拉取 / 自动偷窥最新 / 用户点击进阶查询 */
 type FetchKind = 'none' | 'latest' | 'condition'
@@ -108,6 +111,62 @@ function toDatetimeLocalValue(d: Date): string {
   const h = String(d.getHours()).padStart(2, '0')
   const min = String(d.getMinutes()).padStart(2, '0')
   return `${y}-${m}-${day}T${h}:${min}`
+}
+
+function pad2(value: number): string {
+  return String(value).padStart(2, '0')
+}
+
+function formatTimestamp(timestamp: number, timezone: 'local' | 'utc', formatType: 'datetime' | 'ms'): string {
+  if (!Number.isFinite(timestamp) || timestamp <= 0) return '—'
+  if (formatType === 'ms') return String(timestamp)
+
+  const date = new Date(timestamp)
+  if (Number.isNaN(date.getTime())) return '—'
+
+  if (timezone === 'utc') {
+    return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}-${pad2(date.getUTCDate())} ${pad2(date.getUTCHours())}:${pad2(date.getUTCMinutes())}:${pad2(date.getUTCSeconds())} UTC`
+  }
+
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}`
+}
+
+function getMessageStoreTime(message: MessageItem, timezone: 'local' | 'utc', formatType: 'datetime' | 'ms'): string {
+  if (typeof message.storeTimestamp === 'number' && message.storeTimestamp > 0) {
+    return formatTimestamp(message.storeTimestamp, timezone, formatType)
+  }
+  return message.storeTime?.trim() || '—'
+}
+
+function getPayloadPreview(text: string, maxBytes: number): {
+  text: string
+  totalBytes: number
+  truncated: boolean
+} {
+  const source = text ?? ''
+  const bytes = textEncoder.encode(source)
+  if (maxBytes <= 0 || bytes.length <= maxBytes) {
+    return {
+      text: source,
+      totalBytes: bytes.length,
+      truncated: false,
+    }
+  }
+
+  let end = Math.min(maxBytes, bytes.length)
+  while (end > 0 && end < bytes.length) {
+    const currentByte = bytes[end]
+    if (currentByte == null || (currentByte & 0b1100_0000) !== 0b1000_0000) {
+      break
+    }
+    end--
+  }
+
+  return {
+    text: textDecoder.decode(bytes.slice(0, Math.max(end, 0))),
+    totalBytes: bytes.length,
+    truncated: true,
+  }
 }
 
 function DateTimePicker({
@@ -372,6 +431,7 @@ function TopicCombobox({
 }
 
 export function MessageView() {
+  const { settings } = useSettings()
   const [clusterName, setClusterName] = useState('')
   const [topicOptions, setTopicOptions] = useState<string[]>([])
   const [selectedTopic, setSelectedTopic] = useState('')
@@ -396,10 +456,16 @@ export function MessageView() {
 
   useEffect(() => {
     if (selectedMessage) {
-      setBodyViewMode('raw')
-      setBodyFormatted(null)
+      const canFormatJSON = tryParseJSON(selectedMessage.body ?? '') != null
+      const shouldFormatJSON = settings.autoFormatJson && canFormatJSON
+      setBodyViewMode(shouldFormatJSON ? 'json' : 'raw')
+      setBodyFormatted(shouldFormatJSON ? formatJSONString(selectedMessage.body ?? '') : null)
     }
-  }, [selectedMessage])
+  }, [selectedMessage, settings.autoFormatJson])
+
+  useEffect(() => {
+    setMaxResults(settings.fetchLimit)
+  }, [settings.fetchLimit])
 
   // 拉取 Topic 列表与集群名
   useEffect(() => {
@@ -419,7 +485,7 @@ export function MessageView() {
     return () => { cancelled = true }
   }, [])
 
-  // 1. 默认状态：选 Topic 即静默拉取最新 32 条，不等待点击「查询」
+  // 1. 默认状态：选 Topic 即静默拉取最新消息，不等待点击「查询」
   useEffect(() => {
     const t = selectedTopic.trim()
     if (!t) {
@@ -432,7 +498,7 @@ export function MessageView() {
     setIsLoading(true)
     setSelectedMessage(null)
     messageApi
-      .fetchLatestMessages(t, DEFAULT_MAX_RESULTS)
+      .fetchLatestMessages(t, settings.fetchLimit || DEFAULT_MAX_RESULTS)
       .then((items) => {
         if (cancelled) return
         setMessages(items)
@@ -455,7 +521,7 @@ export function MessageView() {
         if (!cancelled) setIsLoading(false)
       })
     return () => { cancelled = true }
-  }, [selectedTopic])
+  }, [selectedTopic, settings.fetchLimit])
 
   // 2. 进阶搜索：仅当用户点击「查询」时按条件拉取
   const runConditionQuery = useCallback(async () => {
@@ -530,6 +596,14 @@ export function MessageView() {
     }
   }, [sendTopic, selectedTopic, sendTags, sendKeys, sendBody])
 
+  const selectedBody = selectedMessage?.body ?? ''
+  const payloadPreview = getPayloadPreview(selectedBody, settings.maxPayloadRenderBytes)
+  const canPreviewAsJSON = !payloadPreview.truncated && tryParseJSON(selectedBody) != null
+  const effectiveBodyText =
+    bodyViewMode === 'json'
+      ? bodyFormatted ?? formatJSONString(payloadPreview.text)
+      : payloadPreview.text
+
   return (
     <div className="flex h-full flex-col">
       {/* 紧凑单行 Toolbar */}
@@ -588,7 +662,7 @@ export function MessageView() {
             id="msg-max"
             type="number"
             min={1}
-            max={64}
+            max={128}
             value={maxResults}
             onChange={(e) => setMaxResults(Number(e.target.value) || DEFAULT_MAX_RESULTS)}
             className="h-8 w-14 shrink-0 rounded-md border border-border/40 bg-background px-2 text-center text-xs"
@@ -623,8 +697,8 @@ export function MessageView() {
       {/* 发送消息面板 */}
       {showSendPanel && (
         <div className="shrink-0 border-b border-border/40 px-3 py-2.5 bg-muted/20">
-          <div className="flex items-start gap-2">
-            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <div className="space-y-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <div className="w-36 shrink-0 [&_input]:h-8 [&_input]:py-1.5 [&_input]:text-xs">
                 <TopicCombobox
                   id="send-topic"
@@ -651,25 +725,31 @@ export function MessageView() {
                 className="h-8 w-24 shrink-0 rounded-md border border-border/40 bg-background px-2.5 text-xs font-mono"
                 aria-label="Keys"
               />
-              <input
-                type="text"
+            </div>
+            <div className="flex items-end gap-2">
+              <textarea
                 value={sendBody}
                 onChange={(e) => setSendBody(e.target.value)}
-                placeholder="消息内容"
-                className="h-8 min-w-0 flex-1 rounded-md border border-border/40 bg-background px-2.5 text-xs font-mono"
+                placeholder="消息内容，支持多行输入；按 Ctrl/Cmd + Enter 快速发送"
+                className="min-h-24 min-w-0 flex-1 rounded-md border border-border/40 bg-background px-3 py-2 text-xs font-mono leading-5"
                 aria-label="消息内容"
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage() } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+                    e.preventDefault()
+                    handleSendMessage()
+                  }
+                }}
               />
+              <button
+                type="button"
+                onClick={handleSendMessage}
+                disabled={isSending}
+                className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700 disabled:opacity-50"
+              >
+                {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                发送
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleSendMessage}
-              disabled={isSending}
-              className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-md bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700 disabled:opacity-50"
-            >
-              {isSending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-              发送
-            </button>
           </div>
         </div>
       )}
@@ -727,7 +807,9 @@ export function MessageView() {
                         {m.tags != null && m.tags !== '' && (
                           <span className="truncate font-mono" title={m.tags}>{m.tags}</span>
                         )}
-                        <span className="shrink-0">{m.storeTime ?? '—'}</span>
+                        <span className="shrink-0">
+                          {getMessageStoreTime(m, settings.timezone, settings.timestampFormat)}
+                        </span>
                       </div>
                     </li>
                   ))}
@@ -760,7 +842,12 @@ export function MessageView() {
                     {(selectedMessage.keys != null && selectedMessage.keys !== '') && (
                       <p><span className="text-muted-foreground">Keys </span><span className="font-mono text-foreground">{selectedMessage.keys}</span></p>
                     )}
-                    <p><span className="text-muted-foreground">存储 </span><span className="text-foreground">{selectedMessage.storeTime ?? '—'}</span></p>
+                    <p>
+                      <span className="text-muted-foreground">存储 </span>
+                      <span className="text-foreground">
+                        {getMessageStoreTime(selectedMessage, settings.timezone, settings.timestampFormat)}
+                      </span>
+                    </p>
                   </div>
                   <Tabs defaultValue="body" className="w-full">
                     <TabsList className="h-8 w-full justify-start rounded-md bg-muted/30 p-0.5">
@@ -782,7 +869,7 @@ export function MessageView() {
                             className={cn('rounded px-2 py-1 text-[10px] font-medium transition-colors', bodyViewMode === 'hex' ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-muted')}
                             title="十六进制"
                           >Hex</button>
-                          {tryParseJSON(selectedMessage.body ?? '') != null && (
+                          {canPreviewAsJSON && (
                             <button
                               type="button"
                               onClick={() => setBodyViewMode('json')}
@@ -793,8 +880,9 @@ export function MessageView() {
                           {bodyViewMode === 'json' && (
                             <button
                               type="button"
+                              disabled={!canPreviewAsJSON}
                               onClick={() => setBodyFormatted((prev) => (prev != null ? null : formatJSONString(selectedMessage.body ?? '')))}
-                              className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-muted"
+                              className="rounded px-2 py-1 text-[10px] font-medium text-muted-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
                               title={bodyFormatted != null ? '压缩' : '格式化'}
                             >{bodyFormatted != null ? '压缩' : 'Format'}</button>
                           )}
@@ -804,12 +892,17 @@ export function MessageView() {
                           <button type="button" onClick={() => setBodyFullscreenOpen(true)} className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground" title="全屏"><Maximize2 className="h-3.5 w-3.5" /></button>
                         </div>
                       </div>
+                      {payloadPreview.truncated && (
+                        <div className="mb-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-2 text-[11px] text-amber-700 dark:text-amber-300">
+                          消息体共 {payloadPreview.totalBytes} 字节，当前仅预览前 {settings.maxPayloadRenderBytes} 字节。复制操作仍会复制完整内容。
+                        </div>
+                      )}
                       <pre className="max-h-64 overflow-auto rounded-md border border-border/40 bg-muted/30 p-3 font-mono text-xs text-foreground whitespace-pre-wrap wrap-break-word scroll-thin">
                         {bodyViewMode === 'hex'
-                          ? toHexView(selectedMessage.body ?? '')
+                          ? toHexView(payloadPreview.text)
                           : bodyViewMode === 'json'
-                            ? highlightJSON(bodyFormatted ?? (tryParseJSON(selectedMessage.body ?? '') != null ? formatJSONString(selectedMessage.body ?? '') : selectedMessage.body ?? '（空）'))
-                            : (selectedMessage.body != null && selectedMessage.body !== '' ? selectedMessage.body : '（空）')}
+                            ? highlightJSON(effectiveBodyText)
+                            : (effectiveBodyText !== '' ? effectiveBodyText : '（空）')}
                       </pre>
                     </TabsContent>
                     <TabsContent value="properties" className="mt-2">
@@ -867,8 +960,17 @@ export function MessageView() {
               <button type="button" onClick={() => setBodyFullscreenOpen(false)} className="rounded-md border border-border/40 px-2 py-1.5 text-xs hover:bg-accent">关闭</button>
             </div>
           </div>
+          {payloadPreview.truncated && (
+            <div className="mx-4 mt-4 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+              当前全屏视图同样遵循预览阈值，仅展示前 {settings.maxPayloadRenderBytes} 字节。
+            </div>
+          )}
           <pre className="flex-1 overflow-auto p-4 font-mono text-xs text-foreground whitespace-pre-wrap wrap-break-word scroll-thin">
-            {bodyViewMode === 'hex' ? toHexView(selectedMessage.body ?? '') : bodyViewMode === 'json' ? highlightJSON(bodyFormatted ?? formatJSONString(selectedMessage.body ?? '')) : (selectedMessage.body ?? '（空）')}
+            {bodyViewMode === 'hex'
+              ? toHexView(payloadPreview.text)
+              : bodyViewMode === 'json'
+                ? highlightJSON(effectiveBodyText)
+                : (effectiveBodyText || '（空）')}
           </pre>
         </div>
       )}

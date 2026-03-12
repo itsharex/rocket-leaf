@@ -4,6 +4,8 @@
 
 @layer base {
   :root {
+    --app-font-size: 14px;
+    --app-monospace-font: "JetBrains Mono";
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -49,6 +51,10 @@
   }
 }
 
+html {
+  font-size: var(--app-font-size);
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -68,6 +74,21 @@ textarea,
 
 #root {
   min-height: 100vh;
+}
+
+@layer utilities {
+  .font-mono {
+    font-family:
+      var(--app-monospace-font),
+      ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      Monaco,
+      Consolas,
+      "Liberation Mono",
+      "Courier New",
+      monospace;
+  }
 }
 
 /* 客户端风格：取消网页式蓝色选中高亮 */

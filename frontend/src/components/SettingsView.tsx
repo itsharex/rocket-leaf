@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { Browser } from '@wailsio/runtime'
 import {
   Monitor,
   Sun,
@@ -34,9 +35,10 @@ import {
 
 import logoUrl from '@/assets/logo.png'
 
-const APP_VERSION = '0.0.0'
+const APP_VERSION = __APP_VERSION__
 const GITHUB_URL = 'https://github.com/codermast/rocket-leaf'
 const GITHUB_ISSUES_URL = 'https://github.com/codermast/rocket-leaf/issues'
+const GITHUB_RELEASES_URL = 'https://github.com/codermast/rocket-leaf/releases/latest'
 
 const THEME_OPTIONS: { value: ThemeMode; label: string; icon: React.ElementType }[] = [
   { value: 'system', label: '跟随系统', icon: Monitor },
@@ -241,7 +243,8 @@ export function SettingsView() {
     }
   }, [resetAllSettings])
   const handleCheckUpdate = useCallback(() => {
-    toast.info('检查更新功能开发中')
+    Browser.OpenURL(GITHUB_RELEASES_URL)
+      .catch(() => window.open(GITHUB_RELEASES_URL, '_blank', 'noopener,noreferrer'))
   }, [])
 
   return (
@@ -269,6 +272,14 @@ export function SettingsView() {
           ))}
         </nav>
         <main className="scroll-thin min-w-0 flex-1 overflow-y-auto p-4">
+          <fieldset
+            disabled={loading}
+            aria-busy={loading}
+            className={cn('min-w-0', loading && 'opacity-60')}
+          >
+            {loading && (
+              <p className="mb-3 text-xs text-muted-foreground">设置加载中，暂时禁用编辑…</p>
+            )}
           {activeTab === 'general' && (
             <div>
           <Row label="外观主题">
@@ -589,7 +600,7 @@ export function SettingsView() {
           </div>
             </div>
           )}
-
+          </fieldset>
         </main>
       </div>
     </div>

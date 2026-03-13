@@ -293,7 +293,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
         </div>
 
         {selectedTopic && (
-          <div className="flex w-[360px] shrink-0 flex-col border-l border-border/40 bg-card">
+          <div className="flex w-[clamp(280px,32vw,380px)] shrink-0 flex-col border-l border-border/40 bg-card">
             <div className="flex shrink-0 items-center justify-between border-b border-border/30 px-3 py-2.5">
               <span className="truncate text-sm font-medium text-foreground">Topic 详情</span>
               <button

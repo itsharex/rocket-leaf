@@ -13,6 +13,7 @@ import (
 	rocketmqClient "github.com/apache/rocketmq-client-go/v2"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
 	"github.com/apache/rocketmq-client-go/v2/producer"
+	admin "github.com/codermast/rocketmq-admin-go"
 )
 
 // MessageService 消息查询服务
@@ -53,14 +54,74 @@ func (s *MessageService) QueryMessages(topic string, key string, maxResults int,
 		startTime = 0
 	}
 
-	msgs, err := client.QueryMessage(ctx, topic, key, maxResults, startTime, endTime)
+	result := make([]*model.MessageItem, 0)
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		msgs, callErr := retryClient.QueryMessage(ctx, topic, key, maxResults, startTime, endTime)
+		if callErr != nil {
+			return callErr
+		}
+
+		tmpResult := make([]*model.MessageItem, 0, len(msgs))
+		for _, msg := range msgs {
+			// MessageExt 使用 Properties map 获取 Tags 和 Keys
+			tags := ""
+			keys := ""
+			if msg.Properties != nil {
+				if t, ok := msg.Properties["TAGS"]; ok {
+					tags = t
+				}
+				if k, ok := msg.Properties["KEYS"]; ok {
+					keys = k
+				}
+			}
+
+			item := &model.MessageItem{
+				ID:             s.getNextID(),
+				Topic:          msg.Topic,
+				MessageID:      msg.MsgId,
+				Tags:           tags,
+				Keys:           keys,
+				QueueID:        msg.QueueId,
+				QueueOffset:    msg.QueueOffset,
+				StoreHost:      msg.StoreHost,
+				BornHost:       msg.BornHost,
+				StoreTime:      time.Unix(msg.StoreTimestamp/1000, 0).Format("2006-01-02 15:04:05"),
+				StoreTimestamp: msg.StoreTimestamp,
+				Body:           string(msg.Body),
+				Properties:     msg.Properties,
+				Status:         model.MsgNormal,
+			}
+
+			tmpResult = append(tmpResult, item)
+		}
+
+		result = tmpResult
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("查询消息失败: %w", err)
 	}
 
-	result := make([]*model.MessageItem, 0, len(msgs))
-	for _, msg := range msgs {
-		// MessageExt 使用 Properties map 获取 Tags 和 Keys
+	return result, nil
+}
+
+// QueryMessageByID 按消息 ID 查询消息
+func (s *MessageService) QueryMessageByID(topic string, msgID string) (*model.MessageItem, error) {
+	client, err := rocketmq.GetClientManager().GetDefaultClient()
+	if err != nil {
+		return nil, fmt.Errorf("获取客户端失败: %w", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
+	defer cancel()
+
+	var item *model.MessageItem
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		msg, callErr := retryClient.ViewMessage(ctx, topic, msgID)
+		if callErr != nil {
+			return callErr
+		}
+
 		tags := ""
 		keys := ""
 		if msg.Properties != nil {
@@ -72,7 +133,7 @@ func (s *MessageService) QueryMessages(topic string, key string, maxResults int,
 			}
 		}
 
-		item := &model.MessageItem{
+		item = &model.MessageItem{
 			ID:             s.getNextID(),
 			Topic:          msg.Topic,
 			MessageID:      msg.MsgId,
@@ -89,53 +150,10 @@ func (s *MessageService) QueryMessages(topic string, key string, maxResults int,
 			Status:         model.MsgNormal,
 		}
 
-		result = append(result, item)
-	}
-
-	return result, nil
-}
-
-// QueryMessageByID 按消息 ID 查询消息
-func (s *MessageService) QueryMessageByID(topic string, msgID string) (*model.MessageItem, error) {
-	client, err := rocketmq.GetClientManager().GetDefaultClient()
-	if err != nil {
-		return nil, fmt.Errorf("获取客户端失败: %w", err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
-	defer cancel()
-
-	msg, err := client.ViewMessage(ctx, topic, msgID)
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("查询消息失败: %w", err)
-	}
-
-	tags := ""
-	keys := ""
-	if msg.Properties != nil {
-		if t, ok := msg.Properties["TAGS"]; ok {
-			tags = t
-		}
-		if k, ok := msg.Properties["KEYS"]; ok {
-			keys = k
-		}
-	}
-
-	item := &model.MessageItem{
-		ID:             s.getNextID(),
-		Topic:          msg.Topic,
-		MessageID:      msg.MsgId,
-		Tags:           tags,
-		Keys:           keys,
-		QueueID:        msg.QueueId,
-		QueueOffset:    msg.QueueOffset,
-		StoreHost:      msg.StoreHost,
-		BornHost:       msg.BornHost,
-		StoreTime:      time.Unix(msg.StoreTimestamp/1000, 0).Format("2006-01-02 15:04:05"),
-		StoreTimestamp: msg.StoreTimestamp,
-		Body:           string(msg.Body),
-		Properties:     msg.Properties,
-		Status:         model.MsgNormal,
 	}
 
 	return item, nil
@@ -163,12 +181,20 @@ func (s *MessageService) ResendMessage(consumerGroup string, clientID string, to
 	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
-	result, err := client.ConsumeMessageDirectly(ctx, consumerGroup, clientID, topic, msgID)
+	var result string
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		retryResult, callErr := retryClient.ConsumeMessageDirectly(ctx, consumerGroup, clientID, topic, msgID)
+		if callErr != nil {
+			return callErr
+		}
+		result = fmt.Sprintf("消息重投结果: %v", retryResult)
+		return nil
+	})
 	if err != nil {
 		return "", fmt.Errorf("重投消息失败: %w", err)
 	}
 
-	return fmt.Sprintf("消息重投结果: %v", result), nil
+	return result, nil
 }
 
 // SendMessage 发送消息到指定 Topic

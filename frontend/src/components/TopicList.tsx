@@ -5,6 +5,7 @@ import { cn, formatErrorMessage } from '@/lib/utils'
 import type { TopicItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { TopicPerm } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as topicApi from '@/api/topic'
+import * as clusterApi from '@/api/cluster'
 
 const TOOLTIP_DELAY_MS = 150
 const MIN_SPIN_MS = 400
@@ -34,6 +35,8 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
   const [createOpen, setCreateOpen] = useState(false)
   const [createSubmitting, setCreateSubmitting] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
+  const [brokerOptions, setBrokerOptions] = useState<string[]>([])
+  const [brokerOptionsLoading, setBrokerOptionsLoading] = useState(false)
   const [deleteConfirmTopic, setDeleteConfirmTopic] = useState<string | null>(null)
   const [deletingTopic, setDeletingTopic] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -106,6 +109,29 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
     onRefresh()
   }, [onRefresh])
 
+  useEffect(() => {
+    if (!createOpen) return
+    let cancelled = false
+    setBrokerOptionsLoading(true)
+    clusterApi.getBrokers()
+      .then((brokers) => {
+        if (cancelled) return
+        const options = brokers
+          .filter((b): b is NonNullable<typeof b> => b != null && (b.address ?? '').trim() !== '')
+          .map((b) => b.address!.trim())
+        setBrokerOptions(Array.from(new Set(options)))
+      })
+      .catch(() => {
+        if (!cancelled) setBrokerOptions([])
+      })
+      .finally(() => {
+        if (!cancelled) setBrokerOptionsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [createOpen])
+
   const handleCreateSubmit = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault()
@@ -143,7 +169,8 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
     async (topic: string) => {
       setDeletingTopic(topic)
       try {
-        await topicApi.deleteTopic(topic, '')
+        const detail = await topicApi.getTopicDetail(topic)
+        await topicApi.deleteTopic(topic, detail?.cluster ?? '')
         toast.success('已删除')
         setDeleteConfirmTopic(null)
         if (selectedTopic === topic) setSelectedTopic(null)
@@ -237,9 +264,15 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                 >
                   <div className="min-w-0 flex-1">
                     <span className="text-sm font-medium text-foreground">{t.topic}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      读 {t.readQueue ?? 0} / 写 {t.writeQueue ?? 0}
-                    </span>
+                    {(t.readQueue ?? -1) >= 0 && (t.writeQueue ?? -1) >= 0 ? (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        读 {t.readQueue} / 写 {t.writeQueue}
+                      </span>
+                    ) : (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        队列信息见详情
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -363,15 +396,40 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                 />
               </div>
               <div>
-                <label id="create-topic-broker-label" className="mb-1 block text-xs text-muted-foreground">Broker 地址</label>
-                <input
-                  id="create-topic-broker"
-                  name="brokerAddr"
-                  type="text"
-                  aria-labelledby="create-topic-broker-label"
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-                  placeholder="例如：192.168.1.1:10911"
-                />
+                <label
+                  id="create-topic-broker-label"
+                  htmlFor={brokerOptions.length > 0 ? 'create-topic-broker-select' : 'create-topic-broker-input'}
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  Broker 地址
+                </label>
+                {brokerOptions.length > 0 ? (
+                  <select
+                    id="create-topic-broker-select"
+                    name="brokerAddr"
+                    aria-labelledby="create-topic-broker-label"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                    defaultValue={brokerOptions[0]}
+                  >
+                    {brokerOptions.map((addr) => (
+                      <option key={addr} value={addr}>
+                        {addr}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="create-topic-broker-input"
+                    name="brokerAddr"
+                    type="text"
+                    aria-labelledby="create-topic-broker-label"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                    placeholder={brokerOptionsLoading ? '正在加载 Broker…' : '例如：192.168.1.1:10911'}
+                  />
+                )}
+                {brokerOptionsLoading && (
+                  <p className="mt-1 text-xs text-muted-foreground">正在加载可用 Broker 地址…</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

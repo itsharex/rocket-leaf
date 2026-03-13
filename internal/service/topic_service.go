@@ -57,6 +57,8 @@ func (s *TopicService) GetTopics() ([]*model.TopicItem, error) {
 			item := &model.TopicItem{
 				ID:          s.getNextID(),
 				Topic:       topic,
+				ReadQueue:   -1,
+				WriteQueue:  -1,
 				LastUpdated: formatNow(),
 			}
 
@@ -136,6 +138,8 @@ func (s *TopicService) GetTopicsByCluster(clusterName string) ([]*model.TopicIte
 				ID:          s.getNextID(),
 				Topic:       topic,
 				Cluster:     clusterName,
+				ReadQueue:   -1,
+				WriteQueue:  -1,
 				LastUpdated: formatNow(),
 			}
 
@@ -162,51 +166,60 @@ func (s *TopicService) GetTopicDetail(topicName string) (*model.TopicItem, error
 	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
-	routeInfo, err := client.ExamineTopicRouteInfo(ctx, topicName)
+	var item *model.TopicItem
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		routeInfo, callErr := retryClient.ExamineTopicRouteInfo(ctx, topicName)
+		if callErr != nil {
+			return callErr
+		}
+
+		tmpItem := &model.TopicItem{
+			ID:          s.getNextID(),
+			Topic:       topicName,
+			Routes:      make([]model.TopicRouteItem, 0),
+			LastUpdated: formatNow(),
+		}
+
+		totalReadQueue := 0
+		totalWriteQueue := 0
+
+		for _, queueData := range routeInfo.QueueDatas {
+			route := model.TopicRouteItem{
+				Broker:     queueData.BrokerName,
+				ReadQueue:  queueData.ReadQueueNums,
+				WriteQueue: queueData.WriteQueueNums,
+				Perm:       model.IntToPerm(queueData.Perm),
+			}
+
+			// BrokerAddrs 是 map[string]string，key 是 "0" 表示 master
+			for _, brokerData := range routeInfo.BrokerDatas {
+				if brokerData.BrokerName == queueData.BrokerName {
+					if addr, ok := brokerData.BrokerAddrs["0"]; ok {
+						route.BrokerAddr = addr
+					}
+					if tmpItem.Cluster == "" {
+						tmpItem.Cluster = brokerData.Cluster
+					}
+					break
+				}
+			}
+
+			tmpItem.Routes = append(tmpItem.Routes, route)
+			totalReadQueue += queueData.ReadQueueNums
+			totalWriteQueue += queueData.WriteQueueNums
+		}
+
+		tmpItem.ReadQueue = totalReadQueue
+		tmpItem.WriteQueue = totalWriteQueue
+		if len(tmpItem.Routes) > 0 {
+			tmpItem.Perm = tmpItem.Routes[0].Perm
+		}
+
+		item = tmpItem
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("获取 Topic 路由信息失败: %w", err)
-	}
-
-	item := &model.TopicItem{
-		ID:          s.getNextID(),
-		Topic:       topicName,
-		Routes:      make([]model.TopicRouteItem, 0),
-		LastUpdated: formatNow(),
-	}
-
-	totalReadQueue := 0
-	totalWriteQueue := 0
-
-	for _, queueData := range routeInfo.QueueDatas {
-		route := model.TopicRouteItem{
-			Broker:     queueData.BrokerName,
-			ReadQueue:  queueData.ReadQueueNums,
-			WriteQueue: queueData.WriteQueueNums,
-			Perm:       model.IntToPerm(queueData.Perm),
-		}
-
-		// BrokerAddrs 是 map[string]string，key 是 "0" 表示 master
-		for _, brokerData := range routeInfo.BrokerDatas {
-			if brokerData.BrokerName == queueData.BrokerName {
-				if addr, ok := brokerData.BrokerAddrs["0"]; ok {
-					route.BrokerAddr = addr
-				}
-				if item.Cluster == "" {
-					item.Cluster = brokerData.Cluster
-				}
-				break
-			}
-		}
-
-		item.Routes = append(item.Routes, route)
-		totalReadQueue += queueData.ReadQueueNums
-		totalWriteQueue += queueData.WriteQueueNums
-	}
-
-	item.ReadQueue = totalReadQueue
-	item.WriteQueue = totalWriteQueue
-	if len(item.Routes) > 0 {
-		item.Perm = item.Routes[0].Perm
 	}
 
 	return item, nil
@@ -255,7 +268,9 @@ func (s *TopicService) CreateTopic(topic string, brokerAddr string, readQueue in
 		TopicFilterType: "SINGLE_TAG",
 	}
 
-	err = client.CreateTopic(ctx, brokerAddr, config)
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		return retryClient.CreateTopic(ctx, brokerAddr, config)
+	})
 	if err != nil {
 		return fmt.Errorf("创建 Topic 失败: %w", err)
 	}

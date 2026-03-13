@@ -7,6 +7,11 @@ import * as clusterApi from '@/api/cluster'
 
 const MIN_SPIN_MS = 400
 
+function formatMetric(value?: number | null): string {
+  if (value == null || value < 0) return '—'
+  return String(value)
+}
+
 export function ClusterView() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -95,6 +100,10 @@ export function ClusterView() {
         return '—'
     }
   }
+
+  const effectiveDetail = detail != null
+    ? { ...selectedBroker, ...detail }
+    : selectedBroker
 
   return (
     <div className="flex h-full flex-col">
@@ -214,10 +223,10 @@ export function ClusterView() {
                                 {statusLabel(b.status)}
                               </span>
                             </td>
-                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{b.topics ?? 0}</td>
-                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{b.groups ?? 0}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{formatMetric(b.topics)}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{formatMetric(b.groups)}</td>
                             <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
-                              {b.tpsIn ?? 0} / {b.tpsOut ?? 0}
+                              {formatMetric(b.tpsIn)} / {formatMetric(b.tpsOut)}
                             </td>
                           </tr>
                         ))}
@@ -249,49 +258,49 @@ export function ClusterView() {
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
-              ) : detail ? (
+              ) : effectiveDetail ? (
                 <div className="space-y-4 text-sm">
                   <div className="space-y-1.5">
                     <p>
                       <span className="text-muted-foreground">名称：</span>
-                      <span className="font-mono text-foreground">{detail.brokerName ?? '—'}</span>
+                      <span className="font-mono text-foreground">{effectiveDetail.brokerName ?? '—'}</span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">集群：</span>
-                      <span className="text-foreground">{detail.cluster ?? '—'}</span>
+                      <span className="text-foreground">{effectiveDetail.cluster ?? '—'}</span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">角色 / 状态：</span>
-                      <span className="text-foreground">{roleLabel(detail.role)} / {statusLabel(detail.status)}</span>
+                      <span className="text-foreground">{roleLabel(effectiveDetail.role)} / {statusLabel(effectiveDetail.status)}</span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">地址：</span>
-                      <span className="break-all font-mono text-muted-foreground">{detail.address ?? '—'}</span>
+                      <span className="break-all font-mono text-muted-foreground">{effectiveDetail.address ?? '—'}</span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">Topic / 消费组：</span>
-                      <span className="text-foreground">{detail.topics ?? 0} / {detail.groups ?? 0}</span>
+                      <span className="text-foreground">{formatMetric(effectiveDetail.topics)} / {formatMetric(effectiveDetail.groups)}</span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">TPS 入 / 出：</span>
-                      <span className="tabular-nums text-foreground">{detail.tpsIn ?? 0} / {detail.tpsOut ?? 0}</span>
+                      <span className="tabular-nums text-foreground">{formatMetric(effectiveDetail.tpsIn)} / {formatMetric(effectiveDetail.tpsOut)}</span>
                     </p>
-                    {(detail.commitLogDiskUsage ?? 0) > 0 && (
+                    {(effectiveDetail.commitLogDiskUsage ?? 0) > 0 && (
                       <p>
                         <span className="text-muted-foreground">CommitLog 磁盘：</span>
-                        <span className="text-foreground">{detail.commitLogDiskUsage}%</span>
+                        <span className="text-foreground">{effectiveDetail.commitLogDiskUsage}%</span>
                       </p>
                     )}
-                    {(detail.consumeQueueDiskUsage ?? 0) > 0 && (
+                    {(effectiveDetail.consumeQueueDiskUsage ?? 0) > 0 && (
                       <p>
                         <span className="text-muted-foreground">ConsumeQueue 磁盘：</span>
-                        <span className="text-foreground">{detail.consumeQueueDiskUsage}%</span>
+                        <span className="text-foreground">{effectiveDetail.consumeQueueDiskUsage}%</span>
                       </p>
                     )}
-                    {detail.lastUpdate && (
+                    {effectiveDetail.lastUpdate && (
                       <p>
                         <span className="text-muted-foreground">更新时间：</span>
-                        <span className="text-muted-foreground">{detail.lastUpdate}</span>
+                        <span className="text-muted-foreground">{effectiveDetail.lastUpdate}</span>
                       </p>
                     )}
                   </div>

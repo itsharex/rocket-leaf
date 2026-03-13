@@ -103,6 +103,10 @@ func (s *ClusterService) GetClusterInfo() (*model.ClusterInfo, error) {
 					Role:       role,
 					Address:    addr,
 					Status:     model.NodeOnline,
+					Topics:     -1,
+					Groups:     -1,
+					TpsIn:      -1,
+					TpsOut:     -1,
 					LastUpdate: formatNow(),
 				}
 
@@ -140,39 +144,70 @@ func (s *ClusterService) GetBrokerDetail(brokerAddr string) (*model.BrokerNode, 
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
-	defer cancel()
-
-	stats, err := client.FetchBrokerRuntimeStats(ctx, brokerAddr)
-	if err != nil {
-		return nil, fmt.Errorf("获取 Broker 统计信息失败: %w", err)
-	}
-
 	broker := &model.BrokerNode{
 		Address:    brokerAddr,
 		Status:     model.NodeOnline,
+		Topics:     -1,
+		Groups:     -1,
+		TpsIn:      -1,
+		TpsOut:     -1,
 		LastUpdate: formatNow(),
 	}
+	if clusterInfo, clusterErr := s.GetClusterInfo(); clusterErr == nil && clusterInfo != nil {
+		for _, node := range clusterInfo.Brokers {
+			if node == nil || node.Address != brokerAddr {
+				continue
+			}
 
-	if stats != nil && stats.Table != nil {
-		if version, ok := stats.Table["brokerVersionDesc"]; ok {
-			broker.Version = version
+			broker.ID = node.ID
+			broker.Cluster = node.Cluster
+			broker.BrokerName = node.BrokerName
+			broker.BrokerID = node.BrokerID
+			broker.Role = node.Role
+			broker.HAAddress = node.HAAddress
+			broker.Topics = node.Topics
+			broker.Groups = node.Groups
+			broker.Remark = node.Remark
+			break
 		}
-		if tpsIn, ok := stats.Table["putTps"]; ok {
-			broker.TpsIn = parseIntSafe(extractFirstValue(tpsIn))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
+	defer cancel()
+
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		stats, callErr := retryClient.FetchBrokerRuntimeStats(ctx, brokerAddr)
+		if callErr != nil {
+			return callErr
 		}
-		if tpsOut, ok := stats.Table["getTransferredTps"]; ok {
-			broker.TpsOut = parseIntSafe(extractFirstValue(tpsOut))
+
+		if stats != nil && stats.Table != nil {
+			if version, ok := stats.Table["brokerVersionDesc"]; ok {
+				broker.Version = version
+			}
+			if tpsIn, ok := stats.Table["putTps"]; ok {
+				broker.TpsIn = parseIntSafe(extractFirstValue(tpsIn))
+			}
+			if tpsOut, ok := stats.Table["getTransferredTps"]; ok {
+				broker.TpsOut = parseIntSafe(extractFirstValue(tpsOut))
+			}
+			if msgInToday, ok := stats.Table["msgPutTotalTodayNow"]; ok {
+				broker.MsgInToday = parseInt64Safe(msgInToday)
+			}
+			if msgOutToday, ok := stats.Table["msgGetTotalTodayNow"]; ok {
+				broker.MsgOutToday = parseInt64Safe(msgOutToday)
+			}
+			if diskRatio, ok := stats.Table["commitLogDiskRatio"]; ok {
+				broker.CommitLogDiskUsage = int(parseFloatSafe(diskRatio) * 100)
+			}
+			if diskRatio, ok := stats.Table["consumeQueueDiskRatio"]; ok {
+				broker.ConsumeQueueDiskUsage = int(parseFloatSafe(diskRatio) * 100)
+			}
 		}
-		if msgInToday, ok := stats.Table["msgPutTotalTodayNow"]; ok {
-			broker.MsgInToday = parseInt64Safe(msgInToday)
-		}
-		if msgOutToday, ok := stats.Table["msgGetTotalTodayNow"]; ok {
-			broker.MsgOutToday = parseInt64Safe(msgOutToday)
-		}
-		if diskRatio, ok := stats.Table["commitLogDiskRatio"]; ok {
-			broker.CommitLogDiskUsage = int(parseFloatSafe(diskRatio) * 100)
-		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("获取 Broker 统计信息失败: %w", err)
 	}
 
 	return broker, nil

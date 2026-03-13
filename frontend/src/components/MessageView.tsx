@@ -20,8 +20,8 @@ const DEFAULT_MAX_RESULTS = 32
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
 
-/** 当前列表数据来源：未拉取 / 自动偷窥最新 / 用户点击进阶查询 */
-type FetchKind = 'none' | 'latest' | 'condition'
+/** 当前列表数据来源：未拉取 / 用户点击进阶查询 */
+type FetchKind = 'none' | 'condition'
 
 /** 尝试解析 JSON，返回解析结果或 null */
 function tryParseJSON(s: string): unknown | null {
@@ -433,6 +433,7 @@ function TopicCombobox({
 export function MessageView() {
   const { settings } = useSettings()
   const [clusterName, setClusterName] = useState('')
+  const [metaError, setMetaError] = useState<string | null>(null)
   const [topicOptions, setTopicOptions] = useState<string[]>([])
   const [selectedTopic, setSelectedTopic] = useState('')
   const [messageId, setMessageId] = useState('')
@@ -453,6 +454,7 @@ export function MessageView() {
   const [sendKeys, setSendKeys] = useState('')
   const [sendBody, setSendBody] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const requestSeqRef = useRef(0)
 
   useEffect(() => {
     if (selectedMessage) {
@@ -470,60 +472,43 @@ export function MessageView() {
   // 拉取 Topic 列表与集群名
   useEffect(() => {
     let cancelled = false
-    topicApi.getTopics().then((items) => {
+    setMetaError(null)
+    Promise.allSettled([topicApi.getTopics(), clusterApi.getClusterInfo()]).then(([topicsResult, clusterResult]) => {
       if (cancelled) return
-      const names = (items ?? [])
-        .filter((t): t is NonNullable<typeof t> => t != null && t.topic != null)
-        .map((t) => t.topic)
-        .filter((n) => n.length > 0)
-      setTopicOptions([...new Set(names)].sort())
-    }).catch(() => { })
-    clusterApi.getClusterInfo().then((info) => {
-      if (cancelled || !info?.clusterName) return
-      setClusterName(info.clusterName)
-    }).catch(() => { })
+
+      let nextError: string | null = null
+
+      if (topicsResult.status === 'fulfilled') {
+        const names = (topicsResult.value ?? [])
+          .filter((t): t is NonNullable<typeof t> => t != null && t.topic != null)
+          .map((t) => t.topic)
+          .filter((n) => n.length > 0)
+        setTopicOptions([...new Set(names)].sort())
+      } else {
+        setTopicOptions([])
+        nextError = 'Topic 元数据加载失败，请检查连接状态'
+      }
+
+      if (clusterResult.status === 'fulfilled') {
+        setClusterName(clusterResult.value?.clusterName ?? '')
+      } else {
+        setClusterName('')
+        nextError = nextError ?? '集群元数据加载失败，请检查连接状态'
+      }
+
+      setMetaError(nextError)
+    })
     return () => { cancelled = true }
   }, [])
 
-  // 1. 默认状态：选 Topic 即静默拉取最新消息，不等待点击「查询」
+  // 选 Topic 后清空上一次查询结果，避免旧数据误导
   useEffect(() => {
-    const t = selectedTopic.trim()
-    if (!t) {
-      setMessages([])
-      setLastFetchKind('none')
-      setSelectedMessage(null)
-      return
-    }
-    let cancelled = false
-    setIsLoading(true)
+    setMessages([])
+    setLastFetchKind('none')
     setSelectedMessage(null)
-    messageApi
-      .fetchLatestMessages(t, settings.fetchLimit || DEFAULT_MAX_RESULTS)
-      .then((items) => {
-        if (cancelled) return
-        setMessages(items)
-        setLastFetchKind('latest')
-      })
-      .catch((e) => {
-        if (cancelled) return
-        const msg = (() => {
-          try {
-            return formatErrorMessage(e)
-          } catch {
-            return '拉取最新消息失败'
-          }
-        })()
-        toast.error(msg.trim().startsWith('{') ? '拉取失败' : msg)
-        setMessages([])
-        setLastFetchKind('latest')
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false)
-      })
-    return () => { cancelled = true }
-  }, [selectedTopic, settings.fetchLimit])
+  }, [selectedTopic])
 
-  // 2. 进阶搜索：仅当用户点击「查询」时按条件拉取
+  // 进阶搜索：仅当用户点击「查询」时按条件拉取
   const runConditionQuery = useCallback(async () => {
     const t = selectedTopic.trim()
     if (!t) {
@@ -540,16 +525,29 @@ export function MessageView() {
     }
     if (condition.startTimeMs === 0) delete condition.startTimeMs
     if (condition.endTimeMs === 0) delete condition.endTimeMs
+    const hasCondition =
+      Boolean(condition.messageId) ||
+      Boolean(condition.messageKey) ||
+      Boolean(condition.startTimeMs) ||
+      Boolean(condition.endTimeMs)
+    if (!hasCondition) {
+      toast.info('请至少输入 Message ID、Key 或时间范围后再查询')
+      return
+    }
+
+    const requestSeq = ++requestSeqRef.current
     try {
       const items = await messageApi.queryMessagesByCondition(
         t,
         condition,
         maxResults > 0 ? maxResults : DEFAULT_MAX_RESULTS
       )
+      if (requestSeq !== requestSeqRef.current) return
       setMessages(items)
       setLastFetchKind('condition')
       if (items.length === 0) toast.info('未查询到匹配的消息')
     } catch (e) {
+      if (requestSeq !== requestSeqRef.current) return
       const msg = (() => {
         try {
           return formatErrorMessage(e)
@@ -693,6 +691,11 @@ export function MessageView() {
           </button>
         </div>
       </div>
+      {metaError && (
+        <div className="shrink-0 border-b border-border/40 bg-muted/20 px-3 py-2 text-xs text-muted-foreground">
+          {metaError}
+        </div>
+      )}
 
       {/* 发送消息面板 */}
       {showSendPanel && (
@@ -820,7 +823,7 @@ export function MessageView() {
                     ? '请选择 Topic 开始检索'
                     : lastFetchKind === 'condition'
                       ? '未查询到匹配的消息'
-                      : '该 Topic 暂无消息'}
+                      : '请输入 Message ID、Key 或时间范围后点击查询'}
                 </div>
               )}
             </div>

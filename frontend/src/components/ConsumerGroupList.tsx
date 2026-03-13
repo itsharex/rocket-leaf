@@ -5,7 +5,6 @@ import { cn, formatErrorMessage } from '@/lib/utils'
 import type { ConsumerGroupItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { GroupStatus, ConsumeMode } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as consumerApi from '@/api/consumer'
-import * as clusterApi from '@/api/cluster'
 
 const TOOLTIP_DELAY_MS = 150
 const MIN_SPIN_MS = 400
@@ -192,15 +191,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
     async (groupName: string) => {
       setDeletingGroup(groupName)
       try {
-        const brokers = await clusterApi.getBrokers()
-        const broker = brokers.find((b): b is NonNullable<typeof b> => b != null && (b.address ?? '').trim() !== '')
-        const brokerAddr = broker?.address ?? ''
-        if (!brokerAddr) {
-          toast.error('未获取到 Broker 地址，请确保已连接集群')
-          setDeletingGroup(null)
-          return
-        }
-        await consumerApi.deleteConsumerGroup(groupName, brokerAddr)
+        await consumerApi.deleteConsumerGroup(groupName, '')
         toast.success('已删除')
         setDeleteConfirmGroup(null)
         if (selectedGroup === groupName) setSelectedGroup(null)

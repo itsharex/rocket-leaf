@@ -40,79 +40,88 @@ func (s *ConsumerService) GetConsumerGroups() ([]*model.ConsumerGroupItem, error
 	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
-	clusterInfo, err := client.ExamineBrokerClusterInfo(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("获取集群信息失败: %w", err)
-	}
-
 	result := make([]*model.ConsumerGroupItem, 0)
-	processedGroups := make(map[string]bool)
-
-	for _, brokerData := range clusterInfo.BrokerAddrTable {
-		// BrokerAddrs 是 map[string]string
-		masterAddr, ok := brokerData.BrokerAddrs["0"]
-		if !ok {
-			continue
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		clusterInfo, callErr := retryClient.ExamineBrokerClusterInfo(ctx)
+		if callErr != nil {
+			return callErr
 		}
 
-		// GetAllSubscriptionGroup 返回 map[string]*SubscriptionGroupConfig
-		subGroups, err := client.GetAllSubscriptionGroup(ctx, masterAddr)
-		if err != nil {
-			continue
-		}
+		tmpResult := make([]*model.ConsumerGroupItem, 0)
+		processedGroups := make(map[string]bool)
 
-		if subGroups == nil {
-			continue
-		}
-
-		for groupName, config := range subGroups {
-			if isSystemGroup(groupName) {
+		for _, brokerData := range clusterInfo.BrokerAddrTable {
+			// BrokerAddrs 是 map[string]string
+			masterAddr, ok := brokerData.BrokerAddrs["0"]
+			if !ok {
 				continue
 			}
 
-			if processedGroups[groupName] {
+			// GetAllSubscriptionGroup 返回 map[string]*SubscriptionGroupConfig
+			subGroups, groupErr := retryClient.GetAllSubscriptionGroup(ctx, masterAddr)
+			if groupErr != nil || subGroups == nil {
 				continue
 			}
-			processedGroups[groupName] = true
 
-			item := &model.ConsumerGroupItem{
-				ID:          s.getNextID(),
-				Group:       groupName,
-				ConsumeMode: model.ModeClustering,
-				Status:      model.GroupOffline,
-				MaxRetry:    config.RetryMaxTimes,
-				LastUpdate:  formatNow(),
-			}
-
-			connInfo, err := client.ExamineConsumerConnectionInfo(ctx, groupName)
-			if err == nil && connInfo != nil {
-				item.OnlineClients = len(connInfo.ConnectionSet)
-				if item.OnlineClients > 0 {
-					item.Status = model.GroupOnline
+			for groupName, config := range subGroups {
+				if isSystemGroup(groupName) {
+					continue
 				}
 
-				for _, conn := range connInfo.ConnectionSet {
-					c := model.GroupClient{
-						ClientID:      conn.ClientId,
-						IP:            conn.ClientAddr,
-						Version:       fmt.Sprintf("%d", conn.Version),
-						LastHeartbeat: formatNow(),
+				if processedGroups[groupName] {
+					continue
+				}
+				processedGroups[groupName] = true
+
+				item := &model.ConsumerGroupItem{
+					ID:          s.getNextID(),
+					Group:       groupName,
+					Cluster:     brokerData.Cluster,
+					ConsumeMode: model.ModeClustering,
+					Status:      model.GroupOffline,
+					MaxRetry:    config.RetryMaxTimes,
+					LastUpdate:  formatNow(),
+				}
+				if config.ConsumeBroadcastEnable {
+					item.ConsumeMode = model.ModeBroadcasting
+				}
+
+				connInfo, connErr := retryClient.ExamineConsumerConnectionInfo(ctx, groupName)
+				if connErr == nil && connInfo != nil {
+					item.OnlineClients = len(connInfo.ConnectionSet)
+					if item.OnlineClients > 0 {
+						item.Status = model.GroupOnline
 					}
-					item.Clients = append(item.Clients, c)
-				}
 
-				for topic, expr := range connInfo.SubscriptionTable {
-					sub := model.GroupSubscription{
-						Topic:      topic,
-						Expression: expr.SubString,
+					for _, conn := range connInfo.ConnectionSet {
+						c := model.GroupClient{
+							ClientID:      conn.ClientId,
+							IP:            conn.ClientAddr,
+							Version:       fmt.Sprintf("%d", conn.Version),
+							LastHeartbeat: formatNow(),
+						}
+						item.Clients = append(item.Clients, c)
 					}
-					item.Subscriptions = append(item.Subscriptions, sub)
-				}
-				item.TopicCount = len(item.Subscriptions)
-			}
 
-			result = append(result, item)
+					for topic, expr := range connInfo.SubscriptionTable {
+						sub := model.GroupSubscription{
+							Topic:      topic,
+							Expression: expr.SubString,
+						}
+						item.Subscriptions = append(item.Subscriptions, sub)
+					}
+					item.TopicCount = len(item.Subscriptions)
+				}
+
+				tmpResult = append(tmpResult, item)
+			}
 		}
+
+		result = tmpResult
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("获取消费者组失败: %w", err)
 	}
 
 	return result, nil
@@ -138,15 +147,27 @@ func (s *ConsumerService) GetConsumerGroupDetail(groupName string) (*model.Consu
 		LastUpdate:    formatNow(),
 	}
 
-	connInfo, err := client.ExamineConsumerConnectionInfo(ctx, groupName)
-	if err == nil && connInfo != nil {
+	groupConfig, err := s.getSubscriptionGroupConfig(ctx, client, groupName)
+	if err == nil && groupConfig != nil {
+		item.Cluster = groupConfig.Cluster
+		item.MaxRetry = groupConfig.Config.RetryMaxTimes
+		if groupConfig.Config.ConsumeBroadcastEnable {
+			item.ConsumeMode = model.ModeBroadcasting
+		}
+	}
+
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		connInfo, callErr := retryClient.ExamineConsumerConnectionInfo(ctx, groupName)
+		if callErr != nil {
+			return callErr
+		}
+		if connInfo == nil {
+			return nil
+		}
+
 		item.OnlineClients = len(connInfo.ConnectionSet)
 		if item.OnlineClients > 0 {
 			item.Status = model.GroupOnline
-		}
-
-		if connInfo.ConsumeType == "CONSUME_ACTIVELY" {
-			item.ConsumeMode = model.ModeBroadcasting
 		}
 
 		for _, conn := range connInfo.ConnectionSet {
@@ -167,6 +188,10 @@ func (s *ConsumerService) GetConsumerGroupDetail(groupName string) (*model.Consu
 			item.Subscriptions = append(item.Subscriptions, sub)
 		}
 		item.TopicCount = len(item.Subscriptions)
+		return nil
+	})
+	if err != nil && !isRetryableNetworkError(err) {
+		return nil, fmt.Errorf("获取消费者组详情失败: %w", err)
 	}
 
 	return item, nil
@@ -183,23 +208,33 @@ func (s *ConsumerService) GetConsumeStats(groupName string) (map[string]interfac
 	defer cancel()
 
 	// ExamineConsumeStats 只有一个参数
-	stats, err := client.ExamineConsumeStats(ctx, groupName)
+	result := map[string]interface{}{}
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		// ExamineConsumeStats 只有一个参数
+		stats, callErr := retryClient.ExamineConsumeStats(ctx, groupName)
+		if callErr != nil {
+			return callErr
+		}
+
+		// 计算总延迟
+		var totalDiff int64
+		for _, offset := range stats.OffsetTable {
+			diff := offset.BrokerOffset - offset.ConsumerOffset
+			if diff > 0 {
+				totalDiff += diff
+			}
+		}
+
+		result = map[string]interface{}{
+			"group":      groupName,
+			"consumeTps": stats.ConsumeTps,
+			"diffTotal":  totalDiff,
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, fmt.Errorf("获取消费统计失败: %w", err)
 	}
-
-	// 计算总延迟
-	var totalDiff int64
-	for _, offset := range stats.OffsetTable {
-		totalDiff += offset.BrokerOffset - offset.ConsumerOffset
-	}
-
-	result := map[string]interface{}{
-		"group":      groupName,
-		"consumeTps": stats.ConsumeTps,
-		"diffTotal":  totalDiff,
-	}
-
 	return result, nil
 }
 
@@ -222,7 +257,9 @@ func (s *ConsumerService) CreateConsumerGroup(group string, brokerAddr string, c
 		RetryMaxTimes:          maxRetry,
 	}
 
-	err = client.CreateSubscriptionGroup(ctx, brokerAddr, config)
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		return retryClient.CreateSubscriptionGroup(ctx, brokerAddr, config)
+	})
 	if err != nil {
 		return fmt.Errorf("创建消费者组失败: %w", err)
 	}
@@ -240,12 +277,27 @@ func (s *ConsumerService) DeleteConsumerGroup(group string, brokerAddr string) e
 	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
-	err = client.DeleteSubscriptionGroup(ctx, brokerAddr, group)
+	candidates, err := s.resolveMasterBrokerAddrs(ctx, client, brokerAddr)
 	if err != nil {
 		return fmt.Errorf("删除消费者组失败: %w", err)
 	}
 
-	return nil
+	var lastErr error
+	for _, addr := range candidates {
+		callErr := executeWithClientRetry(client, func(retryClient *admin.Client) error {
+			return retryClient.DeleteSubscriptionGroup(ctx, addr, group)
+		})
+		if callErr == nil {
+			return nil
+		}
+		lastErr = callErr
+	}
+
+	if lastErr != nil {
+		return fmt.Errorf("删除消费者组失败: %w", lastErr)
+	}
+
+	return fmt.Errorf("删除消费者组失败: 未找到可用 Broker")
 }
 
 // ResetOffset 重置消费位点
@@ -258,7 +310,10 @@ func (s *ConsumerService) ResetOffset(group string, topic string, timestamp int6
 	ctx, cancel := context.WithTimeout(context.Background(), s.settingsService.GetRequestTimeout())
 	defer cancel()
 
-	_, err = client.ResetOffsetByTimestamp(ctx, topic, group, timestamp, force)
+	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		_, callErr := retryClient.ResetOffsetByTimestamp(ctx, topic, group, timestamp, force)
+		return callErr
+	})
 	if err != nil {
 		return fmt.Errorf("重置消费位点失败: %w", err)
 	}
@@ -302,4 +357,110 @@ func isSystemGroup(group string) bool {
 	}
 
 	return false
+}
+
+type subscriptionGroupLookup struct {
+	Cluster string
+	Config  *admin.SubscriptionGroupConfig
+}
+
+func (s *ConsumerService) getSubscriptionGroupConfig(ctx context.Context, client *admin.Client, groupName string) (*subscriptionGroupLookup, error) {
+	clusterInfo, err := getClusterInfoWithRetry(ctx, client)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, brokerData := range clusterInfo.BrokerAddrTable {
+		if brokerData == nil {
+			continue
+		}
+		masterAddr, ok := brokerData.BrokerAddrs["0"]
+		if !ok || masterAddr == "" {
+			continue
+		}
+
+		subGroups, groupErr := getAllSubscriptionGroupsWithRetry(ctx, client, masterAddr)
+		if groupErr != nil || subGroups == nil {
+			continue
+		}
+
+		if config, exists := subGroups[groupName]; exists && config != nil {
+			return &subscriptionGroupLookup{
+				Cluster: brokerData.Cluster,
+				Config:  config,
+			}, nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (s *ConsumerService) resolveMasterBrokerAddrs(ctx context.Context, client *admin.Client, preferredAddr string) ([]string, error) {
+	addresses := make([]string, 0, 4)
+	seen := make(map[string]struct{})
+	appendAddr := func(addr string) {
+		if addr == "" {
+			return
+		}
+		if _, exists := seen[addr]; exists {
+			return
+		}
+		seen[addr] = struct{}{}
+		addresses = append(addresses, addr)
+	}
+
+	appendAddr(preferredAddr)
+
+	clusterInfo, err := getClusterInfoWithRetry(ctx, client)
+	if err != nil {
+		if len(addresses) > 0 {
+			return addresses, nil
+		}
+		return nil, err
+	}
+
+	for _, brokerData := range clusterInfo.BrokerAddrTable {
+		if brokerData == nil {
+			continue
+		}
+		appendAddr(brokerData.BrokerAddrs["0"])
+	}
+
+	if len(addresses) == 0 {
+		return nil, fmt.Errorf("未找到可用 Broker")
+	}
+
+	return addresses, nil
+}
+
+func getClusterInfoWithRetry(ctx context.Context, client *admin.Client) (*admin.ClusterInfo, error) {
+	var result *admin.ClusterInfo
+	err := executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		clusterInfo, callErr := retryClient.ExamineBrokerClusterInfo(ctx)
+		if callErr != nil {
+			return callErr
+		}
+		result = clusterInfo
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func getAllSubscriptionGroupsWithRetry(ctx context.Context, client *admin.Client, brokerAddr string) (map[string]*admin.SubscriptionGroupConfig, error) {
+	var result map[string]*admin.SubscriptionGroupConfig
+	err := executeWithClientRetry(client, func(retryClient *admin.Client) error {
+		subGroups, callErr := retryClient.GetAllSubscriptionGroup(ctx, brokerAddr)
+		if callErr != nil {
+			return callErr
+		}
+		result = subGroups
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

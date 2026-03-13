@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
-import { RefreshCw, Search, X, Trash2, Loader2, AlertTriangle } from 'lucide-react'
+import { RefreshCw, Search, X, Trash2, Loader2, AlertTriangle, BarChart3, RotateCcw } from 'lucide-react'
 import { cn, formatErrorMessage } from '@/lib/utils'
 import type { ConsumerGroupItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { GroupStatus, ConsumeMode } from '../../bindings/rocket-leaf/internal/model/models.js'
@@ -14,7 +14,31 @@ type Props = {
   list: ConsumerGroupItem[]
   loading: boolean
   error: string | null
-  onRefresh: () => void
+  onRefresh: () => void | Promise<void>
+}
+
+type ConsumeStats = {
+  group: string
+  consumeTps: number
+  diffTotal: number
+}
+
+function toDateTimeLocalValue(date: Date): string {
+  const offset = date.getTimezoneOffset()
+  const localDate = new Date(date.getTime() - offset * 60 * 1000)
+  return localDate.toISOString().slice(0, 16)
+}
+
+function getDefaultResetTimeValue(): string {
+  return toDateTimeLocalValue(new Date())
+}
+
+function parseConsumeStats(data: Record<string, unknown>): ConsumeStats {
+  return {
+    group: typeof data.group === 'string' ? data.group : '',
+    consumeTps: typeof data.consumeTps === 'number' ? data.consumeTps : 0,
+    diffTotal: typeof data.diffTotal === 'number' ? data.diffTotal : 0,
+  }
 }
 
 export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
@@ -25,8 +49,16 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
   const [detail, setDetail] = useState<ConsumerGroupItem | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
+  const [stats, setStats] = useState<ConsumeStats | null>(null)
+  const [statsLoading, setStatsLoading] = useState(false)
+  const [statsError, setStatsError] = useState<string | null>(null)
   const [deleteConfirmGroup, setDeleteConfirmGroup] = useState<string | null>(null)
   const [deletingGroup, setDeletingGroup] = useState<string | null>(null)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [resetTopic, setResetTopic] = useState('')
+  const [resetTimestamp, setResetTimestamp] = useState(getDefaultResetTimeValue())
+  const [resetForce, setResetForce] = useState(false)
+  const [resetSubmitting, setResetSubmitting] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const spinEndRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -51,36 +83,56 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
     }
   }, [loading, refreshing, error])
 
+  const loadDetail = useCallback(async (groupName: string, cancelledRef?: { current: boolean }) => {
+    setDetailLoading(true)
+    setDetailError(null)
+    try {
+      const data = await consumerApi.getConsumerGroupDetail(groupName)
+      if (cancelledRef?.current) return
+      setDetail(data ?? null)
+      setDetailError(data ? null : '未获取到详情')
+    } catch (e) {
+      if (cancelledRef?.current) return
+      setDetailError(e instanceof Error ? e.message : String(e))
+      setDetail(null)
+    } finally {
+      if (!cancelledRef?.current) setDetailLoading(false)
+    }
+  }, [])
+
+  const loadStats = useCallback(async (groupName: string, cancelledRef?: { current: boolean }) => {
+    setStatsLoading(true)
+    setStatsError(null)
+    try {
+      const data = await consumerApi.getConsumeStats(groupName)
+      if (cancelledRef?.current) return
+      setStats(parseConsumeStats(data))
+    } catch (e) {
+      if (cancelledRef?.current) return
+      setStats(null)
+      setStatsError(formatErrorMessage(e))
+    } finally {
+      if (!cancelledRef?.current) setStatsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     if (!selectedGroup) {
       setDetail(null)
       setDetailError(null)
+      setStats(null)
+      setStatsError(null)
       return
     }
-    let cancelled = false
-    setDetailLoading(true)
-    setDetailError(null)
-    consumerApi
-      .getConsumerGroupDetail(selectedGroup)
-      .then((data) => {
-        if (!cancelled) {
-          setDetail(data ?? null)
-          setDetailError(data ? null : '未获取到详情')
-        }
-      })
-      .catch((e) => {
-        if (!cancelled) {
-          setDetailError(e instanceof Error ? e.message : String(e))
-          setDetail(null)
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setDetailLoading(false)
-      })
+
+    const cancelledRef = { current: false }
+    void loadDetail(selectedGroup, cancelledRef)
+    void loadStats(selectedGroup, cancelledRef)
+
     return () => {
-      cancelled = true
+      cancelledRef.current = true
     }
-  }, [selectedGroup])
+  }, [loadDetail, loadStats, selectedGroup])
 
   const onEnter = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -94,8 +146,47 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true)
-    onRefresh()
+    void Promise.resolve(onRefresh())
   }, [onRefresh])
+
+  const handleOpenResetDialog = useCallback(() => {
+    const firstTopic = detail?.subscriptions?.find((sub) => (sub.topic ?? '').trim() !== '')?.topic ?? ''
+    setResetTopic(firstTopic)
+    setResetTimestamp(getDefaultResetTimeValue())
+    setResetForce(false)
+    setResetDialogOpen(true)
+  }, [detail])
+
+  const handleResetOffset = useCallback(async () => {
+    if (!selectedGroup) {
+      toast.error('未选择消费者组')
+      return
+    }
+    if (!resetTopic.trim()) {
+      toast.error('请选择或输入 Topic')
+      return
+    }
+
+    const timestamp = new Date(resetTimestamp).getTime()
+    if (!Number.isFinite(timestamp) || timestamp <= 0) {
+      toast.error('请输入有效的重置时间')
+      return
+    }
+
+    setResetSubmitting(true)
+    try {
+      await consumerApi.resetOffset(selectedGroup, resetTopic.trim(), timestamp, resetForce)
+      toast.success('位点已重置')
+      setResetDialogOpen(false)
+      await Promise.resolve(onRefresh())
+      await loadDetail(selectedGroup)
+      await loadStats(selectedGroup)
+    } catch (err) {
+      toast.error(formatErrorMessage(err))
+    } finally {
+      setResetSubmitting(false)
+    }
+  }, [loadDetail, loadStats, onRefresh, resetForce, resetTimestamp, resetTopic, selectedGroup])
 
   const handleDeleteConfirm = useCallback(
     async (groupName: string) => {
@@ -253,14 +344,26 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
           <div className="flex w-[360px] shrink-0 flex-col border-l border-border/40 bg-card">
             <div className="flex shrink-0 items-center justify-between border-b border-border/30 px-3 py-2.5">
               <span className="truncate text-sm font-medium text-foreground">消费者组详情</span>
-              <button
-                type="button"
-                onClick={() => setSelectedGroup(null)}
-                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                aria-label="关闭"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={handleOpenResetDialog}
+                  disabled={detailLoading || detail == null}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                  aria-label="重置位点"
+                  title="重置位点"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedGroup(null)}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                  aria-label="关闭"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto scroll-thin p-3">
               {detailLoading ? (
@@ -271,6 +374,30 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                 <p className="text-sm text-destructive">{detailError}</p>
               ) : detail ? (
                 <div className="space-y-4">
+                  <div className="rounded-md border border-border/40 bg-background/60 p-3">
+                    <div className="mb-3 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                      <BarChart3 className="h-3.5 w-3.5" />
+                      <span>消费统计</span>
+                    </div>
+                    {statsLoading ? (
+                      <div className="flex items-center justify-center py-4 text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    ) : statsError ? (
+                      <p className="text-xs text-destructive">{statsError}</p>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="rounded-md border border-border/40 bg-card px-3 py-2">
+                          <div className="text-[11px] text-muted-foreground">消费 TPS</div>
+                          <div className="mt-1 text-sm font-medium text-foreground">{stats?.consumeTps ?? 0}</div>
+                        </div>
+                        <div className="rounded-md border border-border/40 bg-card px-3 py-2">
+                          <div className="text-[11px] text-muted-foreground">总堆积</div>
+                          <div className="mt-1 text-sm font-medium text-foreground">{stats?.diffTotal ?? 0}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <div className="space-y-1.5 text-sm">
                     <p>
                       <span className="text-muted-foreground">名称：</span>
@@ -395,6 +522,116 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                   </>
                 ) : (
                   '确定删除'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetDialogOpen && selectedGroup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => resetSubmitting === false && setResetDialogOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reset-offset-title"
+        >
+          <div
+            className="w-full max-w-md rounded-md border border-border/50 bg-card p-4 shadow-sm"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-foreground">
+                <RotateCcw className="h-4 w-4" aria-hidden />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 id="reset-offset-title" className="text-sm font-medium text-card-foreground">
+                  重置消费位点
+                </h2>
+                <p className="mt-1.5 text-sm text-muted-foreground">
+                  为消费者组「<span className="font-mono text-foreground">{selectedGroup}</span>」按时间重置位点。
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <div className="space-y-1.5">
+                <label htmlFor="reset-topic" className="text-xs font-medium text-muted-foreground">
+                  Topic
+                </label>
+                {detail?.subscriptions != null && detail.subscriptions.length > 0 ? (
+                  <select
+                    id="reset-topic"
+                    value={resetTopic}
+                    onChange={(e) => setResetTopic(e.target.value)}
+                    className="w-full rounded-md border border-border/40 bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
+                  >
+                    <option value="">请选择 Topic</option>
+                    {detail.subscriptions.map((sub, index) => (
+                      <option key={`${sub.topic ?? 'topic'}-${index}`} value={sub.topic ?? ''}>
+                        {sub.topic ?? '-'}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="reset-topic"
+                    type="text"
+                    value={resetTopic}
+                    onChange={(e) => setResetTopic(e.target.value)}
+                    placeholder="输入 Topic 名称"
+                    className="w-full rounded-md border border-border/40 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="reset-timestamp" className="text-xs font-medium text-muted-foreground">
+                  重置时间
+                </label>
+                <input
+                  id="reset-timestamp"
+                  type="datetime-local"
+                  value={resetTimestamp}
+                  onChange={(e) => setResetTimestamp(e.target.value)}
+                  className="w-full rounded-md border border-border/40 bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary/50"
+                />
+              </div>
+
+              <label className="flex items-center gap-2 rounded-md border border-border/40 bg-background/60 px-3 py-2 text-sm text-foreground">
+                <input
+                  type="checkbox"
+                  checked={resetForce}
+                  onChange={(e) => setResetForce(e.target.checked)}
+                  className="h-4 w-4 rounded border-border/60"
+                />
+                <span>强制重置</span>
+              </label>
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setResetDialogOpen(false)}
+                disabled={resetSubmitting}
+                className="rounded-md border border-border/50 px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent disabled:opacity-50"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleResetOffset()}
+                disabled={resetSubmitting}
+                className="rounded-md bg-foreground px-3 py-1.5 text-sm text-background transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {resetSubmitting ? (
+                  <>
+                    <Loader2 className="mr-1.5 inline h-4 w-4 animate-spin" aria-hidden />
+                    提交中…
+                  </>
+                ) : (
+                  '确认重置'
                 )}
               </button>
             </div>

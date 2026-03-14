@@ -3,9 +3,9 @@ set -e
 
 # Build configuration
 APP_NAME="rocket-leaf"
-BUNDLE_ID="com.example.rocketleaf"
-VERSION="0.1.0"
-BUILD_NUMBER="0.1.0"
+BUNDLE_ID="com.rocketleaf.app"
+VERSION="1.0.0"
+BUILD_NUMBER="1.0.0"
 BUILD_DIR="build/ios"
 TARGET="simulator"
 

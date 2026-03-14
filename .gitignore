@@ -1,10 +1,32 @@
+# Task / build output
 .task
-bin
-frontend/dist
-frontend/node_modules
-build/linux/appimage/build
+bin/
+
+# Frontend build artifacts
+frontend/dist/
+frontend/node_modules/
+node_modules/
+
+# Wails generated runtime artifacts
+build/darwin/frontend/
+build/linux/appimage/build/
 build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
-.idea
-node_modules
+
+# Apple / Xcode local artifacts
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcuserdatad/
+
+# Android local artifacts
+.gradle/
+build/android/.gradle/
+build/android/local.properties
+build/android/app/build/
+
+# IDE / OS files
+.idea/
+.vscode/
 .DS_Store
 **/.DS_Store

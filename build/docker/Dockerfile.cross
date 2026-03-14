@@ -93,8 +93,8 @@ for arg in "$@"; do
         continue
     fi
     case "$arg" in
-        -target) SKIP_NEXT=1 ;;&
-        *) ARGS="$ARGS $arg" ;;&
+        -target) SKIP_NEXT=1 ;;
+        *) ARGS="$ARGS $arg" ;;
     esac
 done
 exec zig cc -target aarch64-linux-gnu $ARGS
@@ -161,7 +161,7 @@ case "${OS}-${ARCH}" in
         export GOOS=darwin
         ;;
     linux-arm64|linux-aarch64)
-        export CC=zcc-linux-arm64
+        export CC=gcc
         export GOARCH=arm64
         export GOOS=linux
         ;;

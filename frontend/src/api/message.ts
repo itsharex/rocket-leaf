@@ -1,34 +1,10 @@
 import * as MessageService from '../../bindings/rocket-leaf/internal/service/messageservice.js'
 import type { MessageItem, MessageTrackItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 
-/** 是否使用 Mock（无 Wails 环境或需离线预览时设为 true） */
-const USE_MOCK = false
-
-const LATEST_MOCK_SIZE = 32
-
-function mockMessageItem(topic: string, index: number): MessageItem {
-  const id = `mock-${topic}-${Date.now()}-${index}`
-  return {
-    topic,
-    messageId: id,
-    id: id,
-    body: JSON.stringify({ index, ts: Date.now() }),
-    keys: '',
-    tags: `tag-${index % 3}`,
-    storeTime: new Date().toISOString(),
-    properties: {},
-    status: 0,
-  } as unknown as MessageItem
-}
-
 /**
- * 偷窥最新：拉取指定 Topic 最新 N 条消息（用于选 Topic 后自动静默拉取）
+ * 拉取指定 Topic 最新 N 条消息（用于选 Topic 后自动静默拉取）
  */
 export async function fetchLatestMessages(topic: string, limit: number): Promise<MessageItem[]> {
-  if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 600))
-    return Array.from({ length: Math.min(limit, LATEST_MOCK_SIZE) }, (_, i) => mockMessageItem(topic, i))
-  }
   try {
     const raw = await MessageService.QueryMessages(topic, '', '', limit, 0, 0)
     return raw.filter((m): m is MessageItem => m != null)
@@ -47,7 +23,7 @@ export interface QueryCondition {
 }
 
 /**
- * 进阶搜索：按 Message ID / Key / 时间范围精准查询（仅用户点击「查询」时调用）
+ * 按 Message ID / Key / 时间范围精准查询（仅用户点击「查询」时调用）
  */
 export async function queryMessagesByCondition(
   topic: string,
@@ -55,15 +31,6 @@ export async function queryMessagesByCondition(
   maxResults = 32
 ): Promise<MessageItem[]> {
   const { messageId, messageKey = '', messageTag = '', startTimeMs = 0, endTimeMs = 0 } = condition
-  if (USE_MOCK) {
-    await new Promise((r) => setTimeout(r, 500))
-    if (messageId?.trim()) {
-      const one = mockMessageItem(topic, 0)
-      one.messageId = messageId.trim()
-      return [one]
-    }
-    return Array.from({ length: 8 }, (_, i) => mockMessageItem(topic, i + 100))
-  }
   try {
     if (messageId?.trim()) {
       const one = await MessageService.QueryMessageByID(topic, messageId.trim())

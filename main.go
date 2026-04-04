@@ -96,7 +96,7 @@ func main() {
 		MinWidth:  1024,
 		MinHeight: 750,
 		Mac: application.MacWindow{
-			InvisibleTitleBarHeight: 32,
+			InvisibleTitleBarHeight: 48,
 			TitleBar: application.MacTitleBar{
 				Hide:               false,
 				HideTitle:          true,

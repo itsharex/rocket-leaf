@@ -35,11 +35,11 @@ function TpsChart({ data }: { data: TpsPoint[] }) {
 
   return (
     <div className="rounded-md border border-border/40 bg-background/60 p-3">
-      <p className="mb-1.5 text-[11px] text-muted-foreground">
+      <p className="mb-1.5 text-xs text-muted-foreground">
         TPS 趋势（{data.length} 采样点，每 5s）
       </p>
-      <ResponsiveContainer width="100%" height={160}>
-        <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -12 }}>
+      <ResponsiveContainer width="100%" height={180}>
+        <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="hsl(var(--border))"
@@ -47,35 +47,35 @@ function TpsChart({ data }: { data: TpsPoint[] }) {
           />
           <XAxis
             dataKey="time"
-            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             tickLine={false}
             axisLine={{ stroke: 'hsl(var(--border))' }}
             interval="preserveStartEnd"
             minTickGap={40}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+            tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
             tickLine={false}
             axisLine={false}
             allowDecimals={false}
-            width={40}
+            width={44}
           />
           <Tooltip
             contentStyle={{
               backgroundColor: 'hsl(var(--card))',
               border: '1px solid hsl(var(--border))',
               borderRadius: '6px',
-              fontSize: '12px',
-              padding: '6px 10px',
+              fontSize: '13px',
+              padding: '8px 12px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             }}
-            labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: 2 }}
+            labelStyle={{ color: 'hsl(var(--muted-foreground))', marginBottom: 4 }}
             itemStyle={{ padding: 0 }}
           />
           <Legend
             iconType="plainline"
-            iconSize={12}
-            wrapperStyle={{ fontSize: '11px', paddingTop: '4px' }}
+            iconSize={14}
+            wrapperStyle={{ fontSize: '12px', paddingTop: '6px' }}
           />
           <Line
             type="monotone"

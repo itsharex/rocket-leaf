@@ -40,14 +40,14 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
       <div className="shrink-0 border-b border-border/40 px-5 py-3.5">
         <h1 className="text-sm font-semibold text-foreground">概览</h1>
       </div>
-      <div className="flex-1 overflow-y-auto scroll-thin p-5">
-        <div className="mx-auto max-w-3xl space-y-8">
+      <div className="flex-1 p-5">
+        <div className="mx-auto w-full max-w-3xl space-y-6">
           {/* 当前连接 */}
           <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">当前连接</h2>
-            <div className="rounded-lg border border-border/40 bg-card p-5 shadow-sm">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">当前连接</h2>
+            <div className="rounded-lg border border-border/40 bg-card p-4 shadow-sm">
               {currentConn ? (
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                     <Server className="h-5 w-5" />
                   </span>
@@ -64,11 +64,11 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 font-mono text-sm text-muted-foreground">{currentConn.nameServer}</p>
+                    <p className="mt-0.5 font-mono text-sm text-muted-foreground">{currentConn.nameServer}</p>
                   </div>
                 </div>
               ) : defaultConn ? (
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted/80 text-muted-foreground">
                     <Server className="h-5 w-5" />
                   </span>
@@ -85,12 +85,12 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
 
           {/* 数据概览 */}
           <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">数据概览</h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">数据概览</h2>
+            <div className="grid grid-cols-4 gap-3">
               <button
                 type="button"
                 onClick={() => onSelectNav('topics')}
-                className="rounded-lg border border-border/40 bg-card px-5 py-4 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
+                className="rounded-lg border border-border/40 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
               >
                 <p className="text-2xl font-semibold tabular-nums text-foreground">{topicCount}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">Topic</p>
@@ -98,7 +98,7 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
               <button
                 type="button"
                 onClick={() => onSelectNav('consumers')}
-                className="rounded-lg border border-border/40 bg-card px-5 py-4 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
+                className="rounded-lg border border-border/40 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
               >
                 <p className="text-2xl font-semibold tabular-nums text-foreground">{consumerGroupCount}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">消费者组</p>
@@ -106,18 +106,18 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
               <button
                 type="button"
                 onClick={() => onSelectNav('cluster')}
-                className="rounded-lg border border-border/40 bg-card px-5 py-4 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
+                className="rounded-lg border border-border/40 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
               >
                 <p className="text-2xl font-semibold tabular-nums text-foreground">
                   {summary ? `${summary.onlineBrokers}/${summary.totalBrokers}` : '—'}
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">Broker</p>
-                <p className="mt-1 text-[10px] text-muted-foreground/80">在线 / 总数</p>
+                <p className="text-[10px] text-muted-foreground/80">在线 / 总数</p>
               </button>
               <button
                 type="button"
                 onClick={() => onSelectNav('cluster')}
-                className="rounded-lg border border-border/40 bg-card px-5 py-4 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
+                className="rounded-lg border border-border/40 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
               >
                 <div className="flex items-baseline gap-1.5">
                   <p className="text-2xl font-semibold tabular-nums text-foreground">
@@ -126,22 +126,22 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
                   <HardDrive className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">磁盘使用</p>
-                <p className="mt-1 text-[10px] text-muted-foreground/80">集群平均</p>
+                <p className="text-[10px] text-muted-foreground/80">集群平均</p>
               </button>
             </div>
           </section>
 
           {/* 快捷入口 */}
           <section>
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">快捷入口</h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">快捷入口</h2>
+            <div className="grid grid-cols-4 gap-3">
               {SHORTCUTS.map(({ id, icon: Icon, label, description }) => (
                 <button
                   key={id}
                   type="button"
                   onClick={() => onSelectNav(id)}
                   className={cn(
-                    'flex flex-col items-start gap-3 rounded-lg border border-border/40 bg-card p-5 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50'
+                    'flex flex-col items-start gap-2.5 rounded-lg border border-border/40 bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50'
                   )}
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted/80 text-muted-foreground">

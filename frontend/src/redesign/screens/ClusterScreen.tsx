@@ -6,6 +6,7 @@ import {
   HardDrive,
   Inbox,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 
 const BROKERS = [
@@ -16,6 +17,7 @@ const BROKERS = [
 ]
 
 export function ClusterScreen() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('概览')
 
   const prodPoints = Array.from({ length: 60 }, (_, i) => {
@@ -30,7 +32,7 @@ export function ClusterScreen() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
-        title="集群"
+        title={t('cluster.title')}
         subtitle="prod-cluster-01 · 2 个 NameServer · 4 台 Broker"
         tabs={['概览', 'Broker', 'NameServer', 'Topic 路由']}
         activeTab={activeTab}

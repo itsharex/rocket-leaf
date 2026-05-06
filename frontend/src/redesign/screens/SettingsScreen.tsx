@@ -20,6 +20,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { Browser } from '@wailsio/runtime'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 import {
   useSettings,
@@ -42,75 +43,42 @@ const GITHUB_RELEASES_URL = 'https://github.com/amigoer/rocket-leaf/releases/lat
 
 type SectionId = 'appearance' | 'general' | 'fonts' | 'message' | 'proxy' | 'data' | 'about'
 
-const SECTIONS: { id: SectionId; label: string; icon: LucideIcon; subtitle: string }[] = [
-  { id: 'appearance', label: '外观', icon: Sun, subtitle: '主题、强调色与界面密度' },
-  { id: 'general', label: '通用', icon: SettingsIcon, subtitle: '语言、连接与默认行为' },
-  { id: 'fonts', label: '字体与显示', icon: PanelLeft, subtitle: '字号、字体与时间格式' },
-  { id: 'message', label: '消息查询', icon: Search, subtitle: '默认查询与告警参数' },
-  { id: 'proxy', label: '代理与网络', icon: Globe, subtitle: '代理、超时与默认凭证' },
-  { id: 'data', label: '数据与备份', icon: Database, subtitle: '导入导出、数据目录与缓存' },
-  { id: 'about', label: '关于', icon: Info, subtitle: '版本与项目信息' },
+const SECTIONS: { id: SectionId; icon: LucideIcon }[] = [
+  { id: 'appearance', icon: Sun },
+  { id: 'general', icon: SettingsIcon },
+  { id: 'fonts', icon: PanelLeft },
+  { id: 'message', icon: Search },
+  { id: 'proxy', icon: Globe },
+  { id: 'data', icon: Database },
+  { id: 'about', icon: Info },
 ]
 
-const ACCENT_COLORS: { key: AccentKey; c: string; name: string }[] = [
-  { key: 'default', c: '#0a0a0a', name: '默认' },
-  { key: 'blue',    c: '#2563eb', name: '蓝' },
-  { key: 'green',   c: '#16a34a', name: '绿' },
-  { key: 'orange',  c: '#ea580c', name: '橙' },
-  { key: 'red',     c: '#dc2626', name: '红' },
-  { key: 'purple',  c: '#9333ea', name: '紫' },
-  { key: 'cyan',    c: '#0891b2', name: '青' },
+const ACCENT_COLORS: { key: AccentKey; c: string }[] = [
+  { key: 'default', c: '#0a0a0a' },
+  { key: 'blue',    c: '#2563eb' },
+  { key: 'green',   c: '#16a34a' },
+  { key: 'orange',  c: '#ea580c' },
+  { key: 'red',     c: '#dc2626' },
+  { key: 'purple',  c: '#9333ea' },
+  { key: 'cyan',    c: '#0891b2' },
 ]
 
-const THEMES: { name: string; desc: string; mode: ThemeMode }[] = [
-  { name: '浅色', desc: '默认', mode: 'light' },
-  { name: '深色', desc: '护眼', mode: 'dark' },
-  { name: '跟随系统', desc: '自动切换', mode: 'system' },
+const THEMES: { mode: ThemeMode; nameKey: string; descKey: string }[] = [
+  { mode: 'light',  nameKey: 'settings.appearance.themes.light',  descKey: 'settings.appearance.themes.lightDesc' },
+  { mode: 'dark',   nameKey: 'settings.appearance.themes.dark',   descKey: 'settings.appearance.themes.darkDesc' },
+  { mode: 'system', nameKey: 'settings.appearance.themes.system', descKey: 'settings.appearance.themes.systemDesc' },
 ]
 
-const UI_FONT_OPTIONS = [
-  { value: 'system', label: '系统默认' },
-  { value: 'Inter', label: 'Inter' },
-  { value: 'PingFang SC', label: 'PingFang SC' },
-  { value: 'Microsoft YaHei', label: '微软雅黑' },
-  { value: 'Noto Sans SC', label: 'Noto Sans SC' },
-  { value: 'HarmonyOS Sans', label: 'HarmonyOS Sans' },
-]
-
-const MONOSPACE_FONT_OPTIONS = [
-  { value: 'JetBrains Mono', label: 'JetBrains Mono' },
-  { value: 'Fira Code', label: 'Fira Code' },
-  { value: 'Source Code Pro', label: 'Source Code Pro' },
-  { value: 'Cascadia Code', label: 'Cascadia Code' },
-  { value: 'Menlo', label: 'Menlo' },
-  { value: 'Consolas', label: 'Consolas' },
-  { value: 'system', label: '系统默认' },
-]
-
-const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
-  { value: 'zh', label: '简体中文' },
-  { value: 'en', label: 'English' },
-]
-
-const FETCH_LIMIT_OPTIONS: { value: FetchLimit; label: string }[] = [
-  { value: 32, label: '32 条' },
-  { value: 64, label: '64 条' },
-  { value: 128, label: '128 条' },
-]
+const FETCH_LIMITS: FetchLimit[] = [32, 64, 128]
 
 const PROXY_TYPE_OPTIONS: { value: ProxyType; label: string }[] = [
   { value: 'http', label: 'HTTP' },
   { value: 'socks5', label: 'SOCKS5' },
 ]
 
-const TIMEZONE_OPTIONS: { value: Timezone; label: string }[] = [
-  { value: 'local', label: '本地时间' },
-  { value: 'utc', label: 'UTC' },
-]
-
-const TIMESTAMP_FORMAT_OPTIONS: { value: TimestampFormat; label: string }[] = [
-  { value: 'datetime', label: 'YYYY-MM-DD HH:mm:ss' },
-  { value: 'ms', label: '毫秒时间戳' },
+const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
+  { value: 'zh', label: '简体中文' },
+  { value: 'en', label: 'English' },
 ]
 
 const DATA_PATHS: { platform: string; path: string }[] = [
@@ -220,20 +188,21 @@ function Switch({
 // =================== Section Panels ===================
 
 function AppearancePanel() {
+  const { t } = useTranslation()
   const { settings, setSetting } = useSettings()
   const { prefs, setAccent, setAnimations, setReduceTransparency, setHighContrast } = useUIPrefs()
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>主题</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.appearance.theme')}</div>
       <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-        {THEMES.map((t) => {
-          const active = settings.theme === t.mode
-          const palette = t.mode === 'dark' ? DARK_P : LIGHT_P
+        {THEMES.map((th) => {
+          const active = settings.theme === th.mode
+          const palette = th.mode === 'dark' ? DARK_P : LIGHT_P
           return (
             <div
-              key={t.name}
+              key={th.mode}
               className="rl-card"
-              onClick={() => setSetting('theme', t.mode)}
+              onClick={() => setSetting('theme', th.mode)}
               style={{
                 padding: 0,
                 overflow: 'hidden',
@@ -247,13 +216,13 @@ function AppearancePanel() {
                   height: 84,
                   position: 'relative',
                   background:
-                    t.mode === 'system'
+                    th.mode === 'system'
                       ? 'linear-gradient(105deg, #ffffff 0%, #ffffff 49%, #262626 49%, #0a0a0a 100%)'
                       : palette.bg,
                   borderBottom: '1px solid hsl(var(--border))',
                 }}
               >
-                {t.mode === 'system' ? (
+                {th.mode === 'system' ? (
                   <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
                     <MiniAppChrome p={LIGHT_P} half="left" />
                     <MiniAppChrome p={DARK_P} half="right" />
@@ -264,8 +233,8 @@ function AppearancePanel() {
               </div>
               <div className="flex items-center justify-between" style={{ padding: '10px 12px' }}>
                 <div>
-                  <div className="text-[13px] font-medium" style={{ lineHeight: 1.2 }}>{t.name}</div>
-                  <div className="rl-muted text-[12px]" style={{ marginTop: 2 }}>{t.desc}</div>
+                  <div className="text-[13px] font-medium" style={{ lineHeight: 1.2 }}>{t(th.nameKey)}</div>
+                  <div className="rl-muted text-[12px]" style={{ marginTop: 2 }}>{t(th.descKey)}</div>
                 </div>
                 <div
                   style={{
@@ -287,7 +256,7 @@ function AppearancePanel() {
         })}
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>强调色</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.appearance.accent')}</div>
       <div className="rl-card" style={{ padding: 16 }}>
         <div className="flex flex-wrap items-center gap-2">
           {ACCENT_COLORS.map((c) => {
@@ -321,29 +290,37 @@ function AppearancePanel() {
                   className="text-[12px]"
                   style={{ color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' }}
                 >
-                  {c.name}
+                  {t(`settings.appearance.accentNames.${c.key}`)}
                 </span>
               </button>
             )
           })}
         </div>
-        <div className="rl-muted mt-3 text-[12px]">
-          强调色应用于按钮、链接与焦点环。选择「默认」恢复主题色。
-        </div>
+        <div className="rl-muted mt-3 text-[12px]">{t('settings.appearance.accentHint')}</div>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>动效与可访问性</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.appearance.a11y')}</div>
       <div className="rl-card">
-        <SettingsRow title="界面过渡动画" hint="页面切换、面板展开等过渡效果">
+        <SettingsRow
+          title={t('settings.appearance.animations')}
+          hint={t('settings.appearance.animationsHint')}
+        >
           <Switch on={prefs.animations} onClick={() => setAnimations(!prefs.animations)} />
         </SettingsRow>
-        <SettingsRow title="减少透明效果" hint="关闭背景模糊与半透明面板">
+        <SettingsRow
+          title={t('settings.appearance.reduceTransparency')}
+          hint={t('settings.appearance.reduceTransparencyHint')}
+        >
           <Switch
             on={prefs.reduceTransparency}
             onClick={() => setReduceTransparency(!prefs.reduceTransparency)}
           />
         </SettingsRow>
-        <SettingsRow title="高对比度" hint="增强边框与文本对比度" bordered={false}>
+        <SettingsRow
+          title={t('settings.appearance.highContrast')}
+          hint={t('settings.appearance.highContrastHint')}
+          bordered={false}
+        >
           <Switch on={prefs.highContrast} onClick={() => setHighContrast(!prefs.highContrast)} />
         </SettingsRow>
       </div>
@@ -352,12 +329,13 @@ function AppearancePanel() {
 }
 
 function GeneralPanel() {
+  const { t } = useTranslation()
   const { settings, setSetting } = useSettings()
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>语言与区域</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.general.languageRegion')}</div>
       <div className="rl-card">
-        <SettingsRow title="界面语言" hint="切换后立即生效">
+        <SettingsRow title={t('settings.general.language')} hint={t('settings.general.languageHint')}>
           <select
             className="rl-select"
             style={{ width: 200 }}
@@ -369,25 +347,24 @@ function GeneralPanel() {
             ))}
           </select>
         </SettingsRow>
-        <SettingsRow title="时区" hint="影响列表与详情中的时间显示" bordered={false}>
+        <SettingsRow title={t('settings.general.timezone')} hint={t('settings.general.timezoneHint')} bordered={false}>
           <select
             className="rl-select"
             style={{ width: 200 }}
             value={settings.timezone}
             onChange={(e) => setSetting('timezone', e.target.value as Timezone)}
           >
-            {TIMEZONE_OPTIONS.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
+            <option value="local">{t('settings.general.tzLocal')}</option>
+            <option value="utc">{t('settings.general.tzUtc')}</option>
           </select>
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>启动行为</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.general.startup')}</div>
       <div className="rl-card">
         <SettingsRow
-          title="启动时自动连接上次集群"
-          hint="启动应用后自动连接上次使用的集群"
+          title={t('settings.general.autoConnect')}
+          hint={t('settings.general.autoConnectHint')}
           bordered={false}
         >
           <Switch
@@ -401,6 +378,7 @@ function GeneralPanel() {
 }
 
 function FontsPanel() {
+  const { t } = useTranslation()
   const { settings, setSetting } = useSettings()
 
   const handleFontSizeChange = (delta: number) => {
@@ -410,9 +388,9 @@ function FontsPanel() {
 
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>字体与排版</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.fonts.fontsTypography')}</div>
       <div className="rl-card">
-        <SettingsRow title="界面字号" hint="影响整个应用的基础字号">
+        <SettingsRow title={t('settings.fonts.fontSize')} hint={t('settings.fonts.fontSizeHint')}>
           <button
             className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm"
             onClick={() => handleFontSizeChange(-1)}
@@ -434,52 +412,58 @@ function FontsPanel() {
             +
           </button>
         </SettingsRow>
-        <SettingsRow title="界面字体" hint="默认使用系统 UI 字体">
+        <SettingsRow title={t('settings.fonts.uiFont')} hint={t('settings.fonts.uiFontHint')}>
           <select
             className="rl-select"
             style={{ width: 200 }}
             value={settings.uiFont}
             onChange={(e) => setSetting('uiFont', e.target.value)}
           >
-            {UI_FONT_OPTIONS.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
+            <option value="system">{t('settings.fonts.systemDefault')}</option>
+            <option value="Inter">Inter</option>
+            <option value="PingFang SC">PingFang SC</option>
+            <option value="Microsoft YaHei">Microsoft YaHei</option>
+            <option value="Noto Sans SC">Noto Sans SC</option>
+            <option value="HarmonyOS Sans">HarmonyOS Sans</option>
           </select>
         </SettingsRow>
-        <SettingsRow title="等宽字体" hint="用于消息体、ID、JSON 显示" bordered={false}>
+        <SettingsRow title={t('settings.fonts.monospaceFont')} hint={t('settings.fonts.monospaceFontHint')} bordered={false}>
           <select
             className="rl-select"
             style={{ width: 200 }}
             value={settings.monospaceFont}
             onChange={(e) => setSetting('monospaceFont', e.target.value)}
           >
-            {MONOSPACE_FONT_OPTIONS.map((f) => (
-              <option key={f.value} value={f.value}>{f.label}</option>
-            ))}
+            <option value="JetBrains Mono">JetBrains Mono</option>
+            <option value="Fira Code">Fira Code</option>
+            <option value="Source Code Pro">Source Code Pro</option>
+            <option value="Cascadia Code">Cascadia Code</option>
+            <option value="Menlo">Menlo</option>
+            <option value="Consolas">Consolas</option>
+            <option value="system">{t('settings.fonts.systemDefault')}</option>
           </select>
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>时间显示</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.fonts.timeDisplay')}</div>
       <div className="rl-card">
-        <SettingsRow title="时间格式" hint="影响列表与详情中的时间显示" bordered={false}>
+        <SettingsRow title={t('settings.fonts.timeFormat')} hint={t('settings.fonts.timeFormatHint')} bordered={false}>
           <select
             className="rl-select"
             style={{ width: 200 }}
             value={settings.timestampFormat}
             onChange={(e) => setSetting('timestampFormat', e.target.value as TimestampFormat)}
           >
-            {TIMESTAMP_FORMAT_OPTIONS.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
+            <option value="datetime">{t('settings.fonts.tsDatetime')}</option>
+            <option value="ms">{t('settings.fonts.tsMs')}</option>
           </select>
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>预览</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.fonts.preview')}</div>
       <div className="rl-card" style={{ padding: 16 }}>
         <div className="text-[13px]" style={{ fontSize: settings.fontSize }}>
-          示例文本：Rocket-Leaf 轻量级 RocketMQ 管理客户端 ABCDabcd 1234
+          {t('settings.fonts.previewSample')}
         </div>
         <div
           className="font-mono-design rl-muted mt-2 text-[12px]"
@@ -493,31 +477,32 @@ function FontsPanel() {
 }
 
 function MessagePanel() {
+  const { t } = useTranslation()
   const { settings, setSetting } = useSettings()
   const payloadKB = Math.round(settings.maxPayloadRenderBytes / 1024)
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>消息查询默认值</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.message.defaults')}</div>
       <div className="rl-card">
-        <SettingsRow title="单页拉取数量" hint="每次查询 Topic、消费组的数量上限">
+        <SettingsRow title={t('settings.message.fetchLimit')} hint={t('settings.message.fetchLimitHint')}>
           <select
             className="rl-select"
             style={{ width: 140 }}
             value={settings.fetchLimit}
             onChange={(e) => setSetting('fetchLimit', Number(e.target.value) as FetchLimit)}
           >
-            {FETCH_LIMIT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {FETCH_LIMITS.map((n) => (
+              <option key={n} value={n}>{t('settings.message.fetchUnit', { count: n })}</option>
             ))}
           </select>
         </SettingsRow>
-        <SettingsRow title="JSON 自动格式化" hint="查看消息时自动美化 JSON 内容">
+        <SettingsRow title={t('settings.message.autoFormatJson')} hint={t('settings.message.autoFormatJsonHint')}>
           <Switch
             on={settings.autoFormatJson}
             onClick={() => setSetting('autoFormatJson', !settings.autoFormatJson)}
           />
         </SettingsRow>
-        <SettingsRow title="消息截断阈值" hint="超过此大小的消息内容将被截断显示" bordered={false}>
+        <SettingsRow title={t('settings.message.payloadLimit')} hint={t('settings.message.payloadLimitHint')} bordered={false}>
           <input
             type="number"
             className="rl-input"
@@ -537,11 +522,11 @@ function MessagePanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>告警阈值</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.message.alertThresholds')}</div>
       <div className="rl-card">
         <SettingsRow
-          title="消费积压告警"
-          hint="当消费组堆积消息超过此值时显示告警，设为 0 关闭"
+          title={t('settings.message.lagAlert')}
+          hint={t('settings.message.lagAlertHint')}
           bordered={false}
         >
           <input
@@ -553,7 +538,7 @@ function MessagePanel() {
             value={settings.lagAlertThreshold}
             onChange={(e) => setSetting('lagAlertThreshold', Number(e.target.value) || 0)}
           />
-          <span className="rl-muted text-[12px]">条</span>
+          <span className="rl-muted text-[12px]">{t('settings.message.lagAlertUnit')}</span>
         </SettingsRow>
       </div>
     </>
@@ -561,12 +546,13 @@ function MessagePanel() {
 }
 
 function ProxyPanel() {
+  const { t } = useTranslation()
   const { settings, setSetting } = useSettings()
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>连接超时</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.proxy.timeout')}</div>
       <div className="rl-card">
-        <SettingsRow title="连接超时" hint="建立 NameServer 连接的最大等待时间">
+        <SettingsRow title={t('settings.proxy.connect')} hint={t('settings.proxy.connectHint')}>
           <input
             type="number"
             className="rl-input"
@@ -585,7 +571,7 @@ function ProxyPanel() {
           />
           <span className="rl-muted text-[12px]">ms</span>
         </SettingsRow>
-        <SettingsRow title="请求超时" hint="查询 Topic、消费组等操作的超时时间" bordered={false}>
+        <SettingsRow title={t('settings.proxy.request')} hint={t('settings.proxy.requestHint')} bordered={false}>
           <input
             type="number"
             className="rl-input"
@@ -606,29 +592,29 @@ function ProxyPanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>默认凭证</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.proxy.credentials')}</div>
       <div className="rl-card">
-        <SettingsRow title="默认 AccessKey" hint="新建连接时自动填充">
+        <SettingsRow title={t('settings.proxy.ak')} hint={t('settings.proxy.akHint')}>
           <input
             type="text"
             className="rl-input font-mono-design"
             style={{ width: 240 }}
             value={settings.globalAccessKey}
-            placeholder="新建连接时自动填充"
+            placeholder={t('settings.proxy.akPlaceholder')}
             onChange={(e) => setSetting('globalAccessKey', e.target.value)}
           />
         </SettingsRow>
-        <SettingsRow title="默认 SecretKey" hint="加密存储于本地">
+        <SettingsRow title={t('settings.proxy.sk')} hint={t('settings.proxy.skHint')}>
           <input
             type="password"
             className="rl-input font-mono-design"
             style={{ width: 240 }}
             value={settings.globalSecretKey}
-            placeholder="新建连接时自动填充"
+            placeholder={t('settings.proxy.akPlaceholder')}
             onChange={(e) => setSetting('globalSecretKey', e.target.value)}
           />
         </SettingsRow>
-        <SettingsRow title="跳过 TLS 校验" hint="跳过服务端证书验证，仅限测试环境" bordered={false}>
+        <SettingsRow title={t('settings.proxy.skipTls')} hint={t('settings.proxy.skipTlsHint')} bordered={false}>
           <Switch
             on={settings.skipTlsVerify}
             onClick={() => setSetting('skipTlsVerify', !settings.skipTlsVerify)}
@@ -636,9 +622,9 @@ function ProxyPanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>HTTP 代理</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.proxy.httpProxy')}</div>
       <div className="rl-card">
-        <SettingsRow title="启用代理" hint="发起连接时使用代理服务器">
+        <SettingsRow title={t('settings.proxy.enable')} hint={t('settings.proxy.enableHint')}>
           <Switch
             on={settings.proxyEnabled}
             onClick={() => setSetting('proxyEnabled', !settings.proxyEnabled)}
@@ -646,7 +632,7 @@ function ProxyPanel() {
         </SettingsRow>
         {settings.proxyEnabled && (
           <>
-            <SettingsRow title="代理类型">
+            <SettingsRow title={t('settings.proxy.type')}>
               <select
                 className="rl-select"
                 style={{ width: 140 }}
@@ -658,7 +644,7 @@ function ProxyPanel() {
                 ))}
               </select>
             </SettingsRow>
-            <SettingsRow title="代理地址">
+            <SettingsRow title={t('settings.proxy.host')}>
               <input
                 type="text"
                 className="rl-input font-mono-design"
@@ -668,7 +654,7 @@ function ProxyPanel() {
                 onChange={(e) => setSetting('proxyHost', e.target.value)}
               />
             </SettingsRow>
-            <SettingsRow title="代理端口" bordered={false}>
+            <SettingsRow title={t('settings.proxy.port')} bordered={false}>
               <input
                 type="text"
                 className="rl-input font-mono-design"
@@ -680,7 +666,7 @@ function ProxyPanel() {
                   const port = Number(settings.proxyPort)
                   if (settings.proxyPort && (port < 1 || port > 65535)) {
                     setSetting('proxyPort', '')
-                    toast.error('端口范围 1-65535')
+                    toast.error(t('settings.proxy.portRangeError'))
                   }
                 }}
               />
@@ -692,7 +678,7 @@ function ProxyPanel() {
             className="rl-muted text-[12px]"
             style={{ padding: '12px 16px', borderTop: '1px solid hsl(var(--border))' }}
           >
-            未启用代理，连接将直连 NameServer。
+            {t('settings.proxy.disabledNote')}
           </div>
         )}
       </div>
@@ -709,18 +695,19 @@ function DataPanel({
   onImport: () => void
   onClearCache: () => void
 }) {
+  const { t } = useTranslation()
   const copyPath = useCallback(async (p: string) => {
     try {
       await navigator.clipboard.writeText(p)
-      toast.success('已复制路径')
+      toast.success(t('settings.data.copySuccess'))
     } catch {
-      toast.error('复制失败')
+      toast.error(t('settings.data.copyError'))
     }
-  }, [])
+  }, [t])
 
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>数据存储位置</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.data.storage')}</div>
       <div className="rl-card overflow-hidden">
         {DATA_PATHS.map((p, i) => (
           <div
@@ -737,34 +724,34 @@ function DataPanel({
             <code className="font-mono-design rl-muted min-w-0 flex-1 truncate text-[12px]">
               {p.path}
             </code>
-            <span className="rl-muted text-[11px]">点击复制</span>
+            <span className="rl-muted text-[11px]">{t('settings.data.clickToCopy')}</span>
           </div>
         ))}
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>导入与导出</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.data.ioSection')}</div>
       <div className="rl-card">
-        <SettingsRow title="导出全部配置" hint="导出连接、ACL、应用设置为 JSON 文件">
+        <SettingsRow title={t('settings.data.exportTitle')} hint={t('settings.data.exportHint')}>
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onExport}>
-            <Download size={13} />导出
+            <Download size={13} />{t('common.export')}
           </button>
         </SettingsRow>
-        <SettingsRow title="导入配置" hint="从 JSON 文件恢复，重启应用后生效" bordered={false}>
+        <SettingsRow title={t('settings.data.importTitle')} hint={t('settings.data.importHint')} bordered={false}>
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onImport}>
-            <Upload size={13} />选择文件
+            <Upload size={13} />{t('common.selectFile')}
           </button>
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>清理</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.data.cleanup')}</div>
       <div className="rl-card">
-        <SettingsRow title="清理缓存" hint="清除本地的查询、消息缓存数据" bordered={false}>
+        <SettingsRow title={t('settings.data.clearCache')} hint={t('settings.data.clearCacheHint')} bordered={false}>
           <button
             className="rl-btn rl-btn-outline rl-btn-sm"
             style={{ color: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive) / 0.5)' }}
             onClick={onClearCache}
           >
-            <Trash2 size={13} />清理缓存
+            <Trash2 size={13} />{t('settings.data.clearCache')}
           </button>
         </SettingsRow>
       </div>
@@ -773,6 +760,7 @@ function DataPanel({
 }
 
 function AboutPanel({ onCheckUpdate, onResetSettings }: { onCheckUpdate: () => void; onResetSettings: () => void }) {
+  const { t } = useTranslation()
   const openLink = (url: string) =>
     Browser.OpenURL(url).catch(() => window.open(url, '_blank', 'noopener,noreferrer'))
 
@@ -783,41 +771,41 @@ function AboutPanel({ onCheckUpdate, onResetSettings }: { onCheckUpdate: () => v
           <img src={logoUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-contain" aria-hidden />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="text-[16px] font-semibold">Rocket-Leaf</h2>
+              <h2 className="text-[16px] font-semibold">{t('app.name')}</h2>
               <span className="rl-badge rl-badge-outline">v{APP_VERSION}</span>
             </div>
             <p className="rl-muted mt-1 text-[13px]" style={{ lineHeight: 1.6 }}>
-              一款基于 Wails 构建的轻量级、跨平台 RocketMQ 管理客户端。
+              {t('settings.about.descriptionZh')}
             </p>
             <p className="rl-muted text-[12px]" style={{ lineHeight: 1.6 }}>
-              A lightweight, cross-platform RocketMQ client built with Go and Wails.
+              {t('settings.about.descriptionEn')}
             </p>
           </div>
         </div>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 20 }}>资源</div>
+      <div className="rl-section-label" style={{ marginTop: 20 }}>{t('settings.about.resources')}</div>
       <div className="flex flex-wrap gap-2">
         <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onCheckUpdate}>
-          <RefreshCw size={13} />检查更新
+          <RefreshCw size={13} />{t('settings.about.checkUpdate')}
         </button>
         <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={() => openLink(GITHUB_URL)}>
           <Github size={13} />GitHub
         </button>
         <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={() => openLink(GITHUB_ISSUES_URL)}>
-          <ExternalLink size={13} />提交 Issue
+          <ExternalLink size={13} />{t('settings.about.openIssue')}
         </button>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 20 }}>偏好设置</div>
+      <div className="rl-section-label" style={{ marginTop: 20 }}>{t('settings.about.preferences')}</div>
       <div className="rl-card">
-        <SettingsRow title="恢复默认设置" hint="将所有设置恢复为初始值（不影响连接）" bordered={false}>
+        <SettingsRow title={t('settings.about.resetTitle')} hint={t('settings.about.resetHint')} bordered={false}>
           <button
             className="rl-btn rl-btn-outline rl-btn-sm"
             style={{ color: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive) / 0.5)' }}
             onClick={onResetSettings}
           >
-            <RotateCcw size={13} />恢复默认
+            <RotateCcw size={13} />{t('settings.about.reset')}
           </button>
         </SettingsRow>
       </div>
@@ -828,6 +816,7 @@ function AboutPanel({ onCheckUpdate, onResetSettings }: { onCheckUpdate: () => v
 // =================== Main Screen ===================
 
 export function SettingsScreen() {
+  const { t } = useTranslation()
   const [activeSection, setActiveSection] = useState<SectionId>('appearance')
   const { resetAllSettings, loading } = useSettings()
   const [confirmAction, setConfirmAction] = useState<{
@@ -846,11 +835,11 @@ export function SettingsScreen() {
       a.download = `rocket-leaf-config-${new Date().toISOString().slice(0, 10)}.json`
       a.click()
       URL.revokeObjectURL(url)
-      toast.success('配置已导出')
+      toast.success(t('settings.data.exportSuccess'))
     } catch {
-      toast.error('导出配置失败')
+      toast.error(t('settings.data.exportError'))
     }
-  }, [])
+  }, [t])
 
   const handleImport = useCallback(() => {
     const input = document.createElement('input')
@@ -862,49 +851,49 @@ export function SettingsScreen() {
       try {
         const text = await file.text()
         await importAllConfig(text)
-        toast.success('配置已导入，重启应用后生效')
+        toast.success(t('settings.data.importSuccess'))
       } catch {
-        toast.error('导入配置失败')
+        toast.error(t('settings.data.importError'))
       }
     }
     input.click()
-  }, [])
+  }, [t])
 
   const doClearCache = useCallback(async () => {
     try {
       await clearCacheApi()
-      toast.success('缓存已清理')
+      toast.success(t('settings.data.clearCacheSuccess'))
     } catch {
-      toast.error('清理缓存失败')
+      toast.error(t('settings.data.clearCacheError'))
     }
-  }, [])
+  }, [t])
 
   const handleClearCache = useCallback(() => {
     setConfirmAction({
-      title: '清理缓存',
-      description: '确定要清理所有缓存数据吗？此操作不可撤销。',
+      title: t('settings.data.clearCacheConfirmTitle'),
+      description: t('settings.data.clearCacheConfirmDesc'),
       onConfirm: () => {
         setConfirmAction(null)
         void doClearCache()
       },
     })
-  }, [doClearCache])
+  }, [doClearCache, t])
 
   const handleResetSettings = useCallback(() => {
     setConfirmAction({
-      title: '恢复默认设置',
-      description: '确定要将所有设置恢复为默认值吗？当前的自定义设置将全部丢失。',
+      title: t('settings.about.resetConfirmTitle'),
+      description: t('settings.about.resetConfirmDesc'),
       onConfirm: async () => {
         setConfirmAction(null)
         try {
           await resetAllSettings()
-          toast.success('已恢复默认设置')
+          toast.success(t('settings.about.resetSuccess'))
         } catch {
-          toast.error('恢复默认设置失败')
+          toast.error(t('settings.about.resetError'))
         }
       },
     })
-  }, [resetAllSettings])
+  }, [resetAllSettings, t])
 
   const handleCheckUpdate = useCallback(() => {
     Browser.OpenURL(GITHUB_RELEASES_URL).catch(() =>
@@ -916,7 +905,7 @@ export function SettingsScreen() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title="设置" />
+      <PageHeader title={t('settings.title')} />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside
           className="rl-subtle-bg"
@@ -943,7 +932,7 @@ export function SettingsScreen() {
                   borderLeft: active ? '2px solid hsl(var(--foreground))' : '2px solid transparent',
                 }}
               >
-                <s.icon size={14} />{s.label}
+                <s.icon size={14} />{t(`settings.section.${s.id}.label`)}
               </div>
             )
           })}
@@ -952,12 +941,16 @@ export function SettingsScreen() {
         <div className="scroll-thin min-w-0 flex-1 overflow-auto p-6">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <div className="text-[16px] font-semibold">{currentSection.label}</div>
-              <div className="rl-muted mt-1 text-[12px]">{currentSection.subtitle}</div>
+              <div className="text-[16px] font-semibold">
+                {t(`settings.section.${currentSection.id}.label`)}
+              </div>
+              <div className="rl-muted mt-1 text-[12px]">
+                {t(`settings.section.${currentSection.id}.subtitle`)}
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="rl-muted text-[12px]">
-                {loading ? '加载中…' : '所有更改自动保存'}
+                {loading ? t('settings.loading') : t('settings.autoSaved')}
               </span>
             </div>
           </div>
@@ -992,8 +985,8 @@ export function SettingsScreen() {
         open={confirmAction !== null}
         title={confirmAction?.title ?? ''}
         description={confirmAction?.description ?? ''}
-        confirmText="确认"
-        cancelText="取消"
+        confirmText={t('common.confirm')}
+        cancelText={t('common.cancel')}
         variant="destructive"
         onConfirm={confirmAction?.onConfirm ?? (() => { })}
         onCancel={() => setConfirmAction(null)}

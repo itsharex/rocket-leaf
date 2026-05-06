@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { History, Plus, MoreHorizontal } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 
 const RULES = [
@@ -18,19 +19,20 @@ const FIRES: { t: string; level: 'crit' | 'warn' | 'info'; rule: string; text: s
 ]
 
 export function AlertsScreen() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('规则')
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
-        title="监控告警"
+        title={t('alerts.title')}
         subtitle="3 条规则启用 · 近 24h 触发 3 次"
         tabs={['规则', '近期触发', '通知渠道']}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       >
         <button className="rl-btn rl-btn-ghost rl-btn-sm"><History size={13} />历史</button>
-        <button className="rl-btn rl-btn-primary rl-btn-sm"><Plus size={13} />新建规则</button>
+        <button className="rl-btn rl-btn-primary rl-btn-sm"><Plus size={13} />{t('common.create')}</button>
       </PageHeader>
 
       <div className="scroll-thin min-h-0 flex-1 overflow-auto" style={{ padding: 20 }}>

@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { getSettings, updateSettings, resetSettings as apiResetSettings } from '@/api/settings'
 import type { AppSettings } from '@/api/settings'
+import { setLanguage as setI18nLanguage, type SupportedLanguage } from '@/i18n'
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 export type Language = 'en' | 'zh'
@@ -147,6 +148,7 @@ function applySettingsToDocument(settings: FrontendSettings) {
 
   // 语言
   root.lang = settings.language === 'en' ? 'en' : 'zh-CN'
+  setI18nLanguage(settings.language as SupportedLanguage)
 }
 
 function useSettingsStore(): SettingsContextValue {

@@ -5,6 +5,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader, JSONView } from '../shell'
 
 const SAMPLE_BODY = `{
@@ -24,9 +25,10 @@ const HISTORY: { ok: boolean; t: string; topic: string; id?: string; ms?: string
 ]
 
 export function ProducerScreen() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title="发送测试消息" subtitle="向 Topic 发送一条消息用于联调与诊断">
+      <PageHeader title={t('producer.title')} subtitle="向 Topic 发送一条消息用于联调与诊断">
         <button className="rl-btn rl-btn-ghost rl-btn-sm">
           <History size={13} />历史
         </button>

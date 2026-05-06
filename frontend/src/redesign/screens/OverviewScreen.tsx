@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 
 function trend(offset = 0, amp = 30): number[] {
@@ -21,13 +22,6 @@ function trend(offset = 0, amp = 30): number[] {
     100 + Math.sin(i * 0.4 + offset) * amp + Math.cos(i * 0.15 + offset) * (amp * 0.6) + (i % 5) * 2
   )
 }
-
-const KPIS = [
-  { label: 'Topic', value: '248', icon: LayoutGrid, sub: '活跃 196 · 新增 +3' },
-  { label: '消费者组', value: '82', icon: Users, sub: '在线 71 · 离线 11' },
-  { label: 'Broker', value: '8 / 8', icon: Server, sub: '4 主 + 4 备 · 全部在线' },
-  { label: '消息积压', value: '15.1k', icon: Inbox, sub: '3 个 Group 异常' },
-]
 
 const ACTIVE_TOPICS = [
   { n: 'im.message', t: '8.4k/s', p: 100 },
@@ -50,25 +44,36 @@ const BROKERS = [
   { n: 'broker-b-slave-1', role: 'S', disk: 51 },
 ]
 
-const QUICK_ACTIONS = [
-  { icon: Send, label: '发送测试消息' },
-  { icon: Search, label: '查询消息' },
-  { icon: Plus, label: '新建 Topic' },
-  { icon: RotateCcw, label: '重置消费进度' },
-]
-
 export function OverviewScreen() {
+  const { t } = useTranslation()
   const prod = trend(0, 30)
   const cons = trend(0.4, 28)
 
+  const KPIS = [
+    { label: t('overview.stat.topics'), value: '248', icon: LayoutGrid, sub: t('overview.stat.topicSummary', { active: 196, new: 3 }) },
+    { label: t('overview.stat.consumers'), value: '82', icon: Users, sub: t('overview.stat.consumersSummary', { online: 71, offline: 11 }) },
+    { label: t('overview.stat.broker'), value: '8 / 8', icon: Server, sub: t('overview.stat.brokerSummary', { master: 4, slave: 4 }) },
+    { label: t('overview.stat.lag'), value: '15.1k', icon: Inbox, sub: t('overview.stat.lagSummary', { count: 3 }) },
+  ]
+
+  const QUICK_ACTIONS = [
+    { icon: Send, label: t('overview.shortcut.send') },
+    { icon: Search, label: t('overview.shortcut.search') },
+    { icon: Plus, label: t('overview.shortcut.create') },
+    { icon: RotateCcw, label: t('overview.shortcut.reset') },
+  ]
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title="概览" subtitle="prod-cluster-01 · 实时刷新于 10:24:38">
+      <PageHeader
+        title={t('overview.title')}
+        subtitle={t('overview.subtitleConnected', { cluster: 'prod-cluster-01', time: '10:24:38' })}
+      >
         <button className="rl-btn rl-btn-ghost rl-btn-sm">
-          <RefreshCw size={13} />刷新
+          <RefreshCw size={13} />{t('common.refresh')}
         </button>
         <button className="rl-btn rl-btn-outline rl-btn-sm">
-          <Unlink size={13} />断开
+          <Unlink size={13} />{t('common.disconnect')}
         </button>
       </PageHeader>
 
@@ -146,10 +151,10 @@ export function OverviewScreen() {
               <div className="rl-card overflow-hidden">
                 <div className="flex items-center justify-between p-4 pb-3">
                   <div>
-                    <div className="text-[13px] font-medium">活跃 Topic</div>
-                    <div className="rl-muted mt-1 text-[12px]">按入流量排序</div>
+                    <div className="text-[13px] font-medium">{t('overview.active.title')}</div>
+                    <div className="rl-muted mt-1 text-[12px]">{t('overview.active.subtitle')}</div>
                   </div>
-                  <span className="rl-muted text-[12px]">查看全部 →</span>
+                  <span className="rl-muted text-[12px]">{t('common.viewAll')} →</span>
                 </div>
                 <div style={{ borderTop: '1px solid hsl(var(--border))' }}>
                   {ACTIVE_TOPICS.map((r, i) => (
@@ -177,8 +182,8 @@ export function OverviewScreen() {
               <div className="rl-card overflow-hidden">
                 <div className="flex items-center justify-between p-4 pb-3">
                   <div>
-                    <div className="text-[13px] font-medium">堆积告警</div>
-                    <div className="rl-muted mt-1 text-[12px]">堆积 &gt; 100 条的消费组</div>
+                    <div className="text-[13px] font-medium">{t('overview.lag.title')}</div>
+                    <div className="rl-muted mt-1 text-[12px]">{t('overview.lag.subtitle')}</div>
                   </div>
                   <span className="rl-badge rl-badge-danger">3</span>
                 </div>
@@ -203,7 +208,7 @@ export function OverviewScreen() {
                     className="flex items-center gap-3 rl-muted"
                     style={{ padding: '10px 16px', borderTop: '1px solid hsl(var(--border))' }}
                   >
-                    <span className="text-[12px]">其余 79 个消费组运行正常</span>
+                    <span className="text-[12px]">{t('overview.lag.rest', { count: 79 })}</span>
                   </div>
                 </div>
               </div>
@@ -213,12 +218,12 @@ export function OverviewScreen() {
           {/* RIGHT */}
           <div className="flex flex-col gap-4">
             <div className="rl-card" style={{ padding: 16 }}>
-              <div className="rl-muted text-[12px]">当前连接</div>
+              <div className="rl-muted text-[12px]">{t('overview.current.title')}</div>
               <div className="mt-2 flex items-center gap-2">
                 <span className="font-medium">prod-cluster-01</span>
                 <span className="rl-badge rl-badge-success">
                   <span style={{ width: 5, height: 5, borderRadius: 999, background: 'currentColor' }} />
-                  已连接
+                  {t('common.connected')}
                 </span>
               </div>
               <div className="font-mono-design rl-muted mt-2 text-[12px]" style={{ wordBreak: 'break-all', lineHeight: 1.6 }}>
@@ -233,8 +238,8 @@ export function OverviewScreen() {
 
             <div className="rl-card overflow-hidden">
               <div className="p-4 pb-3">
-                <div className="text-[13px] font-medium">Broker 状态</div>
-                <div className="rl-muted mt-1 text-[12px]">8 个节点全部在线</div>
+                <div className="text-[13px] font-medium">{t('overview.broker.title')}</div>
+                <div className="rl-muted mt-1 text-[12px]">{t('overview.broker.subtitle', { count: 8 })}</div>
               </div>
               <div style={{ borderTop: '1px solid hsl(var(--border))' }}>
                 {BROKERS.map((b, i) => (
@@ -256,7 +261,7 @@ export function OverviewScreen() {
 
             <div className="rl-card overflow-hidden">
               <div className="p-4 pb-3">
-                <div className="text-[13px] font-medium">快捷操作</div>
+                <div className="text-[13px] font-medium">{t('overview.shortcut.title')}</div>
               </div>
               <div style={{ borderTop: '1px solid hsl(var(--border))' }}>
                 {QUICK_ACTIONS.map((a, i) => (
@@ -280,6 +285,7 @@ export function OverviewScreen() {
 }
 
 function AIDiagnoseCard() {
+  const { t } = useTranslation()
   return (
     <div className="rl-ai-diag-card">
       <div className="rl-ai-diag-head">
@@ -293,12 +299,12 @@ function AIDiagnoseCard() {
           <Sparkles size={12} />
         </div>
         <div className="flex-1">
-          <div className="text-[13px] font-semibold">AI 诊断 · 集群健康</div>
-          <div className="rl-muted text-[12px]">2 分钟前更新 · 检查了 14 个 Topic, 9 个消费者组, 8 个 Broker</div>
+          <div className="text-[13px] font-semibold">{t('overview.ai.title')}</div>
+          <div className="rl-muted text-[12px]">{t('overview.ai.subtitle')}</div>
         </div>
-        <button className="rl-btn rl-btn-ghost rl-btn-sm">重新分析</button>
+        <button className="rl-btn rl-btn-ghost rl-btn-sm">{t('overview.ai.reanalyze')}</button>
         <button className="rl-btn rl-btn-outline rl-btn-sm">
-          <Sparkles size={12} />和 AI 聊聊
+          <Sparkles size={12} />{t('overview.ai.chat')}
         </button>
       </div>
 
@@ -308,7 +314,7 @@ function AIDiagnoseCard() {
           <div className="rl-ai-finding-body">
             <div className="flex items-center justify-between">
               <div className="rl-ai-finding-title">search-indexer 持续堆积，疑似下游解析异常</div>
-              <span className="rl-muted text-[12px]">高优先级</span>
+              <span className="rl-muted text-[12px]">{t('overview.ai.high')}</span>
             </div>
             <div className="rl-ai-finding-desc">
               重试率 18.2%（正常 &lt; 2%），与 1h 前 <strong>order-events v2.3</strong> 升级时间吻合。建议跳过异常消息并通知下游团队。
@@ -320,7 +326,7 @@ function AIDiagnoseCard() {
           <div className="rl-ai-finding-body">
             <div className="flex items-center justify-between">
               <div className="rl-ai-finding-title">broker-b-master 磁盘水位 78%，预计 36h 后触发只读</div>
-              <span className="rl-muted text-[12px]">中优先级</span>
+              <span className="rl-muted text-[12px]">{t('overview.ai.med')}</span>
             </div>
             <div className="rl-ai-finding-desc">
               按当前增长速度（约 3.2GB/h）将在阈值 85% 前 36 小时触达。可考虑扩容或清理 7 天前的归档消息。
@@ -332,7 +338,7 @@ function AIDiagnoseCard() {
           <div className="rl-ai-finding-body">
             <div className="flex items-center justify-between">
               <div className="rl-ai-finding-title">3 个 Topic 长期无生产者，建议归档</div>
-              <span className="rl-muted text-[12px]">低优先级</span>
+              <span className="rl-muted text-[12px]">{t('overview.ai.low')}</span>
             </div>
             <div className="rl-ai-finding-desc">
               <code>legacy-orders</code>、<code>test-evt</code>、<code>tmp-import</code> 已 14 天无新消息，仍占用 832MB 存储。

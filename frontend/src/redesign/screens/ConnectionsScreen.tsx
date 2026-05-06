@@ -8,6 +8,7 @@ import {
   Wifi,
   Trash2,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 
 const CONNS = [
@@ -18,15 +19,16 @@ const CONNS = [
 ]
 
 export function ConnectionsScreen() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title="连接管理" subtitle="本地保存 · 4 个连接配置">
+      <PageHeader title={t('connections.title')} subtitle="本地保存 · 4 个连接配置">
         <div className="rl-search-input" style={{ width: 220 }}>
           <span className="icon"><Search size={14} /></span>
-          <input className="rl-input" placeholder="搜索连接…" />
+          <input className="rl-input" placeholder={t('common.search')} />
         </div>
         <button className="rl-btn rl-btn-primary rl-btn-sm">
-          <Plus size={13} />添加连接
+          <Plus size={13} />{t('common.create')}
         </button>
       </PageHeader>
 

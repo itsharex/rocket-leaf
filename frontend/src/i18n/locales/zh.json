@@ -1,0 +1,354 @@
+{
+  "app": {
+    "name": "Rocket-Leaf",
+    "tagline": "RocketMQ 桌面客户端"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "delete": "删除",
+    "refresh": "刷新",
+    "search": "搜索",
+    "edit": "编辑",
+    "create": "新建",
+    "import": "导入",
+    "export": "导出",
+    "copy": "复制",
+    "loading": "加载中…",
+    "all": "全部",
+    "online": "在线",
+    "offline": "离线",
+    "connected": "已连接",
+    "disconnect": "断开",
+    "selectFile": "选择文件",
+    "viewAll": "查看全部",
+    "newCount": "新增 {{count}}",
+    "instances": "{{count}} 实例",
+    "queues": "{{count}} 队列",
+    "comma": "、",
+    "minimize": "最小化",
+    "maximize": "最大化",
+    "restore": "还原",
+    "close": "关闭",
+    "exitApp": "退出应用",
+    "exitAppConfirm": "确定要关闭 Rocket-Leaf 吗？",
+    "exit": "退出",
+    "connectFirst": "请先连接集群"
+  },
+  "nav": {
+    "home": "概览",
+    "topics": "主题",
+    "consumers": "消费者组",
+    "messages": "消息",
+    "producer": "发送测试",
+    "cluster": "集群",
+    "alerts": "告警",
+    "acl": "权限与审计",
+    "connections": "连接",
+    "settings": "设置",
+    "github": "GitHub"
+  },
+  "titlebar": {
+    "aiAssistant": "AI 助手"
+  },
+  "overview": {
+    "title": "概览",
+    "subtitleConnected": "{{cluster}} · 实时刷新于 {{time}}",
+    "stat": {
+      "topics": "Topic",
+      "consumers": "消费者组",
+      "broker": "Broker",
+      "lag": "消息积压",
+      "topicSummary": "活跃 {{active}} · 新增 +{{new}}",
+      "consumersSummary": "在线 {{online}} · 离线 {{offline}}",
+      "brokerSummary": "{{master}} 主 + {{slave}} 备 · 全部在线",
+      "lagSummary": "{{count}} 个 Group 异常"
+    },
+    "ai": {
+      "title": "AI 智能诊断",
+      "subtitle": "基于 24h 集群指标与历史模式",
+      "reanalyze": "重新分析",
+      "chat": "和 AI 聊聊",
+      "high": "高优先级",
+      "med": "中优先级",
+      "low": "低优先级"
+    },
+    "active": {
+      "title": "活跃 Topic",
+      "subtitle": "按入流量排序"
+    },
+    "lag": {
+      "title": "堆积告警",
+      "subtitle": "堆积 > 100 条的消费组",
+      "rest": "其余 {{count}} 个消费组运行正常"
+    },
+    "current": {
+      "title": "当前连接"
+    },
+    "broker": {
+      "title": "Broker 状态",
+      "subtitle": "{{count}} 个节点全部在线"
+    },
+    "shortcut": {
+      "title": "快捷操作",
+      "send": "发送测试消息",
+      "search": "查询消息",
+      "create": "新建 Topic",
+      "reset": "重置消费进度"
+    }
+  },
+  "topics": {
+    "title": "主题",
+    "subtitle": "{{count}} 个 Topic"
+  },
+  "consumers": {
+    "title": "消费者组",
+    "subtitle": "{{count}} 个 Group",
+    "searchPlaceholder": "搜索 Group…",
+    "tabs": {
+      "overview": "概览",
+      "instances": "实例",
+      "subscriptions": "订阅",
+      "config": "配置"
+    },
+    "table": {
+      "name": "Group 名称",
+      "topic": "订阅主题",
+      "model": "模式",
+      "status": "状态",
+      "instances": "实例",
+      "lag": "堆积"
+    },
+    "detail": {
+      "instances": "实例",
+      "totalLag": "总堆积",
+      "consumeTps": "消费 TPS",
+      "subscribed": "订阅主题",
+      "queueProgress": "队列消费进度",
+      "behind": "{{queues}} 队列 · {{behind}} 落后",
+      "caughtUp": "已追平",
+      "resetProgress": "重置进度",
+      "editSubscription": "修改订阅"
+    }
+  },
+  "messages": {
+    "title": "消息查询",
+    "lag": "堆积"
+  },
+  "producer": {
+    "title": "发送测试消息"
+  },
+  "cluster": {
+    "title": "集群"
+  },
+  "alerts": {
+    "title": "告警"
+  },
+  "acl": {
+    "title": "ACL 管理",
+    "subtitle": "访问控制列表",
+    "new": "新增账号",
+    "tabs": {
+      "accounts": "账号",
+      "topic": "Topic 权限",
+      "group": "Group 权限"
+    },
+    "table": {
+      "ak": "AccessKey",
+      "sk": "SecretKey",
+      "ip": "白名单 IP",
+      "tp": "默认 Topic",
+      "gp": "默认 Group",
+      "role": "角色",
+      "createdAt": "创建时间"
+    },
+    "role": {
+      "admin": "管理员",
+      "normal": "普通"
+    },
+    "detail": {
+      "credentials": "凭证",
+      "rotateSk": "轮换 SecretKey",
+      "ipWhitelist": "白名单 IP",
+      "policy": "权限策略",
+      "defaultTopic": "默认 Topic 权限",
+      "defaultGroup": "默认 Group 权限",
+      "adminRights": "管理员权限",
+      "enabled": "已开启",
+      "overrides": "资源覆写",
+      "addOverride": "新增覆写",
+      "createdOn": "创建于 {{date}}"
+    }
+  },
+  "connections": {
+    "title": "连接"
+  },
+  "settings": {
+    "title": "设置",
+    "autoSaved": "所有更改自动保存",
+    "loading": "加载中…",
+    "section": {
+      "appearance": {
+        "label": "外观",
+        "subtitle": "主题、强调色与界面密度"
+      },
+      "general": {
+        "label": "通用",
+        "subtitle": "语言、连接与默认行为"
+      },
+      "fonts": {
+        "label": "字体与显示",
+        "subtitle": "字号、字体与时间格式"
+      },
+      "message": {
+        "label": "消息查询",
+        "subtitle": "默认查询与告警参数"
+      },
+      "proxy": {
+        "label": "代理与网络",
+        "subtitle": "代理、超时与默认凭证"
+      },
+      "data": {
+        "label": "数据与备份",
+        "subtitle": "导入导出、数据目录与缓存"
+      },
+      "about": {
+        "label": "关于",
+        "subtitle": "版本与项目信息"
+      }
+    },
+    "appearance": {
+      "theme": "主题",
+      "themes": {
+        "light": "浅色",
+        "lightDesc": "默认",
+        "dark": "深色",
+        "darkDesc": "护眼",
+        "system": "跟随系统",
+        "systemDesc": "自动切换"
+      },
+      "accent": "强调色",
+      "accentNames": {
+        "default": "默认",
+        "blue": "蓝",
+        "green": "绿",
+        "orange": "橙",
+        "red": "红",
+        "purple": "紫",
+        "cyan": "青"
+      },
+      "accentHint": "强调色应用于按钮、链接与焦点环。选择「默认」恢复主题色。",
+      "a11y": "动效与可访问性",
+      "animations": "界面过渡动画",
+      "animationsHint": "页面切换、面板展开等过渡效果",
+      "reduceTransparency": "减少透明效果",
+      "reduceTransparencyHint": "关闭背景模糊与半透明面板",
+      "highContrast": "高对比度",
+      "highContrastHint": "增强边框与文本对比度"
+    },
+    "general": {
+      "languageRegion": "语言与区域",
+      "language": "界面语言",
+      "languageHint": "切换后立即生效",
+      "timezone": "时区",
+      "timezoneHint": "影响列表与详情中的时间显示",
+      "tzLocal": "本地时间",
+      "tzUtc": "UTC",
+      "startup": "启动行为",
+      "autoConnect": "启动时自动连接上次集群",
+      "autoConnectHint": "启动应用后自动连接上次使用的集群"
+    },
+    "fonts": {
+      "fontsTypography": "字体与排版",
+      "fontSize": "界面字号",
+      "fontSizeHint": "影响整个应用的基础字号",
+      "uiFont": "界面字体",
+      "uiFontHint": "默认使用系统 UI 字体",
+      "monospaceFont": "等宽字体",
+      "monospaceFontHint": "用于消息体、ID、JSON 显示",
+      "systemDefault": "系统默认",
+      "timeDisplay": "时间显示",
+      "timeFormat": "时间格式",
+      "timeFormatHint": "影响列表与详情中的时间显示",
+      "tsDatetime": "YYYY-MM-DD HH:mm:ss",
+      "tsMs": "毫秒时间戳",
+      "preview": "预览",
+      "previewSample": "示例文本：Rocket-Leaf 轻量级 RocketMQ 管理客户端 ABCDabcd 1234"
+    },
+    "message": {
+      "defaults": "消息查询默认值",
+      "fetchLimit": "单页拉取数量",
+      "fetchLimitHint": "每次查询 Topic、消费组的数量上限",
+      "fetchUnit": "{{count}} 条",
+      "autoFormatJson": "JSON 自动格式化",
+      "autoFormatJsonHint": "查看消息时自动美化 JSON 内容",
+      "payloadLimit": "消息截断阈值",
+      "payloadLimitHint": "超过此大小的消息内容将被截断显示",
+      "alertThresholds": "告警阈值",
+      "lagAlert": "消费积压告警",
+      "lagAlertHint": "当消费组堆积消息超过此值时显示告警，设为 0 关闭",
+      "lagAlertUnit": "条"
+    },
+    "proxy": {
+      "timeout": "连接超时",
+      "connect": "连接超时",
+      "connectHint": "建立 NameServer 连接的最大等待时间",
+      "request": "请求超时",
+      "requestHint": "查询 Topic、消费组等操作的超时时间",
+      "credentials": "默认凭证",
+      "ak": "默认 AccessKey",
+      "akHint": "新建连接时自动填充",
+      "sk": "默认 SecretKey",
+      "skHint": "加密存储于本地",
+      "skipTls": "跳过 TLS 校验",
+      "skipTlsHint": "跳过服务端证书验证，仅限测试环境",
+      "httpProxy": "HTTP 代理",
+      "enable": "启用代理",
+      "enableHint": "发起连接时使用代理服务器",
+      "type": "代理类型",
+      "host": "代理地址",
+      "port": "代理端口",
+      "portRangeError": "端口范围 1-65535",
+      "disabledNote": "未启用代理，连接将直连 NameServer。",
+      "akPlaceholder": "新建连接时自动填充"
+    },
+    "data": {
+      "storage": "数据存储位置",
+      "clickToCopy": "点击复制",
+      "copySuccess": "已复制路径",
+      "copyError": "复制失败",
+      "ioSection": "导入与导出",
+      "exportTitle": "导出全部配置",
+      "exportHint": "导出连接、ACL、应用设置为 JSON 文件",
+      "importTitle": "导入配置",
+      "importHint": "从 JSON 文件恢复，重启应用后生效",
+      "exportSuccess": "配置已导出",
+      "exportError": "导出配置失败",
+      "importSuccess": "配置已导入，重启应用后生效",
+      "importError": "导入配置失败",
+      "cleanup": "清理",
+      "clearCache": "清理缓存",
+      "clearCacheHint": "清除本地的查询、消息缓存数据",
+      "clearCacheConfirmTitle": "清理缓存",
+      "clearCacheConfirmDesc": "确定要清理所有缓存数据吗？此操作不可撤销。",
+      "clearCacheSuccess": "缓存已清理",
+      "clearCacheError": "清理缓存失败"
+    },
+    "about": {
+      "descriptionZh": "一款基于 Wails 构建的轻量级、跨平台 RocketMQ 管理客户端。",
+      "descriptionEn": "A lightweight, cross-platform RocketMQ client built with Go and Wails.",
+      "resources": "资源",
+      "checkUpdate": "检查更新",
+      "openIssue": "提交 Issue",
+      "preferences": "偏好设置",
+      "resetTitle": "恢复默认设置",
+      "resetHint": "将所有设置恢复为初始值（不影响连接）",
+      "reset": "恢复默认",
+      "resetConfirmTitle": "恢复默认设置",
+      "resetConfirmDesc": "确定要将所有设置恢复为默认值吗？当前的自定义设置将全部丢失。",
+      "resetSuccess": "已恢复默认设置",
+      "resetError": "恢复默认设置失败"
+    }
+  }
+}

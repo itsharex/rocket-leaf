@@ -7,6 +7,7 @@ import {
   Send,
   GitBranch,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader, JSONView } from '../shell'
 
 const MESSAGES = [
@@ -36,12 +37,13 @@ const SAMPLE_BODY = `{
 }`
 
 export function MessagesScreen() {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('按主题查询')
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
-        title="消息"
+        title={t('messages.title')}
         tabs={['按主题查询', '按 Key 查询', '按 MsgID 查询', '发送消息']}
         activeTab={activeTab}
         onTabChange={setActiveTab}

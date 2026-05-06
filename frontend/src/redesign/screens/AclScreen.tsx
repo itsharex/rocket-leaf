@@ -10,6 +10,7 @@ import {
   Trash2,
   Check,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 
 const ROWS = [
@@ -38,22 +39,32 @@ const RESOURCE_OVERRIDES = [
 ]
 
 export function AclScreen() {
-  const [activeTab, setActiveTab] = useState('账号')
+  const { t } = useTranslation()
+  const tabs = [
+    t('acl.tabs.accounts'),
+    t('acl.tabs.topic'),
+    t('acl.tabs.group'),
+  ]
+  const [activeIdx, setActiveIdx] = useState(0)
+  const activeTab = tabs[activeIdx]!
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
-        title="ACL 管理"
-        subtitle="访问控制列表"
-        tabs={['账号', 'Topic 权限', 'Group 权限']}
+        title={t('acl.title')}
+        subtitle={t('acl.subtitle')}
+        tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(label) => {
+          const idx = tabs.indexOf(label)
+          if (idx !== -1) setActiveIdx(idx)
+        }}
       >
         <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm">
           <RefreshCw size={14} />
         </button>
         <button className="rl-btn rl-btn-primary rl-btn-sm">
-          <Plus size={13} />新增账号
+          <Plus size={13} />{t('acl.new')}
         </button>
       </PageHeader>
 
@@ -63,13 +74,13 @@ export function AclScreen() {
             <thead>
               <tr>
                 <th style={{ width: 36 }}><input type="checkbox" /></th>
-                <th>AccessKey</th>
-                <th>SecretKey</th>
-                <th>白名单 IP</th>
-                <th style={{ width: 100 }}>默认 Topic</th>
-                <th style={{ width: 100 }}>默认 Group</th>
-                <th style={{ width: 90 }}>角色</th>
-                <th style={{ width: 130 }}>创建时间</th>
+                <th>{t('acl.table.ak')}</th>
+                <th>{t('acl.table.sk')}</th>
+                <th>{t('acl.table.ip')}</th>
+                <th style={{ width: 100 }}>{t('acl.table.tp')}</th>
+                <th style={{ width: 100 }}>{t('acl.table.gp')}</th>
+                <th style={{ width: 90 }}>{t('acl.table.role')}</th>
+                <th style={{ width: 130 }}>{t('acl.table.createdAt')}</th>
                 <th style={{ width: 70 }} />
               </tr>
             </thead>
@@ -87,7 +98,7 @@ export function AclScreen() {
                   <td><span className="font-mono-design text-[12px]">{r.ip}</span></td>
                   <td><span className="rl-badge rl-badge-outline">{r.tp}</span></td>
                   <td><span className="rl-badge rl-badge-outline">{r.gp}</span></td>
-                  <td>{r.admin ? <span className="rl-badge rl-badge-warn">管理员</span> : <span className="rl-muted text-[12px]">普通</span>}</td>
+                  <td>{r.admin ? <span className="rl-badge rl-badge-warn">{t('acl.role.admin')}</span> : <span className="rl-muted text-[12px]">{t('acl.role.normal')}</span>}</td>
                   <td>
                     <span className="font-mono-design rl-muted rl-tabular text-[12px] whitespace-nowrap">{r.ts}</span>
                   </td>

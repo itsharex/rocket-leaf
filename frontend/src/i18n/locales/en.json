@@ -1,0 +1,354 @@
+{
+  "app": {
+    "name": "Rocket-Leaf",
+    "tagline": "RocketMQ desktop client"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "refresh": "Refresh",
+    "search": "Search",
+    "edit": "Edit",
+    "create": "Create",
+    "import": "Import",
+    "export": "Export",
+    "copy": "Copy",
+    "loading": "Loading…",
+    "all": "All",
+    "online": "Online",
+    "offline": "Offline",
+    "connected": "Connected",
+    "disconnect": "Disconnect",
+    "selectFile": "Choose file",
+    "viewAll": "View all",
+    "newCount": "+{{count}} new",
+    "instances": "{{count}} instances",
+    "queues": "{{count}} queues",
+    "comma": ", ",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close",
+    "exitApp": "Quit application",
+    "exitAppConfirm": "Quit Rocket-Leaf?",
+    "exit": "Quit",
+    "connectFirst": "Connect to a cluster first"
+  },
+  "nav": {
+    "home": "Overview",
+    "topics": "Topics",
+    "consumers": "Consumers",
+    "messages": "Messages",
+    "producer": "Producer",
+    "cluster": "Cluster",
+    "alerts": "Alerts",
+    "acl": "ACL & Audit",
+    "connections": "Connections",
+    "settings": "Settings",
+    "github": "GitHub"
+  },
+  "titlebar": {
+    "aiAssistant": "AI Assistant"
+  },
+  "overview": {
+    "title": "Overview",
+    "subtitleConnected": "{{cluster}} · refreshed at {{time}}",
+    "stat": {
+      "topics": "Topics",
+      "consumers": "Consumer groups",
+      "broker": "Brokers",
+      "lag": "Total lag",
+      "topicSummary": "{{active}} active · +{{new}} new",
+      "consumersSummary": "{{online}} online · {{offline}} offline",
+      "brokerSummary": "{{master}} master + {{slave}} slave · all online",
+      "lagSummary": "{{count}} group(s) abnormal"
+    },
+    "ai": {
+      "title": "AI diagnostics",
+      "subtitle": "Based on 24h cluster metrics & history",
+      "reanalyze": "Re-analyze",
+      "chat": "Chat with AI",
+      "high": "High",
+      "med": "Medium",
+      "low": "Low"
+    },
+    "active": {
+      "title": "Active topics",
+      "subtitle": "Sorted by inbound traffic"
+    },
+    "lag": {
+      "title": "Lag alerts",
+      "subtitle": "Groups with > 100 lag",
+      "rest": "Other {{count}} group(s) running normally"
+    },
+    "current": {
+      "title": "Current connection"
+    },
+    "broker": {
+      "title": "Broker status",
+      "subtitle": "{{count}} nodes all online"
+    },
+    "shortcut": {
+      "title": "Quick actions",
+      "send": "Send test message",
+      "search": "Search messages",
+      "create": "Create topic",
+      "reset": "Reset consumer offset"
+    }
+  },
+  "topics": {
+    "title": "Topics",
+    "subtitle": "{{count}} topic(s)"
+  },
+  "consumers": {
+    "title": "Consumer groups",
+    "subtitle": "{{count}} group(s)",
+    "searchPlaceholder": "Search groups…",
+    "tabs": {
+      "overview": "Overview",
+      "instances": "Instances",
+      "subscriptions": "Subscriptions",
+      "config": "Config"
+    },
+    "table": {
+      "name": "Group name",
+      "topic": "Topic",
+      "model": "Model",
+      "status": "Status",
+      "instances": "Instances",
+      "lag": "Lag"
+    },
+    "detail": {
+      "instances": "Instances",
+      "totalLag": "Total lag",
+      "consumeTps": "Consume TPS",
+      "subscribed": "Subscribed topics",
+      "queueProgress": "Queue consumption progress",
+      "behind": "{{queues}} queues · {{behind}} behind",
+      "caughtUp": "Caught up",
+      "resetProgress": "Reset offset",
+      "editSubscription": "Edit subscription"
+    }
+  },
+  "messages": {
+    "title": "Messages",
+    "lag": "Lag"
+  },
+  "producer": {
+    "title": "Test producer"
+  },
+  "cluster": {
+    "title": "Cluster"
+  },
+  "alerts": {
+    "title": "Alerts"
+  },
+  "acl": {
+    "title": "ACL",
+    "subtitle": "Access control list",
+    "new": "New account",
+    "tabs": {
+      "accounts": "Accounts",
+      "topic": "Topic ACL",
+      "group": "Group ACL"
+    },
+    "table": {
+      "ak": "AccessKey",
+      "sk": "SecretKey",
+      "ip": "IP whitelist",
+      "tp": "Default Topic",
+      "gp": "Default Group",
+      "role": "Role",
+      "createdAt": "Created"
+    },
+    "role": {
+      "admin": "Admin",
+      "normal": "User"
+    },
+    "detail": {
+      "credentials": "Credentials",
+      "rotateSk": "Rotate SecretKey",
+      "ipWhitelist": "IP whitelist",
+      "policy": "Permission policy",
+      "defaultTopic": "Default Topic permission",
+      "defaultGroup": "Default Group permission",
+      "adminRights": "Admin rights",
+      "enabled": "Enabled",
+      "overrides": "Resource overrides",
+      "addOverride": "Add override",
+      "createdOn": "Created on {{date}}"
+    }
+  },
+  "connections": {
+    "title": "Connections"
+  },
+  "settings": {
+    "title": "Settings",
+    "autoSaved": "All changes saved automatically",
+    "loading": "Loading…",
+    "section": {
+      "appearance": {
+        "label": "Appearance",
+        "subtitle": "Theme, accent and density"
+      },
+      "general": {
+        "label": "General",
+        "subtitle": "Language, connection and defaults"
+      },
+      "fonts": {
+        "label": "Fonts & display",
+        "subtitle": "Font size, family and time format"
+      },
+      "message": {
+        "label": "Messages",
+        "subtitle": "Default query and alert thresholds"
+      },
+      "proxy": {
+        "label": "Proxy & network",
+        "subtitle": "Proxy, timeouts and default credentials"
+      },
+      "data": {
+        "label": "Data & backup",
+        "subtitle": "Import/export, data folder and cache"
+      },
+      "about": {
+        "label": "About",
+        "subtitle": "Version and project info"
+      }
+    },
+    "appearance": {
+      "theme": "Theme",
+      "themes": {
+        "light": "Light",
+        "lightDesc": "Default",
+        "dark": "Dark",
+        "darkDesc": "Easy on eyes",
+        "system": "System",
+        "systemDesc": "Auto switch"
+      },
+      "accent": "Accent color",
+      "accentNames": {
+        "default": "Default",
+        "blue": "Blue",
+        "green": "Green",
+        "orange": "Orange",
+        "red": "Red",
+        "purple": "Purple",
+        "cyan": "Cyan"
+      },
+      "accentHint": "Accent applies to buttons, links and focus rings. Pick \"Default\" to revert to the theme color.",
+      "a11y": "Animations & accessibility",
+      "animations": "Interface animations",
+      "animationsHint": "Page transitions, panel open/close, etc.",
+      "reduceTransparency": "Reduce transparency",
+      "reduceTransparencyHint": "Disable backdrop blur and translucent panels",
+      "highContrast": "High contrast",
+      "highContrastHint": "Strengthen border and text contrast"
+    },
+    "general": {
+      "languageRegion": "Language & region",
+      "language": "Interface language",
+      "languageHint": "Applied immediately",
+      "timezone": "Timezone",
+      "timezoneHint": "Affects timestamps in lists and details",
+      "tzLocal": "Local time",
+      "tzUtc": "UTC",
+      "startup": "Startup behavior",
+      "autoConnect": "Auto-connect on launch",
+      "autoConnectHint": "Reconnect to the last cluster on app start"
+    },
+    "fonts": {
+      "fontsTypography": "Fonts & typography",
+      "fontSize": "Interface font size",
+      "fontSizeHint": "Base font size for the entire app",
+      "uiFont": "Interface font",
+      "uiFontHint": "Defaults to the system UI font",
+      "monospaceFont": "Monospace font",
+      "monospaceFontHint": "Used for message bodies, IDs and JSON",
+      "systemDefault": "System default",
+      "timeDisplay": "Time display",
+      "timeFormat": "Time format",
+      "timeFormatHint": "Affects timestamps in lists and details",
+      "tsDatetime": "YYYY-MM-DD HH:mm:ss",
+      "tsMs": "Milliseconds",
+      "preview": "Preview",
+      "previewSample": "Sample: Rocket-Leaf — a lightweight RocketMQ client. ABCDabcd 1234"
+    },
+    "message": {
+      "defaults": "Query defaults",
+      "fetchLimit": "Page size",
+      "fetchLimitHint": "Max items fetched per topic/consumer query",
+      "fetchUnit": "{{count}} items",
+      "autoFormatJson": "Auto-format JSON",
+      "autoFormatJsonHint": "Beautify JSON when viewing messages",
+      "payloadLimit": "Truncate threshold",
+      "payloadLimitHint": "Messages exceeding this size will be truncated",
+      "alertThresholds": "Alert thresholds",
+      "lagAlert": "Consumer lag alert",
+      "lagAlertHint": "Show alert when group lag exceeds this value. 0 disables.",
+      "lagAlertUnit": "msgs"
+    },
+    "proxy": {
+      "timeout": "Timeouts",
+      "connect": "Connect timeout",
+      "connectHint": "Max wait for the NameServer connection",
+      "request": "Request timeout",
+      "requestHint": "Timeout for topic, consumer and other queries",
+      "credentials": "Default credentials",
+      "ak": "Default AccessKey",
+      "akHint": "Auto-filled when creating a connection",
+      "sk": "Default SecretKey",
+      "skHint": "Encrypted at rest",
+      "skipTls": "Skip TLS verification",
+      "skipTlsHint": "Skip server certificate validation. Test only.",
+      "httpProxy": "HTTP proxy",
+      "enable": "Enable proxy",
+      "enableHint": "Use a proxy server for outbound connections",
+      "type": "Proxy type",
+      "host": "Proxy host",
+      "port": "Proxy port",
+      "portRangeError": "Port must be 1–65535",
+      "disabledNote": "Proxy is disabled. Connections go directly to the NameServer.",
+      "akPlaceholder": "Auto-filled when creating a connection"
+    },
+    "data": {
+      "storage": "Data storage location",
+      "clickToCopy": "Click to copy",
+      "copySuccess": "Path copied",
+      "copyError": "Copy failed",
+      "ioSection": "Import & export",
+      "exportTitle": "Export all configuration",
+      "exportHint": "Export connections, ACL and app settings as JSON",
+      "importTitle": "Import configuration",
+      "importHint": "Restore from a JSON file. Restart to apply.",
+      "exportSuccess": "Configuration exported",
+      "exportError": "Export failed",
+      "importSuccess": "Configuration imported. Restart to apply.",
+      "importError": "Import failed",
+      "cleanup": "Cleanup",
+      "clearCache": "Clear cache",
+      "clearCacheHint": "Remove local query and message cache",
+      "clearCacheConfirmTitle": "Clear cache",
+      "clearCacheConfirmDesc": "Clear all cached data? This cannot be undone.",
+      "clearCacheSuccess": "Cache cleared",
+      "clearCacheError": "Clear cache failed"
+    },
+    "about": {
+      "descriptionZh": "一款基于 Wails 构建的轻量级、跨平台 RocketMQ 管理客户端。",
+      "descriptionEn": "A lightweight, cross-platform RocketMQ client built with Go and Wails.",
+      "resources": "Resources",
+      "checkUpdate": "Check for updates",
+      "openIssue": "Open issue",
+      "preferences": "Preferences",
+      "resetTitle": "Reset to defaults",
+      "resetHint": "Reset all settings to defaults (does not affect connections)",
+      "reset": "Reset",
+      "resetConfirmTitle": "Reset to defaults",
+      "resetConfirmDesc": "Reset all settings to defaults? Custom values will be lost.",
+      "resetSuccess": "Settings reset to defaults",
+      "resetError": "Reset failed"
+    }
+  }
+}

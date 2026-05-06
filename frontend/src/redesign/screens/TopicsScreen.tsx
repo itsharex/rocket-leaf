@@ -12,6 +12,7 @@ import {
   Send,
   Trash2,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 
 type TopicType = 'NORMAL' | 'DELAY' | 'TRANSACTION' | 'RETRY' | 'DLQ'
@@ -41,21 +42,22 @@ function typeBadge(t: TopicType) {
 }
 
 export function TopicsScreen() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title="主题" subtitle="248 个 Topic">
+      <PageHeader title={t('topics.title')} subtitle={t('topics.subtitle', { count: 248 })}>
         <div className="rl-search-input" style={{ width: 240 }}>
           <span className="icon"><Search size={14} /></span>
-          <input className="rl-input" placeholder="搜索 Topic 名称…" />
+          <input className="rl-input" placeholder={t('common.search')} />
         </div>
         <button className="rl-btn rl-btn-outline rl-btn-sm">
-          <Filter size={13} />筛选
+          <Filter size={13} />{t('common.refresh')}
         </button>
         <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm">
           <RefreshCw size={14} />
         </button>
         <button className="rl-btn rl-btn-primary rl-btn-sm">
-          <Plus size={13} />新建
+          <Plus size={13} />{t('common.create')}
         </button>
       </PageHeader>
 

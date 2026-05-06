@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback, useEffect } from 'react'
 import { Minus, Square, SquareMinus, X, Sparkles } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Window } from '@wailsio/runtime'
@@ -17,6 +18,7 @@ export function TitleBar({
   connected?: string | null
   aiEnabled?: boolean
 }) {
+  const { t } = useTranslation()
   const mac = useMemo(isMac, [])
   const [isMaximised, setIsMaximised] = useState(false)
   const [showCloseConfirm, setShowCloseConfirm] = useState(false)
@@ -56,8 +58,8 @@ export function TitleBar({
         style={mac ? undefined : { paddingLeft: 12 }}
       >
         <img src={logoUrl} alt="" className="logo-img" aria-hidden />
-        <div className="title">Rocket-Leaf</div>
-        <div className="rl-muted" style={{ fontSize: 11 }}>— RocketMQ 桌面客户端</div>
+        <div className="title">{t('app.name')}</div>
+        <div className="rl-muted" style={{ fontSize: 11 }}>— {t('app.tagline')}</div>
         <div className="rl-titlebar-spacer" />
         {aiEnabled && (
           <button
@@ -65,7 +67,7 @@ export function TitleBar({
             type="button"
           >
             <span className="ai-spark"><Sparkles size={11} /></span>
-            <span>AI 助手</span>
+            <span>{t('titlebar.aiAssistant')}</span>
             <span className="kbd-mini">⌘K</span>
           </button>
         )}
@@ -77,15 +79,15 @@ export function TitleBar({
         )}
         {!mac && (
           <div className="flex shrink-0 items-center gap-0.5" style={{ marginLeft: 8 }}>
-            <button type="button" onClick={handleMinimise} className={winBtnClass} title="最小化" aria-label="最小化">
+            <button type="button" onClick={handleMinimise} className={winBtnClass} title={t('common.minimize')} aria-label={t('common.minimize')}>
               <Minus className="h-4 w-4" />
             </button>
             <button
               type="button"
               onClick={handleToggleMaximise}
               className={winBtnClass}
-              title={isMaximised ? '还原' : '最大化'}
-              aria-label={isMaximised ? '还原' : '最大化'}
+              title={isMaximised ? t('common.restore') : t('common.maximize')}
+              aria-label={isMaximised ? t('common.restore') : t('common.maximize')}
             >
               {isMaximised ? <SquareMinus className="h-4 w-4" /> : <Square className="h-4 w-4" />}
             </button>
@@ -93,8 +95,8 @@ export function TitleBar({
               type="button"
               onClick={() => setShowCloseConfirm(true)}
               className={closeBtnClass}
-              title="关闭"
-              aria-label="关闭"
+              title={t('common.close')}
+              aria-label={t('common.close')}
             >
               <X className="h-4 w-4" />
             </button>
@@ -104,10 +106,10 @@ export function TitleBar({
 
       <ConfirmDialog
         open={showCloseConfirm}
-        title="退出应用"
-        description="确定要关闭 Rocket-Leaf 吗？"
-        confirmText="退出"
-        cancelText="取消"
+        title={t('common.exitApp')}
+        description={t('common.exitAppConfirm')}
+        confirmText={t('common.exit')}
+        cancelText={t('common.cancel')}
         variant="destructive"
         onConfirm={() => Window.Close().catch(() => { })}
         onCancel={() => setShowCloseConfirm(false)}

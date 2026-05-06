@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Edit,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
 
 const GROUPS = [
@@ -30,12 +31,13 @@ const QUEUE_PROGRESS = [
 ]
 
 export function ConsumersScreen() {
+  const { t } = useTranslation()
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title="消费者组" subtitle="82 个 Group">
+      <PageHeader title={t('consumers.title')} subtitle={t('consumers.subtitle', { count: 82 })}>
         <div className="rl-search-input" style={{ width: 240 }}>
           <span className="icon"><Search size={14} /></span>
-          <input className="rl-input" placeholder="搜索 Group…" />
+          <input className="rl-input" placeholder={t('consumers.searchPlaceholder')} />
         </div>
         <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm">
           <RefreshCw size={14} />
@@ -47,12 +49,12 @@ export function ConsumersScreen() {
           <table className="rl-table">
             <thead>
               <tr>
-                <th>Group 名称</th>
-                <th>订阅主题</th>
-                <th style={{ width: 130 }}>模式</th>
-                <th style={{ width: 100 }}>状态</th>
-                <th style={{ width: 90, textAlign: 'right' }}>实例</th>
-                <th style={{ width: 130, textAlign: 'right' }}>堆积</th>
+                <th>{t('consumers.table.name')}</th>
+                <th>{t('consumers.table.topic')}</th>
+                <th style={{ width: 130 }}>{t('consumers.table.model')}</th>
+                <th style={{ width: 100 }}>{t('consumers.table.status')}</th>
+                <th style={{ width: 90, textAlign: 'right' }}>{t('consumers.table.instances')}</th>
+                <th style={{ width: 130, textAlign: 'right' }}>{t('consumers.table.lag')}</th>
                 <th style={{ width: 50 }} />
               </tr>
             </thead>
@@ -65,10 +67,10 @@ export function ConsumersScreen() {
                   <td>
                     {g.status === '在线' ? (
                       <span className="rl-badge rl-badge-success">
-                        <span style={{ width: 5, height: 5, borderRadius: 999, background: 'currentColor' }} />在线
+                        <span style={{ width: 5, height: 5, borderRadius: 999, background: 'currentColor' }} />{t('common.online')}
                       </span>
                     ) : (
-                      <span className="rl-badge rl-badge-danger">离线</span>
+                      <span className="rl-badge rl-badge-danger">{t('common.offline')}</span>
                     )}
                   </td>
                   <td style={{ textAlign: 'right' }} className="rl-tabular">{g.consumers}</td>
@@ -123,10 +125,10 @@ export function ConsumersScreen() {
           </div>
 
           <div className="rl-utabs" style={{ paddingLeft: 20, paddingRight: 20, borderBottom: '1px solid hsl(var(--border))' }}>
-            <div className="utab active">概览</div>
-            <div className="utab">实例 <span className="rl-muted" style={{ marginLeft: 4 }}>3</span></div>
-            <div className="utab">订阅</div>
-            <div className="utab">配置</div>
+            <div className="utab active">{t('consumers.tabs.overview')}</div>
+            <div className="utab">{t('consumers.tabs.instances')} <span className="rl-muted" style={{ marginLeft: 4 }}>3</span></div>
+            <div className="utab">{t('consumers.tabs.subscriptions')}</div>
+            <div className="utab">{t('consumers.tabs.config')}</div>
           </div>
 
           <div className="scroll-thin min-h-0 flex-1 overflow-auto" style={{ padding: '16px 20px' }}>

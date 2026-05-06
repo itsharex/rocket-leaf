@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Browser } from '@wailsio/runtime'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 const GITHUB_URL = 'https://github.com/amigoer/rocket-leaf'
@@ -31,27 +32,27 @@ export type NavId =
   | 'github'
   | 'settings'
 
-type NavItem = { id: NavId; icon: LucideIcon; label: string; href?: string }
+type NavItem = { id: NavId; icon: LucideIcon; labelKey: string; href?: string }
 
 const GROUPS: NavItem[][] = [
-  [{ id: 'home', icon: Home, label: '概览' }],
+  [{ id: 'home', icon: Home, labelKey: 'nav.home' }],
   [
-    { id: 'topics', icon: LayoutGrid, label: '主题' },
-    { id: 'consumers', icon: Users, label: '消费者组' },
-    { id: 'messages', icon: Mail, label: '消息' },
-    { id: 'producer', icon: Send, label: '发送测试' },
+    { id: 'topics', icon: LayoutGrid, labelKey: 'nav.topics' },
+    { id: 'consumers', icon: Users, labelKey: 'nav.consumers' },
+    { id: 'messages', icon: Mail, labelKey: 'nav.messages' },
+    { id: 'producer', icon: Send, labelKey: 'nav.producer' },
   ],
   [
-    { id: 'cluster', icon: BarChart3, label: '集群' },
-    { id: 'alerts', icon: Bell, label: '告警' },
-    { id: 'acl', icon: Shield, label: '权限与审计' },
+    { id: 'cluster', icon: BarChart3, labelKey: 'nav.cluster' },
+    { id: 'alerts', icon: Bell, labelKey: 'nav.alerts' },
+    { id: 'acl', icon: Shield, labelKey: 'nav.acl' },
   ],
-  [{ id: 'connections', icon: Server, label: '连接' }],
+  [{ id: 'connections', icon: Server, labelKey: 'nav.connections' }],
 ]
 
 const BOTTOM: NavItem[] = [
-  { id: 'github', icon: Github, label: 'GitHub', href: GITHUB_URL },
-  { id: 'settings', icon: Settings, label: '设置' },
+  { id: 'github', icon: Github, labelKey: 'nav.github', href: GITHUB_URL },
+  { id: 'settings', icon: Settings, labelKey: 'nav.settings' },
 ]
 
 export function Sidebar({
@@ -63,8 +64,10 @@ export function Sidebar({
   onSelect: (id: NavId) => void
   disabledIds?: NavId[]
 }) {
+  const { t } = useTranslation()
   const renderItem = (item: NavItem, isBottom = false) => {
-    const { id, icon: Icon, label, href } = item
+    const { id, icon: Icon, labelKey, href } = item
+    const label = t(labelKey)
     const disabled = !isBottom && disabledIds.includes(id)
     const isActive = active === id
 
@@ -88,7 +91,7 @@ export function Sidebar({
         key={id}
         type="button"
         className={cn('item', isActive && 'active', disabled && 'disabled')}
-        title={disabled ? '请先连接集群' : label}
+        title={disabled ? t('common.connectFirst') : label}
         aria-disabled={disabled || undefined}
         onClick={() => !disabled && onSelect(id)}
       >

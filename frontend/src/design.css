@@ -17,18 +17,6 @@
   flex-shrink: 0;
   position: relative;
 }
-.rl-title-bar .traffic {
-  position: absolute;
-  left: 14px;
-  display: flex;
-  gap: 8px;
-}
-.rl-title-bar .traffic span {
-  width: 12px; height: 12px; border-radius: 999px; display: block;
-}
-.rl-title-bar .traffic .c1 { background: #ff5f57; }
-.rl-title-bar .traffic .c2 { background: #febc2e; }
-.rl-title-bar .traffic .c3 { background: #28c840; }
 .rl-title-bar .logo {
   width: 22px; height: 22px;
   background: linear-gradient(135deg, hsl(240 6% 15%), hsl(240 6% 28%));

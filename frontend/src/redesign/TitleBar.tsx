@@ -55,13 +55,6 @@ export function TitleBar({
         )}
         style={mac ? undefined : { paddingLeft: 12 }}
       >
-        {mac && (
-          <div className="traffic">
-            <span className="c1" />
-            <span className="c2" />
-            <span className="c3" />
-          </div>
-        )}
         <img src={logoUrl} alt="" className="logo-img" aria-hidden />
         <div className="title">Rocket-Leaf</div>
         <div className="rl-muted" style={{ fontSize: 11 }}>— RocketMQ 桌面客户端</div>

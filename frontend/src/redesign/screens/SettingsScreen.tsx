@@ -30,6 +30,7 @@ import {
   type ProxyType,
   type FetchLimit,
 } from '@/hooks/useSettings'
+import { useUIPrefs, type AccentKey } from '@/hooks/useUIPrefs'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import logoUrl from '@/assets/logo.png'
 import { exportAllConfig, importAllConfig, clearCache as clearCacheApi } from '@/api/settings'
@@ -51,14 +52,14 @@ const SECTIONS: { id: SectionId; label: string; icon: LucideIcon; subtitle: stri
   { id: 'about', label: '关于', icon: Info, subtitle: '版本与项目信息' },
 ]
 
-const ACCENT_COLORS = [
-  { c: '#0a0a0a', name: '默认' },
-  { c: '#2563eb', name: '蓝' },
-  { c: '#16a34a', name: '绿' },
-  { c: '#ea580c', name: '橙' },
-  { c: '#dc2626', name: '红' },
-  { c: '#9333ea', name: '紫' },
-  { c: '#0891b2', name: '青' },
+const ACCENT_COLORS: { key: AccentKey; c: string; name: string }[] = [
+  { key: 'default', c: '#0a0a0a', name: '默认' },
+  { key: 'blue',    c: '#2563eb', name: '蓝' },
+  { key: 'green',   c: '#16a34a', name: '绿' },
+  { key: 'orange',  c: '#ea580c', name: '橙' },
+  { key: 'red',     c: '#dc2626', name: '红' },
+  { key: 'purple',  c: '#9333ea', name: '紫' },
+  { key: 'cyan',    c: '#0891b2', name: '青' },
 ]
 
 const THEMES: { name: string; desc: string; mode: ThemeMode }[] = [
@@ -220,6 +221,7 @@ function Switch({
 
 function AppearancePanel() {
   const { settings, setSetting } = useSettings()
+  const { prefs, setAccent, setAnimations, setReduceTransparency, setHighContrast } = useUIPrefs()
   return (
     <>
       <div className="rl-section-label" style={{ marginTop: 0 }}>主题</div>
@@ -288,10 +290,17 @@ function AppearancePanel() {
       <div className="rl-section-label" style={{ marginTop: 24 }}>强调色</div>
       <div className="rl-card" style={{ padding: 16 }}>
         <div className="flex flex-wrap items-center gap-2">
-          {ACCENT_COLORS.map((c, i) => {
-            const active = i === 0
+          {ACCENT_COLORS.map((c) => {
+            const active = prefs.accent === c.key
             return (
-              <div key={c.name} className="flex flex-col items-center gap-1 cursor-pointer">
+              <button
+                type="button"
+                key={c.key}
+                onClick={() => setAccent(c.key)}
+                aria-pressed={active}
+                className="flex flex-col items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
+                style={{ width: 48 }}
+              >
                 <div
                   style={{
                     width: 32,
@@ -301,26 +310,41 @@ function AppearancePanel() {
                     border: active ? '2px solid hsl(var(--foreground))' : '2px solid transparent',
                     outline: active ? '2px solid hsl(var(--background))' : 'none',
                     outlineOffset: -4,
+                    display: 'grid',
+                    placeItems: 'center',
+                    color: 'white',
                   }}
-                />
-                <span className="rl-muted text-[12px]">{c.name}</span>
-              </div>
+                >
+                  {active && <Check size={14} strokeWidth={3} />}
+                </div>
+                <span
+                  className="text-[12px]"
+                  style={{ color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' }}
+                >
+                  {c.name}
+                </span>
+              </button>
             )
           })}
         </div>
-        <div className="rl-muted mt-3 text-[12px]">强调色仅作展示，未来版本接入主色调。</div>
+        <div className="rl-muted mt-3 text-[12px]">
+          强调色应用于按钮、链接与焦点环。选择「默认」恢复主题色。
+        </div>
       </div>
 
       <div className="rl-section-label" style={{ marginTop: 24 }}>动效与可访问性</div>
       <div className="rl-card">
         <SettingsRow title="界面过渡动画" hint="页面切换、面板展开等过渡效果">
-          <Switch on={true} onClick={() => toast.message('动效设置保留为开启')} />
+          <Switch on={prefs.animations} onClick={() => setAnimations(!prefs.animations)} />
         </SettingsRow>
         <SettingsRow title="减少透明效果" hint="关闭背景模糊与半透明面板">
-          <Switch on={false} onClick={() => toast.message('当前未启用透明效果')} />
+          <Switch
+            on={prefs.reduceTransparency}
+            onClick={() => setReduceTransparency(!prefs.reduceTransparency)}
+          />
         </SettingsRow>
         <SettingsRow title="高对比度" hint="增强边框与文本对比度" bordered={false}>
-          <Switch on={false} onClick={() => toast.message('未来版本将提供高对比度主题')} />
+          <Switch on={prefs.highContrast} onClick={() => setHighContrast(!prefs.highContrast)} />
         </SettingsRow>
       </div>
     </>

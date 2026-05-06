@@ -2,7 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { SettingsProvider } from '@/hooks/useSettings'
+import { bootstrapUIPrefs } from '@/hooks/useUIPrefs'
 import './index.css'
+
+bootstrapUIPrefs()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

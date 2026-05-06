@@ -571,3 +571,26 @@
 
 /* Spark */
 .rl-spark { width: 100%; height: 32px; }
+
+/* Subtle panel backgrounds — themed */
+.rl-app-bg { background: hsl(0 0% 99.5%); }
+.rl-subtle-bg { background: hsl(0 0% 99%); }
+.dark .rl-app-bg { background: hsl(240 6% 5%); }
+.dark .rl-subtle-bg { background: hsl(240 4% 7%); }
+
+/* ===== Dark mode overrides ===== */
+.dark .rl-sidebar { background: hsl(240 4% 7%); }
+.dark .rl-table thead th { background: hsl(240 5% 8%); }
+.dark .rl-ai-pill { background: hsl(240 4% 9%); }
+.dark .rl-ai-pill .ai-spark { color: hsl(240 5% 75%); }
+.dark .rl-ai-diag-card { background: hsl(240 5% 7%); }
+.dark .rl-ai-finding.low .ai-sev { background: hsl(217 70% 55%); }
+.dark .rl-json-view { background: hsl(240 4% 8%); color: hsl(240 5% 80%); }
+.dark .rl-json-view .ln-col { color: hsl(240 4% 35%); }
+.dark .rl-json-view .k { color: hsl(217 65% 65%); }
+.dark .rl-json-view .s { color: hsl(142 50% 60%); }
+.dark .rl-json-view .n { color: hsl(28 80% 65%); }
+.dark .rl-json-view .b { color: hsl(262 70% 70%); }
+.dark .rl-json-view .nu { color: hsl(0 60% 65%); }
+.dark .rl-json-view .p { color: hsl(240 4% 50%); }
+.dark .rl-json-view .br { color: hsl(240 4% 60%); }

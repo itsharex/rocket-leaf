@@ -220,8 +220,8 @@ export function ConsumersScreen() {
           </div>
 
           <div
-            className="flex items-center gap-2"
-            style={{ padding: '12px 20px', borderTop: '1px solid hsl(var(--border))', background: 'hsl(0 0% 99%)' }}
+            className="flex items-center gap-2 rl-subtle-bg"
+            style={{ padding: '12px 20px', borderTop: '1px solid hsl(var(--border))' }}
           >
             <button className="rl-btn rl-btn-outline rl-btn-sm"><RotateCcw size={13} />重置进度</button>
             <button className="rl-btn rl-btn-outline rl-btn-sm" style={{ marginLeft: 'auto' }}>

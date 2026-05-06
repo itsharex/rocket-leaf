@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { PageHeader } from '../shell'
+import { useSettings, type ThemeMode, type Language } from '@/hooks/useSettings'
 
 const SECTIONS: { k: string; icon: LucideIcon }[] = [
   { k: '外观', icon: Sun },
@@ -24,7 +25,7 @@ const SECTIONS: { k: string; icon: LucideIcon }[] = [
 ]
 
 const ACCENT_COLORS = [
-  { c: '#0a0a0a', name: '默认', active: true },
+  { c: '#0a0a0a', name: '默认' },
   { c: '#2563eb', name: '蓝' },
   { c: '#16a34a', name: '绿' },
   { c: '#ea580c', name: '橙' },
@@ -33,11 +34,36 @@ const ACCENT_COLORS = [
   { c: '#0891b2', name: '青' },
 ]
 
-const THEMES = [
-  { name: '浅色', desc: '默认', mode: 'light' as const, active: true },
-  { name: '深色', desc: '护眼', mode: 'dark' as const },
-  { name: '跟随系统', desc: '自动切换', mode: 'auto' as const },
+const THEMES: { name: string; desc: string; mode: ThemeMode }[] = [
+  { name: '浅色', desc: '默认', mode: 'light' },
+  { name: '深色', desc: '护眼', mode: 'dark' },
+  { name: '跟随系统', desc: '自动切换', mode: 'system' },
 ]
+
+const UI_FONT_OPTIONS = [
+  { value: 'system', label: '系统默认' },
+  { value: 'Inter', label: 'Inter' },
+  { value: 'PingFang SC', label: 'PingFang SC' },
+  { value: 'Microsoft YaHei', label: '微软雅黑' },
+  { value: 'Noto Sans SC', label: 'Noto Sans SC' },
+]
+
+const MONOSPACE_FONT_OPTIONS = [
+  { value: 'JetBrains Mono', label: 'JetBrains Mono' },
+  { value: 'Fira Code', label: 'Fira Code' },
+  { value: 'Source Code Pro', label: 'Source Code Pro' },
+  { value: 'Cascadia Code', label: 'Cascadia Code' },
+  { value: 'Menlo', label: 'Menlo' },
+  { value: 'system', label: '系统默认' },
+]
+
+const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
+  { value: 'zh', label: '简体中文' },
+  { value: 'en', label: 'English' },
+]
+
+const MIN_FONT_SIZE = 12
+const MAX_FONT_SIZE = 18
 
 type Palette = { bg: string; panel: string; border: string; fg: string; muted: string; line: string }
 const LIGHT_P: Palette = { bg: '#ffffff', panel: '#fafafa', border: '#e5e5e5', fg: '#0a0a0a', muted: '#a3a3a3', line: '#f0f0f0' }
@@ -91,17 +117,23 @@ function MiniAppChrome({ p, half }: { p: Palette; half?: 'left' | 'right' }) {
 
 export function SettingsScreen() {
   const [activeSection, setActiveSection] = useState('外观')
+  const { settings, setSetting, resetAllSettings } = useSettings()
+
+  const handleFontSizeChange = (delta: number) => {
+    const next = Math.max(MIN_FONT_SIZE, Math.min(MAX_FONT_SIZE, settings.fontSize + delta))
+    setSetting('fontSize', next)
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader title="设置" />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <aside
+          className="rl-subtle-bg"
           style={{
             width: 200,
             borderRight: '1px solid hsl(var(--border))',
             padding: '12px 0',
-            background: 'hsl(0 0% 99%)',
           }}
         >
           {SECTIONS.map((s) => {
@@ -133,7 +165,14 @@ export function SettingsScreen() {
               <div className="rl-muted mt-1 text-[12px]">主题、字体与界面密度</div>
             </div>
             <div className="flex items-center gap-2">
-              <button className="rl-btn rl-btn-ghost rl-btn-sm">恢复默认</button>
+              <button
+                className="rl-btn rl-btn-ghost rl-btn-sm"
+                onClick={() => {
+                  void resetAllSettings()
+                }}
+              >
+                恢复默认
+              </button>
               <span className="rl-muted text-[12px]">所有更改自动保存</span>
             </div>
           </div>
@@ -143,16 +182,18 @@ export function SettingsScreen() {
               <div className="rl-section-label" style={{ marginTop: 0 }}>主题</div>
               <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {THEMES.map((t) => {
+                  const active = settings.theme === t.mode
                   const palette = t.mode === 'dark' ? DARK_P : LIGHT_P
                   return (
                     <div
                       key={t.name}
                       className="rl-card"
+                      onClick={() => setSetting('theme', t.mode)}
                       style={{
                         padding: 0,
                         overflow: 'hidden',
-                        borderColor: t.active ? 'hsl(var(--foreground))' : 'hsl(var(--border))',
-                        boxShadow: t.active ? '0 0 0 1px hsl(var(--foreground))' : undefined,
+                        borderColor: active ? 'hsl(var(--foreground))' : 'hsl(var(--border))',
+                        boxShadow: active ? '0 0 0 1px hsl(var(--foreground))' : undefined,
                         cursor: 'pointer',
                       }}
                     >
@@ -161,13 +202,13 @@ export function SettingsScreen() {
                           height: 84,
                           position: 'relative',
                           background:
-                            t.mode === 'auto'
+                            t.mode === 'system'
                               ? 'linear-gradient(105deg, #ffffff 0%, #ffffff 49%, #262626 49%, #0a0a0a 100%)'
                               : palette.bg,
                           borderBottom: '1px solid hsl(var(--border))',
                         }}
                       >
-                        {t.mode === 'auto' ? (
+                        {t.mode === 'system' ? (
                           <div
                             style={{
                               position: 'absolute',
@@ -193,14 +234,14 @@ export function SettingsScreen() {
                             width: 16,
                             height: 16,
                             borderRadius: 999,
-                            border: '1px solid ' + (t.active ? 'hsl(var(--foreground))' : 'hsl(var(--border))'),
-                            background: t.active ? 'hsl(var(--foreground))' : 'transparent',
+                            border: '1px solid ' + (active ? 'hsl(var(--foreground))' : 'hsl(var(--border))'),
+                            background: active ? 'hsl(var(--foreground))' : 'transparent',
                             display: 'grid',
                             placeItems: 'center',
                             color: 'hsl(var(--background))',
                           }}
                         >
-                          {t.active && <Check size={10} strokeWidth={3} />}
+                          {active && <Check size={10} strokeWidth={3} />}
                         </div>
                       </div>
                     </div>
@@ -211,22 +252,25 @@ export function SettingsScreen() {
               <div className="rl-section-label" style={{ marginTop: 24 }}>强调色</div>
               <div className="rl-card" style={{ padding: 16 }}>
                 <div className="flex flex-wrap items-center gap-2">
-                  {ACCENT_COLORS.map((c) => (
-                    <div key={c.name} className="flex flex-col items-center gap-1 cursor-pointer">
-                      <div
-                        style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: 999,
-                          background: c.c,
-                          border: c.active ? '2px solid hsl(var(--foreground))' : '2px solid transparent',
-                          outline: c.active ? '2px solid hsl(var(--background))' : 'none',
-                          outlineOffset: -4,
-                        }}
-                      />
-                      <span className="rl-muted text-[12px]">{c.name}</span>
-                    </div>
-                  ))}
+                  {ACCENT_COLORS.map((c, i) => {
+                    const active = i === 0
+                    return (
+                      <div key={c.name} className="flex flex-col items-center gap-1 cursor-pointer">
+                        <div
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 999,
+                            background: c.c,
+                            border: active ? '2px solid hsl(var(--foreground))' : '2px solid transparent',
+                            outline: active ? '2px solid hsl(var(--background))' : 'none',
+                            outlineOffset: -4,
+                          }}
+                        />
+                        <span className="rl-muted text-[12px]">{c.name}</span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -241,9 +285,26 @@ export function SettingsScreen() {
                     <div className="rl-muted mt-1 text-[12px]">影响整个应用的基础字号</div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm">−</button>
-                    <span className="font-mono-design rl-tabular text-[13px]" style={{ width: 40, textAlign: 'center' }}>14px</span>
-                    <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm">+</button>
+                    <button
+                      className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm"
+                      onClick={() => handleFontSizeChange(-1)}
+                      disabled={settings.fontSize <= MIN_FONT_SIZE}
+                    >
+                      −
+                    </button>
+                    <span
+                      className="font-mono-design rl-tabular text-[13px]"
+                      style={{ width: 40, textAlign: 'center' }}
+                    >
+                      {settings.fontSize}px
+                    </span>
+                    <button
+                      className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm"
+                      onClick={() => handleFontSizeChange(1)}
+                      disabled={settings.fontSize >= MAX_FONT_SIZE}
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
                 <div
@@ -254,11 +315,15 @@ export function SettingsScreen() {
                     <div className="text-[13px] font-medium">界面字体</div>
                     <div className="rl-muted mt-1 text-[12px]">默认使用系统 UI 字体</div>
                   </div>
-                  <select className="rl-select" style={{ width: 200 }}>
-                    <option>系统默认</option>
-                    <option>Inter</option>
-                    <option>HarmonyOS Sans</option>
-                    <option>PingFang SC</option>
+                  <select
+                    className="rl-select"
+                    style={{ width: 200 }}
+                    value={settings.uiFont}
+                    onChange={(e) => setSetting('uiFont', e.target.value)}
+                  >
+                    {UI_FONT_OPTIONS.map((f) => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div
@@ -269,11 +334,15 @@ export function SettingsScreen() {
                     <div className="text-[13px] font-medium">等宽字体</div>
                     <div className="rl-muted mt-1 text-[12px]">用于消息体、ID、JSON 显示</div>
                   </div>
-                  <select className="rl-select" style={{ width: 200 }}>
-                    <option>JetBrains Mono</option>
-                    <option>SF Mono</option>
-                    <option>Cascadia Code</option>
-                    <option>系统默认</option>
+                  <select
+                    className="rl-select"
+                    style={{ width: 200 }}
+                    value={settings.monospaceFont}
+                    onChange={(e) => setSetting('monospaceFont', e.target.value)}
+                  >
+                    {MONOSPACE_FONT_OPTIONS.map((f) => (
+                      <option key={f.value} value={f.value}>{f.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex items-center justify-between p-4">
@@ -317,10 +386,15 @@ export function SettingsScreen() {
                     <div className="text-[13px] font-medium">界面语言</div>
                     <div className="rl-muted mt-1 text-[12px]">应用启动后生效</div>
                   </div>
-                  <select className="rl-select" style={{ width: 200 }}>
-                    <option>简体中文</option>
-                    <option>English</option>
-                    <option>跟随系统</option>
+                  <select
+                    className="rl-select"
+                    style={{ width: 200 }}
+                    value={settings.language}
+                    onChange={(e) => setSetting('language', e.target.value as Language)}
+                  >
+                    {LANGUAGE_OPTIONS.map((l) => (
+                      <option key={l.value} value={l.value}>{l.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="flex items-center justify-between p-4">
@@ -328,10 +402,16 @@ export function SettingsScreen() {
                     <div className="text-[13px] font-medium">时间格式</div>
                     <div className="rl-muted mt-1 text-[12px]">影响列表与详情中的时间显示</div>
                   </div>
-                  <select className="rl-select" style={{ width: 200 }}>
-                    <option>2024-10-21 14:32:08</option>
-                    <option>10/21/2024 2:32 PM</option>
-                    <option>相对时间（5 分钟前）</option>
+                  <select
+                    className="rl-select"
+                    style={{ width: 200 }}
+                    value={settings.timestampFormat}
+                    onChange={(e) =>
+                      setSetting('timestampFormat', e.target.value as 'datetime' | 'ms')
+                    }
+                  >
+                    <option value="datetime">2024-10-21 14:32:08</option>
+                    <option value="ms">毫秒时间戳</option>
                   </select>
                 </div>
               </div>
@@ -373,8 +453,8 @@ export function SettingsScreen() {
               <div className="rl-section-label" style={{ marginTop: 0 }}>预览</div>
               <div className="rl-card overflow-hidden">
                 <div
+                  className="rl-subtle-bg"
                   style={{
-                    background: 'hsl(0 0% 99%)',
                     padding: '8px 12px',
                     borderBottom: '1px solid hsl(var(--border))',
                     display: 'flex',

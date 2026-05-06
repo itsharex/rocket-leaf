@@ -63,10 +63,7 @@ function App(): React.ReactElement {
               : []
           }
         />
-        <main
-          className="min-w-0 flex-1 overflow-hidden"
-          style={{ background: 'hsl(0 0% 99.5%)' }}
-        >
+        <main className="rl-app-bg min-w-0 flex-1 overflow-hidden">
           {renderContent()}
         </main>
       </div>

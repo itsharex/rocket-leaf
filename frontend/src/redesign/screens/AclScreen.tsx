@@ -105,12 +105,11 @@ export function AclScreen() {
 
         {/* Detail panel */}
         <aside
-          className="scroll-thin"
+          className="scroll-thin rl-subtle-bg"
           style={{
             width: 360,
             borderLeft: '1px solid hsl(var(--border))',
             overflow: 'auto',
-            background: 'hsl(0 0% 99%)',
           }}
         >
           <div style={{ padding: 20 }}>

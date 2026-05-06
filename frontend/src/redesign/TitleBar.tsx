@@ -3,6 +3,7 @@ import { Minus, Square, SquareMinus, X, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Window } from '@wailsio/runtime'
+import logoUrl from '@/assets/logo.png'
 
 function isMac(): boolean {
   if (typeof navigator === 'undefined') return false
@@ -61,7 +62,7 @@ export function TitleBar({
             <span className="c3" />
           </div>
         )}
-        <div className="logo">RL</div>
+        <img src={logoUrl} alt="" className="logo-img" aria-hidden />
         <div className="title">Rocket-Leaf</div>
         <div className="rl-muted" style={{ fontSize: 11 }}>— RocketMQ 桌面客户端</div>
         <div className="rl-titlebar-spacer" />

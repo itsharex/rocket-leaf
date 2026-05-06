@@ -39,6 +39,11 @@
   font-size: 11px;
   letter-spacing: -0.5px;
 }
+.rl-title-bar .logo-img {
+  width: 28px; height: 28px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
 .rl-title-bar .title {
   font-size: 13px;
   font-weight: 500;

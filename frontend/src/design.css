@@ -566,6 +566,45 @@
 .dark .rl-app-bg { background: hsl(240 6% 5%); }
 .dark .rl-subtle-bg { background: hsl(240 4% 7%); }
 
+/* ===== Accent color application =====
+   The default theme uses --foreground (near-black/white) as the emphasis
+   color across active states. When the user picks a non-default accent we
+   retarget those emphasis points to --primary so the choice is visible. */
+[data-accent]:not([data-accent="default"]) .rl-sidebar .item.active {
+  color: hsl(var(--primary));
+}
+[data-accent]:not([data-accent="default"]) .rl-sidebar .item.active::before {
+  background: hsl(var(--primary));
+}
+[data-accent]:not([data-accent="default"]) .rl-utabs .utab.active {
+  color: hsl(var(--primary));
+  border-bottom-color: hsl(var(--primary));
+}
+[data-accent]:not([data-accent="default"]) .rl-tabs .tab.active {
+  color: hsl(var(--primary));
+}
+[data-accent]:not([data-accent="default"]) .rl-switch.on {
+  background: hsl(var(--primary));
+}
+[data-accent]:not([data-accent="default"]) .rl-input:focus,
+[data-accent]:not([data-accent="default"]) .rl-select:focus {
+  border-color: hsl(var(--ring));
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2);
+}
+[data-accent]:not([data-accent="default"]) .rl-btn-primary:hover {
+  background: hsl(var(--primary) / 0.85);
+}
+[data-accent]:not([data-accent="default"]) .rl-ai-pill {
+  border-color: hsl(var(--primary) / 0.4);
+}
+[data-accent]:not([data-accent="default"]) .rl-ai-pill .ai-spark {
+  color: hsl(var(--primary));
+}
+[data-accent]:not([data-accent="default"]) .rl-title-bar .conn-pill .dot {
+  background: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18);
+}
+
 /* ===== UI accessibility preferences ===== */
 
 /* Animations off — neutralise transitions and animations everywhere. */

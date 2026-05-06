@@ -260,6 +260,52 @@ func (s *SettingsService) ExportAllConfig() (string, error) {
 	return string(data), nil
 }
 
+// ExportAllConfigToFile 将全部配置写入指定文件路径，返回最终落盘的绝对路径
+func (s *SettingsService) ExportAllConfigToFile(targetPath string) (string, error) {
+	targetPath = strings.TrimSpace(targetPath)
+	if targetPath == "" {
+		return "", errors.New("目标文件路径为空")
+	}
+
+	jsonStr, err := s.ExportAllConfig()
+	if err != nil {
+		return "", err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
+		return "", fmt.Errorf("创建目录失败: %w", err)
+	}
+
+	tmp := targetPath + ".tmp"
+	if err := os.WriteFile(tmp, []byte(jsonStr), 0o600); err != nil {
+		return "", fmt.Errorf("写入文件失败: %w", err)
+	}
+	if err := os.Rename(tmp, targetPath); err != nil {
+		_ = os.Remove(tmp)
+		return "", fmt.Errorf("写入文件失败: %w", err)
+	}
+
+	abs, absErr := filepath.Abs(targetPath)
+	if absErr != nil {
+		abs = targetPath
+	}
+	return abs, nil
+}
+
+// ImportAllConfigFromFile 从指定路径读取并导入全部配置
+func (s *SettingsService) ImportAllConfigFromFile(sourcePath string) error {
+	sourcePath = strings.TrimSpace(sourcePath)
+	if sourcePath == "" {
+		return errors.New("源文件路径为空")
+	}
+
+	data, err := os.ReadFile(sourcePath)
+	if err != nil {
+		return fmt.Errorf("读取文件失败: %w", err)
+	}
+	return s.ImportAllConfig(string(data))
+}
+
 // ImportAllConfig 导入全部配置
 func (s *SettingsService) ImportAllConfig(jsonStr string) error {
 	var importData struct {

@@ -18,7 +18,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { Browser } from '@wailsio/runtime'
+import { Browser, Dialogs } from '@wailsio/runtime'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { PageHeader } from '../shell'
@@ -34,7 +34,11 @@ import {
 import { useUIPrefs, type AccentKey } from '@/hooks/useUIPrefs'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import logoUrl from '@/assets/logo.png'
-import { exportAllConfig, importAllConfig, clearCache as clearCacheApi } from '@/api/settings'
+import {
+  exportAllConfigToFile,
+  importAllConfigFromFile,
+  clearCache as clearCacheApi,
+} from '@/api/settings'
 
 const APP_VERSION = __APP_VERSION__
 const GITHUB_URL = 'https://github.com/amigoer/rocket-leaf'
@@ -826,37 +830,46 @@ export function SettingsScreen() {
   } | null>(null)
 
   const handleExport = useCallback(async () => {
+    const defaultName = `rocket-leaf-config-${new Date().toISOString().slice(0, 10)}.json`
+    let chosen: string
     try {
-      const jsonStr = await exportAllConfig()
-      const blob = new Blob([jsonStr], { type: 'application/json' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `rocket-leaf-config-${new Date().toISOString().slice(0, 10)}.json`
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success(t('settings.data.exportSuccess'))
+      chosen = await Dialogs.SaveFile({
+        Title: t('settings.data.exportTitle'),
+        Filename: defaultName,
+        Filters: [{ DisplayName: 'JSON', Pattern: '*.json' }],
+      })
+    } catch {
+      toast.error(t('settings.data.exportError'))
+      return
+    }
+    if (!chosen) return // user cancelled
+    try {
+      const savedPath = await exportAllConfigToFile(chosen)
+      toast.success(t('settings.data.exportSuccess'), { description: savedPath })
     } catch {
       toast.error(t('settings.data.exportError'))
     }
   }, [t])
 
-  const handleImport = useCallback(() => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.json'
-    input.onchange = async () => {
-      const file = input.files?.[0]
-      if (!file) return
-      try {
-        const text = await file.text()
-        await importAllConfig(text)
-        toast.success(t('settings.data.importSuccess'))
-      } catch {
-        toast.error(t('settings.data.importError'))
-      }
+  const handleImport = useCallback(async () => {
+    let chosen: string | string[]
+    try {
+      chosen = await Dialogs.OpenFile({
+        Title: t('settings.data.importTitle'),
+        Filters: [{ DisplayName: 'JSON', Pattern: '*.json' }],
+      })
+    } catch {
+      toast.error(t('settings.data.importError'))
+      return
     }
-    input.click()
+    const path = Array.isArray(chosen) ? chosen[0] : chosen
+    if (!path) return // user cancelled
+    try {
+      await importAllConfigFromFile(path)
+      toast.success(t('settings.data.importSuccess'), { description: path })
+    } catch {
+      toast.error(t('settings.data.importError'))
+    }
   }, [t])
 
   const doClearCache = useCallback(async () => {

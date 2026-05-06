@@ -39,11 +39,29 @@ export async function exportAllConfig(): Promise<string> {
   }
 }
 
+export async function exportAllConfigToFile(targetPath: string): Promise<string> {
+  try {
+    return await SettingsService.ExportAllConfigToFile(targetPath)
+  } catch (e) {
+    console.error('ExportAllConfigToFile', e)
+    throw e
+  }
+}
+
 export async function importAllConfig(jsonStr: string): Promise<void> {
   try {
     await SettingsService.ImportAllConfig(jsonStr)
   } catch (e) {
     console.error('ImportAllConfig', e)
+    throw e
+  }
+}
+
+export async function importAllConfigFromFile(sourcePath: string): Promise<void> {
+  try {
+    await SettingsService.ImportAllConfigFromFile(sourcePath)
+  } catch (e) {
+    console.error('ImportAllConfigFromFile', e)
     throw e
   }
 }

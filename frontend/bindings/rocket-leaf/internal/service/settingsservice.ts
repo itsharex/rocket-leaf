@@ -32,6 +32,13 @@ export function ExportAllConfig(): $CancellablePromise<string> {
 }
 
 /**
+ * ExportAllConfigToFile 将全部配置写入指定文件路径，返回最终落盘的绝对路径
+ */
+export function ExportAllConfigToFile(targetPath: string): $CancellablePromise<string> {
+    return $Call.ByID(1876922620, targetPath);
+}
+
+/**
  * GetAutoConnectLast 获取是否自动连接上次集群
  */
 export function GetAutoConnectLast(): $CancellablePromise<boolean> {
@@ -73,6 +80,13 @@ export function GetSettings(): $CancellablePromise<model$0.AppSettings | null> {
  */
 export function ImportAllConfig(jsonStr: string): $CancellablePromise<void> {
     return $Call.ByID(3033237922, jsonStr);
+}
+
+/**
+ * ImportAllConfigFromFile 从指定路径读取并导入全部配置
+ */
+export function ImportAllConfigFromFile(sourcePath: string): $CancellablePromise<void> {
+    return $Call.ByID(1889791552, sourcePath);
 }
 
 /**

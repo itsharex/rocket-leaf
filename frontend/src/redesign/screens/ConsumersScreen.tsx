@@ -57,6 +57,7 @@ export function ConsumersScreen() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selectedName, setSelectedName] = useState<string | null>(null)
+  const [panelDismissed, setPanelDismissed] = useState(false)
   const [editorOpen, setEditorOpen] = useState<{ mode: 'create' } | { mode: 'edit'; group: ConsumerGroupItem } | null>(null)
   const [resetTarget, setResetTarget] = useState<ConsumerGroupItem | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<ConsumerGroupItem | null>(null)
@@ -75,11 +76,11 @@ export function ConsumersScreen() {
     })
   }, [groups, search, statusFilter])
 
-  // Auto-select first
+  // Auto-select first (respect explicit user dismissal)
   useEffect(() => {
     const first = filtered[0]
-    if (!selectedName && first) setSelectedName(first.group)
-  }, [filtered, selectedName])
+    if (!panelDismissed && !selectedName && first) setSelectedName(first.group)
+  }, [filtered, selectedName, panelDismissed])
 
   const selected = useMemo<ConsumerGroupItem | null>(
     () => groups.find((g) => g.group === selectedName) ?? null,
@@ -257,7 +258,10 @@ export function ConsumersScreen() {
                         <tr
                           key={g.group}
                           className={selectedName === g.group ? 'selected' : ''}
-                          onClick={() => setSelectedName(g.group)}
+                          onClick={() => {
+                            setSelectedName(g.group)
+                            setPanelDismissed(false)
+                          }}
                           style={{ cursor: 'pointer' }}
                         >
                           <td>
@@ -326,7 +330,10 @@ export function ConsumersScreen() {
         {hasOnline && selected && (
           <GroupDetailPanel
             group={selected}
-            onClose={() => setSelectedName(null)}
+            onClose={() => {
+              setSelectedName(null)
+              setPanelDismissed(true)
+            }}
             onReset={() => setResetTarget(selected)}
             onEdit={() => setEditorOpen({ mode: 'edit', group: selected })}
             onDelete={() => setConfirmDelete(selected)}

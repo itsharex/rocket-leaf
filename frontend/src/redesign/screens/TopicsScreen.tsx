@@ -89,6 +89,7 @@ export function TopicsScreen() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [selectedName, setSelectedName] = useState<string | null>(null)
+  const [panelDismissed, setPanelDismissed] = useState(false)
   const [detail, setDetail] = useState<TopicItem | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [editorOpen, setEditorOpen] = useState<{ mode: 'create' } | { mode: 'edit'; topic: TopicItem } | null>(null)
@@ -113,13 +114,13 @@ export function TopicsScreen() {
     })
   }, [derived, search, typeFilter])
 
-  // Auto-select first topic when list loads
+  // Auto-select first topic when list loads (respect explicit dismissal)
   useEffect(() => {
     const first = filtered[0]
-    if (!selectedName && first) {
+    if (!panelDismissed && !selectedName && first) {
       setSelectedName(first.raw.topic)
     }
-  }, [filtered, selectedName])
+  }, [filtered, selectedName, panelDismissed])
 
   // When selected name changes, fetch detail (with routes)
   useEffect(() => {
@@ -308,7 +309,10 @@ export function TopicsScreen() {
                       <tr
                         key={raw.topic}
                         className={selectedName === raw.topic ? 'selected' : ''}
-                        onClick={() => setSelectedName(raw.topic)}
+                        onClick={() => {
+                          setSelectedName(raw.topic)
+                          setPanelDismissed(false)
+                        }}
                         style={{ cursor: 'pointer' }}
                       >
                         <td>
@@ -351,7 +355,10 @@ export function TopicsScreen() {
           <TopicDetailPanel
             topic={detail}
             loading={detailLoading}
-            onClose={() => setSelectedName(null)}
+            onClose={() => {
+              setSelectedName(null)
+              setPanelDismissed(true)
+            }}
             onEdit={(tp) => setEditorOpen({ mode: 'edit', topic: tp })}
             onDelete={(tp) => setConfirmDelete(tp)}
           />

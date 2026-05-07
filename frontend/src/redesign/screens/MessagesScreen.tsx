@@ -73,14 +73,8 @@ export function MessagesScreen() {
     [results, selectedId],
   )
 
-  // Reset selection when results change
-  useEffect(() => {
-    if (results.length > 0 && !selectedId) {
-      setSelectedId(results[0]!.messageId)
-    } else if (results.length === 0) {
-      setSelectedId(null)
-    }
-  }, [results, selectedId])
+  // Selection is set inline by handleSearch (and cleared by close).
+  // No effect needed — that would cause the close button to re-select instantly.
 
   const handleSearch = async () => {
     setError(null)

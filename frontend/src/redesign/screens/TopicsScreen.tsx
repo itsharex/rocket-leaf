@@ -24,6 +24,7 @@ import { PageHeader } from '../shell'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useTopics } from '@/hooks/useTopics'
 import { useCluster } from '@/hooks/useCluster'
+import { useDelayedUnmount } from '@/hooks/useDelayedUnmount'
 import * as topicApi from '@/api/topic'
 
 type TypeFilter = 'all' | 'normal' | 'fifo' | 'delay' | 'retry' | 'dlq'
@@ -126,6 +127,13 @@ export function TopicsScreen() {
     setSelectedName(null)
     setPanelDismissed(true)
   }, [])
+
+  const panelMount = useDelayedUnmount(!!(hasOnline && selectedName))
+  // Keep the displayed item alive during the exit animation.
+  const [pinnedDetail, setPinnedDetail] = useState<TopicItem | null>(null)
+  useEffect(() => {
+    if (detail) setPinnedDetail(detail)
+  }, [detail])
 
   // Esc closes the detail panel
   useEffect(() => {
@@ -376,10 +384,11 @@ export function TopicsScreen() {
         </div>
 
         {/* Detail panel */}
-        {hasOnline && selectedName && (
+        {panelMount.shouldRender && (
           <TopicDetailPanel
-            topic={detail}
-            loading={detailLoading}
+            topic={detail ?? pinnedDetail}
+            loading={detailLoading && !detail && !pinnedDetail}
+            exiting={panelMount.exiting}
             onClose={dismissPanel}
             onEdit={(tp) => setEditorOpen({ mode: 'edit', topic: tp })}
             onDelete={(tp) => setConfirmDelete(tp)}
@@ -420,12 +429,14 @@ export function TopicsScreen() {
 function TopicDetailPanel({
   topic,
   loading,
+  exiting,
   onClose,
   onEdit,
   onDelete,
 }: {
   topic: TopicItem | null
   loading: boolean
+  exiting: boolean
   onClose: () => void
   onEdit: (t: TopicItem) => void
   onDelete: (t: TopicItem) => void
@@ -433,10 +444,12 @@ function TopicDetailPanel({
   const { t } = useTranslation()
   const [tab, setTab] = useState<'info' | 'routes' | 'groups'>('info')
 
+  const asideClass = 'scroll-thin rl-detail-panel' + (exiting ? ' exiting' : '')
+
   if (loading && !topic) {
     return (
       <aside
-        className="scroll-thin"
+        className={asideClass}
         style={{
           width: 380,
           borderLeft: '1px solid hsl(var(--border))',
@@ -462,7 +475,7 @@ function TopicDetailPanel({
 
   return (
     <aside
-      className="scroll-thin"
+      className={asideClass}
       style={{
         width: 380,
         borderLeft: '1px solid hsl(var(--border))',

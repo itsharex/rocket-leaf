@@ -20,6 +20,7 @@ import { PageHeader, JSONView } from '../shell'
 import { useTopics } from '@/hooks/useTopics'
 import { useConsumers } from '@/hooks/useConsumers'
 import { useSettings } from '@/hooks/useSettings'
+import { useDelayedUnmount } from '@/hooks/useDelayedUnmount'
 import * as messageApi from '@/api/message'
 
 type TabKey = 'topic' | 'msgid' | 'retry' | 'dlq'
@@ -77,6 +78,14 @@ export function MessagesScreen() {
   // No effect needed — that would cause the close button to re-select instantly.
 
   const dismissPanel = useCallback(() => setSelectedId(null), [])
+
+  const panelMount = useDelayedUnmount(!!selected)
+  // Pin the displayed item so it stays alive during the exit animation.
+  const [pinnedSelected, setPinnedSelected] = useState<MessageItem | null>(null)
+  useEffect(() => {
+    if (selected) setPinnedSelected(selected)
+  }, [selected])
+  const renderedSelected = selected ?? pinnedSelected
 
   // Esc closes the detail panel
   useEffect(() => {
@@ -415,12 +424,13 @@ export function MessagesScreen() {
               )}
             </div>
 
-            {selected && (
+            {panelMount.shouldRender && renderedSelected && (
               <MessageDetailPanel
-                msg={selected}
+                msg={renderedSelected}
+                exiting={panelMount.exiting}
                 onClose={dismissPanel}
                 onCopy={handleCopy}
-                onResend={() => setResendTarget(selected)}
+                onResend={() => setResendTarget(renderedSelected)}
               />
             )}
           </div>
@@ -442,11 +452,13 @@ export function MessagesScreen() {
 
 function MessageDetailPanel({
   msg,
+  exiting,
   onClose,
   onCopy,
   onResend,
 }: {
   msg: MessageItem
+  exiting: boolean
   onClose: () => void
   onCopy: (s: string) => void
   onResend: () => void
@@ -496,7 +508,7 @@ function MessageDetailPanel({
 
   return (
     <aside
-      className="scroll-thin"
+      className={'scroll-thin rl-detail-panel' + (exiting ? ' exiting' : '')}
       style={{
         width: 460,
         borderLeft: '1px solid hsl(var(--border))',

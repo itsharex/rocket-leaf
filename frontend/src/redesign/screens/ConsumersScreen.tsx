@@ -25,6 +25,7 @@ import { PageHeader } from '../shell'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useConsumers } from '@/hooks/useConsumers'
 import { useCluster } from '@/hooks/useCluster'
+import { useDelayedUnmount } from '@/hooks/useDelayedUnmount'
 import * as consumerApi from '@/api/consumer'
 
 type StatusFilter = 'all' | 'online' | 'warning' | 'offline'
@@ -108,6 +109,13 @@ export function ConsumersScreen() {
     () => groups.find((g) => g.group === selectedName) ?? null,
     [groups, selectedName],
   )
+  const panelMount = useDelayedUnmount(!!(hasOnline && selected))
+  // Keep the displayed item alive during the exit animation.
+  const [pinnedSelected, setPinnedSelected] = useState<ConsumerGroupItem | null>(null)
+  useEffect(() => {
+    if (selected) setPinnedSelected(selected)
+  }, [selected])
+  const renderedSelected = selected ?? pinnedSelected
 
   const handleRefresh = async () => {
     try {
@@ -352,13 +360,14 @@ export function ConsumersScreen() {
           )}
         </div>
 
-        {hasOnline && selected && (
+        {panelMount.shouldRender && renderedSelected && (
           <GroupDetailPanel
-            group={selected}
+            group={renderedSelected}
+            exiting={panelMount.exiting}
             onClose={dismissPanel}
-            onReset={() => setResetTarget(selected)}
-            onEdit={() => setEditorOpen({ mode: 'edit', group: selected })}
-            onDelete={() => setConfirmDelete(selected)}
+            onReset={() => setResetTarget(renderedSelected)}
+            onEdit={() => setEditorOpen({ mode: 'edit', group: renderedSelected })}
+            onDelete={() => setConfirmDelete(renderedSelected)}
           />
         )}
       </div>
@@ -405,12 +414,14 @@ export function ConsumersScreen() {
 
 function GroupDetailPanel({
   group,
+  exiting,
   onClose,
   onReset,
   onEdit,
   onDelete,
 }: {
   group: ConsumerGroupItem
+  exiting: boolean
   onClose: () => void
   onReset: () => void
   onEdit: () => void
@@ -425,7 +436,7 @@ function GroupDetailPanel({
 
   return (
     <aside
-      className="scroll-thin"
+      className={'scroll-thin rl-detail-panel' + (exiting ? ' exiting' : '')}
       style={{
         width: 420,
         borderLeft: '1px solid hsl(var(--border))',

@@ -605,6 +605,36 @@
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.18);
 }
 
+/* ===== Detail-panel transitions ===== */
+
+/* Slide-in from the right when the panel mounts. */
+.rl-detail-panel {
+  animation: rl-detail-slide-in 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+.rl-detail-panel.exiting {
+  animation: rl-detail-slide-out 160ms cubic-bezier(0.7, 0, 0.84, 0) forwards;
+  pointer-events: none;
+}
+@keyframes rl-detail-slide-in {
+  from { transform: translateX(24px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes rl-detail-slide-out {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(24px); opacity: 0; }
+}
+
+/* Subtle highlight when a row becomes the new selection. */
+.rl-table tbody tr.selected {
+  animation: rl-row-select-flash 240ms ease-out;
+}
+@keyframes rl-row-select-flash {
+  from { background-color: hsl(var(--accent) / 0); }
+  50%  { background-color: hsl(var(--accent) / 0.55); }
+  to   { background-color: hsl(var(--accent)); }
+}
+
 /* ===== UI accessibility preferences ===== */
 
 /* Animations off — neutralise transitions and animations everywhere. */

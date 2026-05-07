@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Send, RotateCcw, X, Loader2, PlugZap, Check, AlertCircle } from 'lucide-react'
+import { Send, RotateCcw, X, PlugZap, Check, AlertCircle } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { PageHeader } from '../shell'
@@ -239,7 +240,7 @@ export function ProducerScreen() {
                     onClick={handleSend}
                     disabled={busy || !topic || !body.trim()}
                   >
-                    {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                    {busy ? <Spinner size={13} /> : <Send size={13} />}
                     {busy ? t('producer.sending') : t('producer.send')}
                   </button>
                   <button

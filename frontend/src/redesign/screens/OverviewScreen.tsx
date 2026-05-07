@@ -14,9 +14,9 @@ import {
   RotateCcw,
   ChevronRight,
   Sparkles,
-  Loader2,
   PlugZap,
 } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import type {
   BrokerNode,
@@ -256,7 +256,7 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
           disabled={refreshing}
           title={t('common.refresh')}
         >
-          {refreshing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
+          {refreshing ? <Spinner size={13} /> : <RefreshCw size={13} />}
           {t('common.refresh')}
         </button>
         {isOnline && conn && (
@@ -759,7 +759,7 @@ function AIDiagnoseCard({
           </div>
         </div>
         <button className="rl-btn rl-btn-ghost rl-btn-sm" onClick={onRefresh} disabled={loading}>
-          {loading ? <Loader2 size={12} className="animate-spin" /> : null}
+          {loading ? <Spinner size={12} /> : null}
           {t('overview.ai.reanalyze')}
         </button>
         <button className="rl-btn rl-btn-outline rl-btn-sm">

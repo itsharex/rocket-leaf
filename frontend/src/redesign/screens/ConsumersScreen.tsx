@@ -8,12 +8,12 @@ import {
   Tag,
   RotateCcw,
   Edit,
-  Loader2,
   PlugZap,
   Plus,
   Check,
   Trash2,
 } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -176,7 +176,7 @@ export function ConsumersScreen() {
           disabled={refreshing || !hasOnline}
           title={t('common.refresh')}
         >
-          {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          {refreshing ? <Spinner size={14} /> : <RefreshCw size={14} />}
         </button>
         <button
           className="rl-btn rl-btn-primary rl-btn-sm"
@@ -236,7 +236,7 @@ export function ConsumersScreen() {
               className="flex items-center justify-center rl-muted"
               style={{ padding: 60, gap: 8 }}
             >
-              <Loader2 size={14} className="animate-spin" />
+              <Spinner size={14} />
               <span className="text-[12px]">{t('common.loading')}</span>
             </div>
           ) : (
@@ -865,7 +865,7 @@ function ResetOffsetDialog({
             onClick={handleSubmit}
             disabled={busy}
           >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
+            {busy ? <Spinner size={13} /> : <RotateCcw size={13} />}
             {t('consumers.reset.submit')}
           </button>
         </div>
@@ -1026,7 +1026,7 @@ function GroupEditor({
             onClick={handleSubmit}
             disabled={busy || masterBrokers.length === 0}
           >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+            {busy ? <Spinner size={13} /> : <Check size={13} />}
             {isEdit ? t('consumers.edit.submit') : t('consumers.edit.createSubmit')}
           </button>
         </div>

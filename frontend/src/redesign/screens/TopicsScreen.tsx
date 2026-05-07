@@ -8,11 +8,11 @@ import {
   Server,
   Edit,
   Trash2,
-  Loader2,
   AlertCircle,
   PlugZap,
   Check,
 } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import {
@@ -227,7 +227,7 @@ export function TopicsScreen() {
           disabled={refreshing || !hasOnline}
           title={t('common.refresh')}
         >
-          {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          {refreshing ? <Spinner size={14} /> : <RefreshCw size={14} />}
         </button>
         <button
           className="rl-btn rl-btn-primary rl-btn-sm"
@@ -290,7 +290,7 @@ export function TopicsScreen() {
               className="flex items-center justify-center rl-muted"
               style={{ padding: 60, gap: 8 }}
             >
-              <Loader2 size={14} className="animate-spin" />
+              <Spinner size={14} />
               <span className="text-[12px]">{t('common.loading')}</span>
             </div>
           ) : (
@@ -461,7 +461,7 @@ function TopicDetailPanel({
           className="flex items-center justify-center rl-muted"
           style={{ padding: 60, gap: 8 }}
         >
-          <Loader2 size={14} className="animate-spin" />
+          <Spinner size={14} />
           <span className="text-[12px]">{t('common.loading')}</span>
         </div>
       </aside>
@@ -825,7 +825,7 @@ function TopicEditor({
             onClick={handleSubmit}
             disabled={busy || masterBrokers.length === 0}
           >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+            {busy ? <Spinner size={13} /> : <Check size={13} />}
             {isEdit ? t('topics.create.save') : t('topics.create.submit')}
           </button>
         </div>

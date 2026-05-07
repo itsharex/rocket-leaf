@@ -9,8 +9,8 @@ import {
   Trash2,
   Wifi,
   Star,
-  Loader2,
 } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { PageHeader } from '../shell'
@@ -292,7 +292,7 @@ export function ConnectionsScreen() {
               className="flex items-center justify-center rl-muted"
               style={{ padding: 32, gap: 8 }}
             >
-              <Loader2 size={14} className="animate-spin" />
+              <Spinner size={14} />
               <span className="text-[12px]">{t('common.loading')}</span>
             </div>
           ) : filtered.length === 0 ? (
@@ -447,7 +447,7 @@ export function ConnectionsScreen() {
                         disabled={busy === 'disconnect'}
                       >
                         {busy === 'disconnect' ? (
-                          <Loader2 size={13} className="animate-spin" />
+                          <Spinner size={13} />
                         ) : (
                           <Unlink size={13} />
                         )}
@@ -460,7 +460,7 @@ export function ConnectionsScreen() {
                         disabled={busy === 'connect'}
                       >
                         {busy === 'connect' ? (
-                          <Loader2 size={13} className="animate-spin" />
+                          <Spinner size={13} />
                         ) : (
                           <PlugZap size={13} />
                         )}
@@ -602,7 +602,7 @@ export function ConnectionsScreen() {
                       disabled={busy === 'test'}
                     >
                       {busy === 'test' ? (
-                        <Loader2 size={13} className="animate-spin" />
+                        <Spinner size={13} />
                       ) : (
                         <Wifi size={13} />
                       )}
@@ -626,7 +626,7 @@ export function ConnectionsScreen() {
                     disabled={busy === 'save' || (!isNew && !dirty)}
                   >
                     {busy === 'save' ? (
-                      <Loader2 size={13} className="animate-spin" />
+                      <Spinner size={13} />
                     ) : (
                       <Check size={13} />
                     )}

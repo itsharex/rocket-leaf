@@ -4,7 +4,6 @@ import {
   Key,
   Plus,
   X,
-  Loader2,
   PlugZap,
   Check,
   Trash2,
@@ -12,6 +11,7 @@ import {
   ShieldCheck,
   ShieldOff,
 } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { PageHeader } from '../shell'
@@ -172,7 +172,7 @@ export function AclScreen() {
           disabled={statusLoading || !hasOnline}
           title={t('common.refresh')}
         >
-          {statusLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          {statusLoading ? <Spinner size={14} /> : <RefreshCw size={14} />}
         </button>
       </PageHeader>
 
@@ -193,7 +193,7 @@ export function AclScreen() {
               style={{ padding: 16 }}
             >
               {statusLoading ? (
-                <Loader2 size={18} className="animate-spin rl-muted shrink-0" />
+                <Spinner size={18} className="rl-muted shrink-0" />
               ) : enabled ? (
                 <ShieldCheck size={20} style={{ color: 'hsl(142 60% 28%)', flexShrink: 0 }} />
               ) : (
@@ -341,7 +341,7 @@ export function AclScreen() {
                   onClick={handleSave}
                   disabled={saving}
                 >
-                  {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  {saving ? <Spinner size={13} /> : <Check size={13} />}
                   {saving ? t('acl.form.saving') : t('acl.form.submit')}
                 </button>
               </div>
@@ -440,7 +440,7 @@ export function AclScreen() {
                   onClick={handleSaveWhite}
                   disabled={whiteSaving}
                 >
-                  {whiteSaving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  {whiteSaving ? <Spinner size={13} /> : <Check size={13} />}
                   {whiteSaving ? t('acl.globalWhite.saving') : t('acl.globalWhite.save')}
                 </button>
               </div>

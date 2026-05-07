@@ -5,11 +5,11 @@ import {
   X,
   Send,
   GitBranch,
-  Loader2,
   PlugZap,
   AlertCircle,
   Check,
 } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type {
@@ -303,7 +303,7 @@ export function MessagesScreen() {
               onClick={handleSearch}
               disabled={searching}
             >
-              {searching ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+              {searching ? <Spinner size={13} /> : <Search size={13} />}
               {searching ? t('messages.form.searching') : t('messages.form.search')}
             </button>
             {hasSearched && !searching && results.length > 0 && (
@@ -340,7 +340,7 @@ export function MessagesScreen() {
                   className="flex items-center justify-center rl-muted"
                   style={{ padding: 60, gap: 8 }}
                 >
-                  <Loader2 size={14} className="animate-spin" />
+                  <Spinner size={14} />
                   <span className="text-[12px]">{t('messages.form.searching')}</span>
                 </div>
               ) : !hasSearched ? (
@@ -669,7 +669,7 @@ function MessageDetailPanel({
                 className="flex items-center justify-center rl-muted"
                 style={{ padding: 24, gap: 8 }}
               >
-                <Loader2 size={14} className="animate-spin" />
+                <Spinner size={14} />
                 <span className="text-[12px]">{t('messages.detail.trackLoading')}</span>
               </div>
             ) : trackError ? (
@@ -846,7 +846,7 @@ function ResendDialog({
             onClick={handleResend}
             disabled={busy || !group}
           >
-            {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+            {busy ? <Spinner size={13} /> : <Check size={13} />}
             {t('messages.detail.resendSubmit')}
           </button>
         </div>

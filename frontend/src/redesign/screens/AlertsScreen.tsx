@@ -6,8 +6,8 @@ import {
   PlugZap,
   Settings,
   RefreshCw,
-  Loader2,
 } from 'lucide-react'
+import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { PageHeader } from '../shell'
@@ -137,7 +137,7 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
           disabled={refreshing || !hasOnline}
           title={t('common.refresh')}
         >
-          {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          {refreshing ? <Spinner size={14} /> : <RefreshCw size={14} />}
         </button>
       </PageHeader>
 
@@ -181,7 +181,7 @@ function ActiveAlerts({ alerts, loading }: { alerts: AlertEntry[]; loading: bool
         className="flex items-center justify-center rl-muted"
         style={{ padding: 60, gap: 8 }}
       >
-        <Loader2 size={14} className="animate-spin" />
+        <Spinner size={14} />
         <span className="text-[12px]">{t('common.loading')}</span>
       </div>
     )

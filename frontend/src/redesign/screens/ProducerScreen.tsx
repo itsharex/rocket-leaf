@@ -1,12 +1,10 @@
-import {
-  History,
-  Send,
-  Plus,
-  Trash2,
-  X,
-} from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Send, RotateCcw, X, Loader2, PlugZap, Check, AlertCircle } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { PageHeader, JSONView } from '../shell'
+import { toast } from 'sonner'
+import { PageHeader } from '../shell'
+import { useTopics } from '@/hooks/useTopics'
+import * as messageApi from '@/api/message'
 
 const SAMPLE_BODY = `{
   "orderId": "ORD-20250812-08472",
@@ -17,169 +15,323 @@ const SAMPLE_BODY = `{
   ]
 }`
 
-const HISTORY: { ok: boolean; t: string; topic: string; id?: string; ms?: string; err?: string }[] = [
-  { ok: true, t: '10:24:18', topic: 'order-events', id: '7F00...4B2D', ms: '12ms' },
-  { ok: true, t: '10:23:55', topic: 'order-events', id: '7F00...4B2C', ms: '9ms' },
-  { ok: false, t: '10:22:41', topic: 'payment-events', err: 'Topic not found' },
-  { ok: true, t: '10:21:08', topic: 'user-events', id: '7F00...4B11', ms: '14ms' },
+interface HistoryEntry {
+  ok: boolean
+  topic: string
+  tag: string
+  key: string
+  delay: number
+  time: string
+  result?: string
+  error?: string
+}
+
+const DELAY_LEVELS: number[] = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
 ]
+
+function formatTime(d: Date): string {
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+}
 
 export function ProducerScreen() {
   const { t } = useTranslation()
+  const { topics, hasOnline } = useTopics()
+
+  const [topic, setTopic] = useState<string>('')
+  const [tag, setTag] = useState('')
+  const [key, setKey] = useState('')
+  const [delay, setDelay] = useState(0)
+  const [body, setBody] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+
+  const sendableTopics = useMemo(
+    () =>
+      topics
+        .filter((tp) => !tp.topic.startsWith('%RETRY%') && !tp.topic.startsWith('%DLQ%'))
+        .map((tp) => tp.topic)
+        .sort(),
+    [topics],
+  )
+
+  const handleFormat = () => {
+    try {
+      const parsed = JSON.parse(body)
+      setBody(JSON.stringify(parsed, null, 2))
+    } catch {
+      toast.error('Invalid JSON')
+    }
+  }
+
+  const handleSend = async () => {
+    if (!topic) {
+      toast.error(t('producer.validateTopic'))
+      return
+    }
+    if (!body.trim()) {
+      toast.error(t('producer.validateBody'))
+      return
+    }
+    setBusy(true)
+    try {
+      const result = await messageApi.sendMessage(topic, tag, key, body, delay)
+      const entry: HistoryEntry = {
+        ok: true,
+        topic,
+        tag,
+        key,
+        delay,
+        time: formatTime(new Date()),
+        result,
+      }
+      setHistory((h) => [entry, ...h].slice(0, 50))
+      toast.success(t('producer.sendSuccess'), { description: result })
+    } catch (e) {
+      const msg = (e as Error).message ?? String(e)
+      const entry: HistoryEntry = {
+        ok: false,
+        topic,
+        tag,
+        key,
+        delay,
+        time: formatTime(new Date()),
+        error: msg,
+      }
+      setHistory((h) => [entry, ...h].slice(0, 50))
+      toast.error(t('producer.sendError'), { description: msg })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleReset = () => {
+    setTag('')
+    setKey('')
+    setDelay(0)
+    setBody('')
+  }
+
+  const subtitle = !hasOnline ? t('producer.subtitleNoConn') : t('producer.subtitle')
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title={t('producer.title')} subtitle="向 Topic 发送一条消息用于联调与诊断">
-        <button className="rl-btn rl-btn-ghost rl-btn-sm">
-          <History size={13} />历史
-        </button>
-      </PageHeader>
+      <PageHeader title={t('producer.title')} subtitle={subtitle} />
 
       <div className="min-h-0 flex-1 overflow-hidden">
-        <div className="grid h-full" style={{ gridTemplateColumns: '1fr 380px' }}>
-          <div className="scroll-thin min-w-0 overflow-auto" style={{ padding: 24 }}>
-            <div style={{ maxWidth: 720 }}>
-              <div className="rl-section-label">目标</div>
-              <div className="rl-card" style={{ padding: 16 }}>
-                <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                  <div>
-                    <div className="rl-muted mb-2 text-[12px]">Topic</div>
-                    <select className="rl-select" defaultValue="order-events">
-                      <option>order-events</option>
-                      <option>payment-events</option>
-                      <option>user-events</option>
-                    </select>
-                  </div>
-                  <div>
-                    <div className="rl-muted mb-2 text-[12px]">消息类型</div>
-                    <select className="rl-select">
-                      <option>NORMAL</option>
-                      <option>ORDER (顺序)</option>
-                      <option>TRANSACTION (事务)</option>
-                      <option>DELAY (延迟)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <div className="rl-muted mb-2 text-[12px]">Tag <span className="rl-muted">(可选)</span></div>
-                    <input className="rl-input font-mono-design" placeholder="order.create" />
-                  </div>
-                  <div>
-                    <div className="rl-muted mb-2 text-[12px]">Key <span className="rl-muted">(可选)</span></div>
-                    <input className="rl-input font-mono-design" placeholder="ORD-..." />
-                  </div>
-                  <div>
-                    <div className="rl-muted mb-2 text-[12px]">指定队列 <span className="rl-muted">(可选)</span></div>
-                    <select className="rl-select">
-                      <option>自动选择</option>
-                      <option>QID 0</option>
-                      <option>QID 1</option>
-                      <option>QID 2</option>
-                    </select>
-                  </div>
-                  <div>
-                    <div className="rl-muted mb-2 text-[12px]">延迟级别</div>
-                    <select className="rl-select">
-                      <option>不延迟</option>
-                      <option>1s</option>
-                      <option>5s</option>
-                      <option>10s</option>
-                      <option>1m</option>
-                      <option>5m</option>
-                      <option>1h</option>
-                    </select>
+        {!hasOnline ? (
+          <div
+            className="rl-muted flex flex-col items-center justify-center text-center"
+            style={{ height: '100%', padding: 40 }}
+          >
+            <PlugZap size={32} className="mb-3 opacity-40" />
+            <div className="text-[13px]">{t('producer.subtitleNoConn')}</div>
+          </div>
+        ) : (
+          <div className="grid h-full" style={{ gridTemplateColumns: '1fr 380px' }}>
+            <div className="scroll-thin min-w-0 overflow-auto" style={{ padding: 24 }}>
+              <div style={{ maxWidth: 720 }}>
+                <div className="rl-section-label">{t('producer.target')}</div>
+                <div className="rl-card" style={{ padding: 16 }}>
+                  <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div className="rl-muted mb-2 text-[12px]">
+                        {t('producer.topic')}{' '}
+                        <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                      </div>
+                      {sendableTopics.length === 0 ? (
+                        <div className="rl-muted text-[12px]" style={{ padding: 8 }}>
+                          {t('producer.noTopics')}
+                        </div>
+                      ) : (
+                        <select
+                          className="rl-select font-mono-design"
+                          value={topic}
+                          onChange={(e) => setTopic(e.target.value)}
+                        >
+                          <option value="">{t('producer.topicPlaceholder')}</option>
+                          {sendableTopics.map((tp) => (
+                            <option key={tp} value={tp}>
+                              {tp}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    <div>
+                      <div className="rl-muted mb-2 text-[12px]">
+                        {t('producer.tag')}{' '}
+                        <span className="rl-muted">{t('producer.tagOptional')}</span>
+                      </div>
+                      <input
+                        className="rl-input font-mono-design"
+                        placeholder={t('producer.tagPlaceholder')}
+                        value={tag}
+                        onChange={(e) => setTag(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <div className="rl-muted mb-2 text-[12px]">
+                        {t('producer.key')}{' '}
+                        <span className="rl-muted">{t('producer.tagOptional')}</span>
+                      </div>
+                      <input
+                        className="rl-input font-mono-design"
+                        placeholder={t('producer.keyPlaceholder')}
+                        value={key}
+                        onChange={(e) => setKey(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <div className="rl-muted mb-2 text-[12px]">{t('producer.delay')}</div>
+                      <select
+                        className="rl-select"
+                        value={delay}
+                        onChange={(e) => setDelay(Number(e.target.value))}
+                      >
+                        {DELAY_LEVELS.map((lv) => (
+                          <option key={lv} value={lv}>
+                            {t(`producer.delayLevels.${lv}` as const)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="rl-section-label" style={{ marginTop: 20 }}>消息体</div>
-              <div className="rl-card">
-                <div
-                  className="flex items-center justify-between"
-                  style={{ padding: '8px 12px', borderBottom: '1px solid hsl(var(--border))' }}
-                >
-                  <div className="rl-tabs">
-                    <button className="tab active">JSON</button>
-                    <button className="tab">Text</button>
-                    <button className="tab">Hex</button>
-                    <button className="tab">Base64</button>
+                <div className="mt-5 mb-2 flex items-center justify-between">
+                  <div className="rl-section-label" style={{ marginBottom: 0 }}>
+                    {t('producer.body')}
                   </div>
                   <div className="flex gap-1">
-                    <button className="rl-btn rl-btn-ghost rl-btn-sm">载入示例</button>
-                    <button className="rl-btn rl-btn-ghost rl-btn-sm">格式化</button>
-                  </div>
-                </div>
-                <JSONView
-                  src={SAMPLE_BODY}
-                  maxHeight={220}
-                  style={{ border: 'none', borderRadius: 0, minHeight: 200 }}
-                />
-              </div>
-
-              <div className="rl-section-label" style={{ marginTop: 20 }}>用户属性</div>
-              <div className="rl-card" style={{ padding: 16 }}>
-                {[
-                  ['X-Trace-Id', 'abc123def456'],
-                  ['region', 'cn-north'],
-                ].map(([k, v]) => (
-                  <div key={k} className="mb-2 flex items-center gap-2">
-                    <input className="rl-input font-mono-design" defaultValue={k} style={{ flex: 1 }} />
-                    <span className="rl-muted">=</span>
-                    <input className="rl-input font-mono-design" defaultValue={v} style={{ flex: 2 }} />
-                    <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm">
-                      <Trash2 size={13} />
+                    <button
+                      className="rl-btn rl-btn-ghost rl-btn-sm"
+                      onClick={() => setBody(SAMPLE_BODY)}
+                    >
+                      {t('producer.loadSample')}
+                    </button>
+                    <button
+                      className="rl-btn rl-btn-ghost rl-btn-sm"
+                      onClick={handleFormat}
+                      disabled={!body.trim()}
+                    >
+                      {t('producer.format')}
                     </button>
                   </div>
-                ))}
-                <button className="rl-btn rl-btn-ghost rl-btn-sm mt-1">
-                  <Plus size={12} />添加属性
-                </button>
-              </div>
-
-              <div className="mt-5 flex gap-2">
-                <button className="rl-btn rl-btn-primary"><Send size={13} />发送</button>
-                <button className="rl-btn rl-btn-outline">发送并查询轨迹</button>
-                <button className="rl-btn rl-btn-ghost">重置</button>
-                <div className="flex-1" />
-                <label className="flex items-center gap-2 rl-muted text-[12px]">
-                  <input type="checkbox" defaultChecked />同步等待结果
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* History */}
-          <div
-            className="scroll-thin overflow-auto"
-            style={{
-              borderLeft: '1px solid hsl(var(--border))',
-              background: 'hsl(var(--background))',
-            }}
-          >
-            <div style={{ padding: '12px 14px', borderBottom: '1px solid hsl(var(--border))' }}>
-              <div className="text-[13px] font-medium">最近发送</div>
-              <div className="rl-muted mt-1 text-[12px]">仅本会话保留</div>
-            </div>
-            {HISTORY.map((h, i) => (
-              <div key={i} style={{ padding: '10px 14px', borderBottom: '1px solid hsl(var(--border))' }}>
-                <div className="flex items-center gap-2">
-                  {h.ok ? (
-                    <span style={{ width: 6, height: 6, borderRadius: 999, background: 'hsl(var(--success))' }} />
-                  ) : (
-                    <X size={11} style={{ color: 'hsl(var(--destructive))' }} />
-                  )}
-                  <span className="font-mono-design rl-muted rl-tabular text-[12px]">{h.t}</span>
-                  <span className="text-[12px]">{h.topic}</span>
-                  <span className="flex-1" />
-                  <span className="rl-muted font-mono-design text-[12px]">{h.ms || ''}</span>
                 </div>
-                {h.ok ? (
-                  <div className="font-mono-design rl-muted mt-1 text-[12px]">ID {h.id}</div>
-                ) : (
-                  <div className="mt-1 text-[12px]" style={{ color: 'hsl(var(--destructive))' }}>{h.err}</div>
-                )}
+                <textarea
+                  className="rl-input font-mono-design"
+                  style={{
+                    width: '100%',
+                    minHeight: 220,
+                    padding: 12,
+                    fontSize: 12,
+                    resize: 'vertical',
+                  }}
+                  placeholder='{"hello":"world"}'
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                />
+
+                <div className="mt-5 flex gap-2">
+                  <button
+                    className="rl-btn rl-btn-primary"
+                    onClick={handleSend}
+                    disabled={busy || !topic || !body.trim()}
+                  >
+                    {busy ? <Loader2 size={13} className="animate-spin" /> : <Send size={13} />}
+                    {busy ? t('producer.sending') : t('producer.send')}
+                  </button>
+                  <button
+                    className="rl-btn rl-btn-ghost"
+                    onClick={handleReset}
+                    disabled={busy}
+                  >
+                    <RotateCcw size={13} />
+                    {t('producer.reset')}
+                  </button>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* History */}
+            <div
+              className="scroll-thin overflow-auto"
+              style={{
+                borderLeft: '1px solid hsl(var(--border))',
+                background: 'hsl(var(--background))',
+              }}
+            >
+              <div
+                style={{
+                  padding: '12px 14px',
+                  borderBottom: '1px solid hsl(var(--border))',
+                }}
+              >
+                <div className="text-[13px] font-medium">{t('producer.history')}</div>
+                <div className="rl-muted mt-1 text-[12px]">{t('producer.historyHint')}</div>
+              </div>
+              {history.length === 0 ? (
+                <div
+                  className="rl-muted text-[12px]"
+                  style={{ padding: 24, textAlign: 'center' }}
+                >
+                  {t('producer.historyEmpty')}
+                </div>
+              ) : (
+                history.map((h, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: '10px 14px',
+                      borderBottom: '1px solid hsl(var(--border))',
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      {h.ok ? (
+                        <Check size={11} style={{ color: 'hsl(var(--success))' }} />
+                      ) : (
+                        <X size={11} style={{ color: 'hsl(var(--destructive))' }} />
+                      )}
+                      <span className="font-mono-design rl-muted rl-tabular text-[12px]">
+                        {h.time}
+                      </span>
+                      <span
+                        className="font-mono-design text-[12px] flex-1 truncate"
+                        title={h.topic}
+                      >
+                        {h.topic}
+                      </span>
+                    </div>
+                    {h.ok ? (
+                      <div
+                        className="font-mono-design rl-muted mt-1 text-[11px] truncate"
+                        title={h.result}
+                      >
+                        {h.result}
+                      </div>
+                    ) : (
+                      <div
+                        className="mt-1 flex items-start gap-1 text-[11px]"
+                        style={{ color: 'hsl(var(--destructive))' }}
+                      >
+                        <AlertCircle size={10} className="mt-0.5 shrink-0" />
+                        <span className="break-all">{h.error}</span>
+                      </div>
+                    )}
+                    {(h.tag || h.key || h.delay > 0) && (
+                      <div className="rl-muted mt-1 flex flex-wrap gap-2 text-[11px]">
+                        {h.tag && <span>tag: {h.tag}</span>}
+                        {h.key && <span>key: {h.key}</span>}
+                        {h.delay > 0 && <span>delay: L{h.delay}</span>}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

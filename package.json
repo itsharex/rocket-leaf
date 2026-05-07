@@ -1,5 +1,25 @@
 {
+  "name": "rocket-leaf",
+  "private": true,
+  "scripts": {
+    "prepare": "husky",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "go:fmt": "gofmt -w main.go internal scripts build",
+    "go:fmt:check": "sh scripts/check-gofmt.sh",
+    "go:vet": "go vet ./...",
+    "frontend:type-check": "npm --prefix frontend run type-check",
+    "check": "npm run format:check && npm run go:fmt:check && npm run go:vet && npm run frontend:type-check"
+  },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.10",
     "shadcn": "^4.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,css,json,md,yml,yaml}": "prettier --write",
+    "*.go": "gofmt -w"
   }
 }

@@ -133,7 +133,88 @@
   },
   "topics": {
     "title": "Topics",
-    "subtitle": "{{count}} topic(s)"
+    "subtitle": "{{count}} topics",
+    "subtitleFiltered": "{{count}} of {{total}} topics",
+    "subtitleNoConn": "Not connected · open Connections first",
+    "searchPlaceholder": "Search topic name or description…",
+    "filterAll": "All",
+    "filterNormal": "Normal",
+    "filterFifo": "FIFO",
+    "filterDelay": "Delay",
+    "filterRetry": "Retry",
+    "filterDlq": "DLQ",
+    "table": {
+      "name": "Name",
+      "type": "Type",
+      "queues": "Queues (R/W)",
+      "perm": "Perm",
+      "groups": "Groups",
+      "tpsIn": "Inbound TPS"
+    },
+    "empty": "No topics",
+    "loadError": "Failed to load topics: {{message}}",
+    "type": {
+      "normal": "NORMAL",
+      "fifo": "FIFO",
+      "delay": "DELAY",
+      "retry": "RETRY",
+      "dlq": "DLQ"
+    },
+    "perm": {
+      "rw": "Read/Write",
+      "r": "Read",
+      "w": "Write",
+      "deny": "Deny"
+    },
+    "detail": {
+      "tabs": {
+        "info": "Info",
+        "routes": "Routes",
+        "groups": "Groups"
+      },
+      "stat": {
+        "tpsIn": "Inbound",
+        "tpsOut": "Outbound",
+        "groups": "Subscribers",
+        "queues": "Queues"
+      },
+      "info": "General",
+      "infoCluster": "Cluster",
+      "infoType": "Type",
+      "infoPerm": "Permission",
+      "infoQueues": "Read / Write queues",
+      "infoGroups": "Consumer groups",
+      "infoUpdated": "Last update",
+      "infoDesc": "Description",
+      "routesTitle": "Route distribution",
+      "routesEmpty": "No route data",
+      "groupsTitle": "Consumer groups",
+      "groupsEmpty": "No subscribers",
+      "actions": {
+        "edit": "Edit",
+        "send": "Send test",
+        "messages": "View messages",
+        "delete": "Delete"
+      },
+      "deleteConfirm": "Delete topic {{name}}? This cannot be undone and will clear all route data."
+    },
+    "create": {
+      "title": "New topic",
+      "edit": "Edit topic",
+      "name": "Topic name",
+      "namePlaceholder": "e.g. order-events",
+      "broker": "Target broker",
+      "brokerHint": "Pick a master broker to create the topic on",
+      "noBrokers": "No brokers available",
+      "readQueue": "Read queues",
+      "writeQueue": "Write queues",
+      "perm": "Permission",
+      "submit": "Create",
+      "save": "Save",
+      "createSuccess": "Topic {{name}} created",
+      "saveSuccess": "Topic {{name}} saved",
+      "deleteSuccess": "Topic deleted"
+    }
   },
   "consumers": {
     "title": "Consumer groups",

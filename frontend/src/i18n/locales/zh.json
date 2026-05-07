@@ -133,7 +133,88 @@
   },
   "topics": {
     "title": "主题",
-    "subtitle": "{{count}} 个 Topic"
+    "subtitle": "{{count}} 个 Topic",
+    "subtitleFiltered": "{{count}} 个 Topic（共 {{total}} 个）",
+    "subtitleNoConn": "未连接 · 请先在「连接」页面建立连接",
+    "searchPlaceholder": "搜索 Topic、备注…",
+    "filterAll": "全部",
+    "filterNormal": "普通",
+    "filterFifo": "顺序",
+    "filterDelay": "延迟",
+    "filterRetry": "重试",
+    "filterDlq": "死信",
+    "table": {
+      "name": "名称",
+      "type": "类型",
+      "queues": "队列 (R/W)",
+      "perm": "权限",
+      "groups": "消费组",
+      "tpsIn": "入流量"
+    },
+    "empty": "暂无 Topic",
+    "loadError": "加载 Topic 列表失败：{{message}}",
+    "type": {
+      "normal": "NORMAL",
+      "fifo": "FIFO",
+      "delay": "DELAY",
+      "retry": "RETRY",
+      "dlq": "DLQ"
+    },
+    "perm": {
+      "rw": "读写",
+      "r": "只读",
+      "w": "只写",
+      "deny": "禁用"
+    },
+    "detail": {
+      "tabs": {
+        "info": "详情",
+        "routes": "路由",
+        "groups": "消费组"
+      },
+      "stat": {
+        "tpsIn": "入流量",
+        "tpsOut": "出流量",
+        "groups": "订阅消费组",
+        "queues": "队列数"
+      },
+      "info": "基础信息",
+      "infoCluster": "所属集群",
+      "infoType": "类型",
+      "infoPerm": "权限",
+      "infoQueues": "读 / 写队列",
+      "infoGroups": "消费组数",
+      "infoUpdated": "最后更新",
+      "infoDesc": "描述",
+      "routesTitle": "路由分布",
+      "routesEmpty": "暂无路由数据",
+      "groupsTitle": "订阅消费组",
+      "groupsEmpty": "暂无订阅消费组",
+      "actions": {
+        "edit": "编辑",
+        "send": "发送测试",
+        "messages": "查看消息",
+        "delete": "删除"
+      },
+      "deleteConfirm": "删除 Topic {{name}}？此操作不可撤销，且将清除所有路由信息。"
+    },
+    "create": {
+      "title": "新建 Topic",
+      "edit": "编辑 Topic",
+      "name": "Topic 名称",
+      "namePlaceholder": "例：order-events",
+      "broker": "目标 Broker",
+      "brokerHint": "选择一个 master Broker 创建",
+      "noBrokers": "未发现可用的 Broker",
+      "readQueue": "读队列数",
+      "writeQueue": "写队列数",
+      "perm": "权限",
+      "submit": "创建",
+      "save": "保存",
+      "createSuccess": "已创建 Topic {{name}}",
+      "saveSuccess": "已保存 Topic {{name}}",
+      "deleteSuccess": "已删除 Topic"
+    }
   },
   "consumers": {
     "title": "消费者组",

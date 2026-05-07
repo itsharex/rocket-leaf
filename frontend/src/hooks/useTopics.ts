@@ -1,30 +1,57 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { TopicItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as topicApi from '@/api/topic'
+import { useConnections } from '@/hooks/useConnections'
 import { formatErrorMessage } from '@/lib/utils'
 
+const AUTO_REFRESH_MS = 30_000
+
 export function useTopics() {
-  const [list, setList] = useState<(TopicItem | null)[]>([])
-  const [loading, setLoading] = useState(false)
+  const { list: connections } = useConnections()
+  const hasOnline = connections.some((c) => c.status === 'online')
+
+  const [topics, setTopics] = useState<TopicItem[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const cancelledRef = useRef(false)
 
   const refresh = useCallback(async () => {
-    setLoading(true)
+    setRefreshing(true)
     setError(null)
     try {
-      const data = await topicApi.getTopics()
-      setList(data)
+      const raw = await topicApi.getTopics()
+      if (cancelledRef.current) return
+      setTopics(raw.filter(Boolean) as TopicItem[])
     } catch (e) {
-      setError(formatErrorMessage(e))
-      setList([])
+      if (!cancelledRef.current) {
+        setError(formatErrorMessage(e))
+        setTopics([])
+      }
     } finally {
-      setLoading(false)
+      if (!cancelledRef.current) {
+        setLoading(false)
+        setRefreshing(false)
+      }
     }
   }, [])
 
   useEffect(() => {
-    refresh()
-  }, [refresh])
+    cancelledRef.current = false
+    if (!hasOnline) {
+      setTopics([])
+      setLoading(false)
+      return () => {
+        cancelledRef.current = true
+      }
+    }
+    void refresh()
+    const id = window.setInterval(refresh, AUTO_REFRESH_MS)
+    return () => {
+      cancelledRef.current = true
+      window.clearInterval(id)
+    }
+  }, [hasOnline, refresh])
 
-  return { list: list.filter(Boolean) as TopicItem[], loading, error, refresh }
+  return { topics, loading, refreshing, error, refresh, hasOnline }
 }

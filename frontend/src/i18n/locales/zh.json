@@ -173,7 +173,42 @@
     "title": "发送测试消息"
   },
   "cluster": {
-    "title": "集群"
+    "title": "集群",
+    "subtitle": "{{cluster}} · {{nameservers}} 个 NameServer · {{brokers}} 台 Broker",
+    "subtitleNoConn": "未连接 · 请先在「连接」页面建立连接",
+    "tabs": {
+      "overview": "概览",
+      "broker": "Broker",
+      "nameserver": "NameServer"
+    },
+    "stat": {
+      "health": "集群健康",
+      "healthHealthy": "正常",
+      "healthDegraded": "降级",
+      "healthOffline": "离线",
+      "healthSummary": "在线 {{online}} / {{total}}",
+      "tps": "总 TPS",
+      "tpsSubtitle": "实时入流 + 出流",
+      "disk": "磁盘使用",
+      "diskSubtitle": "CommitLog 平均",
+      "topics": "Topic 总数",
+      "topicsSubtitle": "{{groups}} 个消费组"
+    },
+    "throughput": "吞吐趋势 · 最近 60 分钟",
+    "brokerList": "Broker 列表",
+    "brokerEmpty": "暂无 Broker 数据",
+    "brokerTable": {
+      "name": "Broker",
+      "role": "角色",
+      "address": "地址",
+      "version": "版本",
+      "tps": "TPS (生产/消费)",
+      "disk": "CommitLog 磁盘",
+      "status": "状态"
+    },
+    "nameserverList": "NameServer 列表",
+    "nameserverEmpty": "暂无 NameServer 信息",
+    "loadError": "加载集群信息失败：{{message}}"
   },
   "alerts": {
     "title": "告警"

@@ -173,7 +173,42 @@
     "title": "Test producer"
   },
   "cluster": {
-    "title": "Cluster"
+    "title": "Cluster",
+    "subtitle": "{{cluster}} · {{nameservers}} NameServers · {{brokers}} Brokers",
+    "subtitleNoConn": "Not connected · open Connections first",
+    "tabs": {
+      "overview": "Overview",
+      "broker": "Broker",
+      "nameserver": "NameServer"
+    },
+    "stat": {
+      "health": "Cluster health",
+      "healthHealthy": "Healthy",
+      "healthDegraded": "Degraded",
+      "healthOffline": "Offline",
+      "healthSummary": "{{online}} / {{total}} online",
+      "tps": "Total TPS",
+      "tpsSubtitle": "Live in + out",
+      "disk": "Disk usage",
+      "diskSubtitle": "CommitLog average",
+      "topics": "Total topics",
+      "topicsSubtitle": "{{groups}} consumer groups"
+    },
+    "throughput": "Throughput · last 60 min",
+    "brokerList": "Brokers",
+    "brokerEmpty": "No broker data",
+    "brokerTable": {
+      "name": "Broker",
+      "role": "Role",
+      "address": "Address",
+      "version": "Version",
+      "tps": "TPS (in/out)",
+      "disk": "CommitLog disk",
+      "status": "Status"
+    },
+    "nameserverList": "NameServers",
+    "nameserverEmpty": "No NameServer data",
+    "loadError": "Failed to load cluster info: {{message}}"
   },
   "alerts": {
     "title": "Alerts"

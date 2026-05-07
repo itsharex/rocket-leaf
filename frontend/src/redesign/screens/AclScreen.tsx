@@ -1,257 +1,464 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   RefreshCw,
-  Plus,
   Key,
-  Edit,
-  MoreHorizontal,
-  Eye,
-  Copy,
-  Trash2,
+  Plus,
+  X,
+  Loader2,
+  PlugZap,
   Check,
+  Trash2,
+  AlertCircle,
+  ShieldCheck,
+  ShieldOff,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { PageHeader } from '../shell'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useConnections } from '@/hooks/useConnections'
+import * as aclApi from '@/api/acl'
+import type { AclVersionInfo } from '@/api/acl'
 
-const ROWS = [
-  { ak: 'rocketmq-admin', sk: '••••••••••••', ip: '*', tp: 'DENY', gp: 'DENY', admin: true, ts: '2024-03-01', sel: true },
-  { ak: 'order-service', sk: '••••••••••••', ip: '10.20.0.0/16', tp: 'PUB', gp: 'SUB', admin: false, ts: '2024-04-12' },
-  { ak: 'payment-service', sk: '••••••••••••', ip: '10.20.0.0/16', tp: 'PUB|SUB', gp: 'SUB', admin: false, ts: '2024-04-15' },
-  { ak: 'audit-collector', sk: '••••••••••••', ip: '10.30.0.0/16', tp: 'DENY', gp: 'SUB', admin: false, ts: '2024-05-02' },
-  { ak: 'search-indexer', sk: '••••••••••••', ip: '10.30.0.0/16', tp: 'DENY', gp: 'SUB', admin: false, ts: '2024-05-18' },
-  { ak: 'notification-svc', sk: '••••••••••••', ip: '10.20.0.0/16', tp: 'PUB', gp: 'DENY', admin: false, ts: '2024-06-04' },
-  { ak: 'log-pipeline', sk: '••••••••••••', ip: '10.30.0.0/16', tp: 'PUB', gp: 'SUB', admin: false, ts: '2024-06-21' },
-  { ak: 'data-warehouse', sk: '••••••••••••', ip: '10.40.5.0/24', tp: 'DENY', gp: 'SUB', admin: false, ts: '2024-07-03' },
-  { ak: 'fraud-detect', sk: '••••••••••••', ip: '10.20.0.0/16', tp: 'DENY', gp: 'SUB', admin: false, ts: '2024-07-19' },
-  { ak: 'ops-monitor', sk: '••••••••••••', ip: '10.0.0.0/8', tp: 'DENY', gp: 'DENY', admin: true, ts: '2024-08-01' },
-  { ak: 'user-service', sk: '••••••••••••', ip: '10.20.0.0/16', tp: 'PUB|SUB', gp: 'SUB', admin: false, ts: '2024-08-15' },
-  { ak: 'inventory-svc', sk: '••••••••••••', ip: '10.20.0.0/16', tp: 'PUB|SUB', gp: 'SUB', admin: false, ts: '2024-09-02' },
-  { ak: 'shipping-svc', sk: '••••••••••••', ip: '10.20.0.0/16', tp: 'PUB', gp: 'SUB', admin: false, ts: '2024-09-14' },
-  { ak: 'recommend-engine', sk: '••••••••••••', ip: '10.30.0.0/16', tp: 'DENY', gp: 'SUB', admin: false, ts: '2024-10-05' },
-  { ak: 'external-webhook', sk: '••••••••••••', ip: '203.0.113.0/24', tp: 'PUB', gp: 'DENY', admin: false, ts: '2024-10-21' },
-]
+const PERMS = ['DENY', 'PUB', 'SUB', 'PUB|SUB'] as const
 
-const RESOURCE_OVERRIDES = [
-  { type: 'Topic', name: 'ORDER_TOPIC', perm: 'PUB|SUB' },
-  { type: 'Topic', name: 'AUDIT_LOG', perm: 'PUB' },
-  { type: 'Group', name: 'GID_ADMIN', perm: 'SUB' },
-  { type: 'Group', name: 'GID_OPS_*', perm: 'SUB' },
-]
+function parsePermLines(text: string): string[] {
+  return text
+    .split(/[\n,;]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+}
 
 export function AclScreen() {
   const { t } = useTranslation()
-  const tabs = [
-    t('acl.tabs.accounts'),
-    t('acl.tabs.topic'),
-    t('acl.tabs.group'),
-  ]
-  const [activeIdx, setActiveIdx] = useState(0)
-  const activeTab = tabs[activeIdx]!
+  const { list: connections } = useConnections()
+  const hasOnline = connections.some((c) => c.status === 'online')
+
+  // Status
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [version, setVersion] = useState<AclVersionInfo | null>(null)
+  const [statusLoading, setStatusLoading] = useState(true)
+  const [statusError, setStatusError] = useState<string | null>(null)
+
+  // Access config form
+  const [ak, setAk] = useState('')
+  const [sk, setSk] = useState('')
+  const [whiteIp, setWhiteIp] = useState('*')
+  const [admin, setAdmin] = useState(false)
+  const [defaultTopicPerm, setDefaultTopicPerm] = useState<(typeof PERMS)[number]>('DENY')
+  const [defaultGroupPerm, setDefaultGroupPerm] = useState<(typeof PERMS)[number]>('SUB')
+  const [topicPerms, setTopicPerms] = useState('')
+  const [groupPerms, setGroupPerms] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Delete by AK
+  const [deleteAk, setDeleteAk] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  // Global white list
+  const [whiteList, setWhiteList] = useState<string[]>([])
+  const [whiteInput, setWhiteInput] = useState('')
+  const [whiteSaving, setWhiteSaving] = useState(false)
+
+  const refreshStatus = async () => {
+    setStatusLoading(true)
+    setStatusError(null)
+    try {
+      const [enabled, ver] = await Promise.all([
+        aclApi.getAclEnabled(),
+        aclApi.getAclVersion().catch(() => null),
+      ])
+      setEnabled(enabled)
+      setVersion(ver)
+    } catch (e) {
+      setStatusError((e as Error).message ?? String(e))
+    } finally {
+      setStatusLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!hasOnline) {
+      setEnabled(null)
+      setVersion(null)
+      setStatusLoading(false)
+      return
+    }
+    void refreshStatus()
+  }, [hasOnline])
+
+  const handleSave = async () => {
+    if (!ak.trim()) {
+      toast.error(t('acl.form.validateAk'))
+      return
+    }
+    if (!sk.trim()) {
+      toast.error(t('acl.form.validateSk'))
+      return
+    }
+    setSaving(true)
+    try {
+      await aclApi.createOrUpdateAccessConfig(
+        ak.trim(),
+        sk,
+        whiteIp.trim(),
+        admin,
+        defaultTopicPerm,
+        defaultGroupPerm,
+        parsePermLines(topicPerms),
+        parsePermLines(groupPerms),
+      )
+      toast.success(t('acl.form.saveSuccess'))
+      void refreshStatus()
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    setDeleting(true)
+    try {
+      await aclApi.deleteAccessConfig(confirmDelete)
+      toast.success(t('acl.delete.success'))
+      setConfirmDelete(null)
+      setDeleteAk('')
+      void refreshStatus()
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleAddWhite = () => {
+    const v = whiteInput.trim()
+    if (!v || whiteList.includes(v)) {
+      setWhiteInput('')
+      return
+    }
+    setWhiteList([...whiteList, v])
+    setWhiteInput('')
+  }
+
+  const handleRemoveWhite = (ip: string) => {
+    setWhiteList(whiteList.filter((x) => x !== ip))
+  }
+
+  const handleSaveWhite = async () => {
+    setWhiteSaving(true)
+    try {
+      await aclApi.updateGlobalWhiteAddrs(whiteList)
+      toast.success(t('acl.globalWhite.saveSuccess'))
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    } finally {
+      setWhiteSaving(false)
+    }
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title={t('acl.title')}
-        subtitle={t('acl.subtitle')}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(label) => {
-          const idx = tabs.indexOf(label)
-          if (idx !== -1) setActiveIdx(idx)
-        }}
+        subtitle={!hasOnline ? t('acl.subtitleNoConn') : t('acl.subtitle')}
       >
-        <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm">
-          <RefreshCw size={14} />
-        </button>
-        <button className="rl-btn rl-btn-primary rl-btn-sm">
-          <Plus size={13} />{t('acl.new')}
+        <button
+          className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm"
+          onClick={() => void refreshStatus()}
+          disabled={statusLoading || !hasOnline}
+          title={t('common.refresh')}
+        >
+          {statusLoading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
         </button>
       </PageHeader>
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-auto">
-          <table className="rl-table">
-            <thead>
-              <tr>
-                <th style={{ width: 36 }}><input type="checkbox" /></th>
-                <th>{t('acl.table.ak')}</th>
-                <th>{t('acl.table.sk')}</th>
-                <th>{t('acl.table.ip')}</th>
-                <th style={{ width: 100 }}>{t('acl.table.tp')}</th>
-                <th style={{ width: 100 }}>{t('acl.table.gp')}</th>
-                <th style={{ width: 90 }}>{t('acl.table.role')}</th>
-                <th style={{ width: 130 }}>{t('acl.table.createdAt')}</th>
-                <th style={{ width: 70 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {ROWS.map((r) => (
-                <tr key={r.ak} className={r.sel ? 'selected' : ''}>
-                  <td><input type="checkbox" defaultChecked={r.sel} /></td>
-                  <td>
-                    <div className="flex items-center gap-2">
-                      <Key size={13} className="rl-muted" />
-                      <span className="font-mono-design">{r.ak}</span>
-                    </div>
-                  </td>
-                  <td><span className="font-mono-design rl-muted text-[12px]">{r.sk}</span></td>
-                  <td><span className="font-mono-design text-[12px]">{r.ip}</span></td>
-                  <td><span className="rl-badge rl-badge-outline">{r.tp}</span></td>
-                  <td><span className="rl-badge rl-badge-outline">{r.gp}</span></td>
-                  <td>{r.admin ? <span className="rl-badge rl-badge-warn">{t('acl.role.admin')}</span> : <span className="rl-muted text-[12px]">{t('acl.role.normal')}</span>}</td>
-                  <td>
-                    <span className="font-mono-design rl-muted rl-tabular text-[12px] whitespace-nowrap">{r.ts}</span>
-                  </td>
-                  <td>
-                    <div className="flex gap-1">
-                      <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"><Edit size={13} /></button>
-                      <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"><MoreHorizontal size={14} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Detail panel */}
-        <aside
-          className="scroll-thin rl-subtle-bg"
-          style={{
-            width: 360,
-            borderLeft: '1px solid hsl(var(--border))',
-            overflow: 'auto',
-          }}
-        >
-          <div style={{ padding: 20 }}>
-            <div className="flex items-center gap-3">
-              <div
-                className="rl-conn-icon"
-                style={{ width: 40, height: 40, background: 'hsl(var(--muted))', color: 'hsl(var(--muted-foreground))' }}
-              >
-                <Key size={17} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-mono-design font-medium truncate">rocketmq-admin</div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="rl-badge rl-badge-warn">管理员</span>
-                  <span className="rl-muted text-[12px]">创建于 2024-03-01</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid hsl(var(--border))', padding: '16px 20px' }}>
-            <div className="rl-section-label" style={{ marginTop: 0 }}>凭证</div>
-            <div className="rl-muted mb-2 text-[12px]">SecretKey</div>
-            <div className="flex items-center gap-2">
-              <input className="rl-input font-mono-design text-[12px]" defaultValue="abcdef123456••••••••" readOnly />
-              <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm" title="显示"><Eye size={13} /></button>
-              <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm" title="复制"><Copy size={13} /></button>
-            </div>
-            <button
-              className="rl-btn rl-btn-outline rl-btn-sm mt-3"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              <RefreshCw size={13} />轮换 SecretKey
-            </button>
-          </div>
-
-          <div style={{ borderTop: '1px solid hsl(var(--border))', padding: '16px 20px' }}>
-            <div className="rl-section-label" style={{ marginTop: 0 }}>白名单 IP</div>
-            <div className="flex flex-col gap-1">
-              <div
-                className="flex items-center justify-between"
-                style={{
-                  padding: '6px 10px', border: '1px solid hsl(var(--border))', borderRadius: 6,
-                  background: 'hsl(var(--background))',
-                }}
-              >
-                <span className="font-mono-design text-[12px]">*</span>
-                <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"><Trash2 size={12} /></button>
-              </div>
-            </div>
-            <div className="mt-2 flex gap-2">
-              <input className="rl-input font-mono-design text-[12px]" placeholder="10.0.0.0/24" />
-              <button className="rl-btn rl-btn-outline rl-btn-sm"><Plus size={12} /></button>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid hsl(var(--border))', padding: '16px 20px' }}>
-            <div className="rl-section-label" style={{ marginTop: 0 }}>权限策略</div>
-            <div className="flex items-center justify-between" style={{ padding: '8px 0' }}>
-              <span className="text-[13px]">默认 Topic 权限</span>
-              <select className="rl-select rl-btn-sm" style={{ width: 110 }}>
-                <option>DENY</option>
-                <option>PUB</option>
-                <option>SUB</option>
-                <option>PUB|SUB</option>
-              </select>
-            </div>
-            <div
-              className="flex items-center justify-between"
-              style={{ padding: '8px 0', borderTop: '1px solid hsl(var(--border))' }}
-            >
-              <span className="text-[13px]">默认 Group 权限</span>
-              <select className="rl-select rl-btn-sm" style={{ width: 110 }}>
-                <option>DENY</option>
-                <option>SUB</option>
-              </select>
-            </div>
-            <div
-              className="flex items-center justify-between"
-              style={{ padding: '8px 0', borderTop: '1px solid hsl(var(--border))' }}
-            >
-              <span className="text-[13px]">管理员权限</span>
-              <span className="rl-badge rl-badge-warn">已开启</span>
-            </div>
-          </div>
-
-          <div style={{ borderTop: '1px solid hsl(var(--border))', padding: '16px 20px' }}>
-            <div className="rl-section-label" style={{ marginTop: 0 }}>
-              资源覆写 <span className="rl-muted text-[12px]" style={{ fontWeight: 400 }}>· 4</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {RESOURCE_OVERRIDES.map((r) => (
-                <div
-                  key={r.name}
-                  className="flex items-center justify-between"
-                  style={{
-                    padding: '8px 10px', border: '1px solid hsl(var(--border))', borderRadius: 6,
-                    background: 'hsl(var(--background))',
-                  }}
-                >
-                  <div>
-                    <span className="rl-badge rl-badge-outline" style={{ marginRight: 6 }}>{r.type}</span>
-                    <span className="font-mono-design text-[12px]">{r.name}</span>
-                  </div>
-                  <span className="rl-badge">{r.perm}</span>
-                </div>
-              ))}
-            </div>
-            <button
-              className="rl-btn rl-btn-outline rl-btn-sm mt-3"
-              style={{ width: '100%', justifyContent: 'center' }}
-            >
-              <Plus size={12} />新增覆写
-            </button>
-          </div>
-
+      <div className="scroll-thin min-h-0 flex-1 overflow-auto p-5">
+        {!hasOnline ? (
           <div
-            style={{
-              borderTop: '1px solid hsl(var(--border))', padding: '16px 20px',
-              display: 'flex', gap: 8,
-            }}
+            className="rl-muted flex flex-col items-center justify-center text-center"
+            style={{ minHeight: 240 }}
           >
-            <button className="rl-btn rl-btn-ghost rl-btn-sm" style={{ color: 'hsl(var(--destructive))' }}>
-              <Trash2 size={13} />删除
-            </button>
-            <button className="rl-btn rl-btn-primary rl-btn-sm" style={{ marginLeft: 'auto' }}>
-              <Check size={13} />保存
-            </button>
+            <PlugZap size={32} className="mb-3 opacity-40" />
+            <div className="text-[13px]">{t('acl.subtitleNoConn')}</div>
           </div>
-        </aside>
+        ) : (
+          <div style={{ maxWidth: 760 }}>
+            {/* Status */}
+            <div
+              className="rl-card mb-5 flex items-center gap-3"
+              style={{ padding: 16 }}
+            >
+              {statusLoading ? (
+                <Loader2 size={18} className="animate-spin rl-muted shrink-0" />
+              ) : enabled ? (
+                <ShieldCheck size={20} style={{ color: 'hsl(142 60% 28%)', flexShrink: 0 }} />
+              ) : (
+                <ShieldOff size={20} className="rl-muted shrink-0" />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] font-medium">
+                  {statusLoading
+                    ? t('acl.status.loading')
+                    : enabled
+                      ? t('acl.status.enabled')
+                      : t('acl.status.disabled')}
+                </div>
+                {version && (
+                  <div className="rl-muted mt-1 text-[12px] flex flex-wrap gap-3">
+                    <span className="font-mono-design">
+                      {t('acl.status.broker', { addr: version.brokerAddr || '—' })}
+                    </span>
+                    {version.version && (
+                      <span className="font-mono-design">
+                        {t('acl.status.version', { ver: version.version })}
+                      </span>
+                    )}
+                  </div>
+                )}
+                {statusError && (
+                  <div
+                    className="mt-1 flex items-center gap-1 text-[11px]"
+                    style={{ color: 'hsl(var(--destructive))' }}
+                  >
+                    <AlertCircle size={11} />
+                    <span>{statusError}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Access config form */}
+            <div className="rl-section-label">{t('acl.form.title')}</div>
+            <div className="rl-card" style={{ padding: 20 }}>
+              <div className="rl-muted mb-4 text-[12px]">{t('acl.form.subtitle')}</div>
+              <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                <div>
+                  <div className="rl-muted mb-2 text-[12px]">
+                    {t('acl.form.ak')}{' '}
+                    <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                  </div>
+                  <input
+                    className="rl-input font-mono-design"
+                    placeholder={t('acl.form.akPlaceholder')}
+                    value={ak}
+                    onChange={(e) => setAk(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <div className="rl-muted mb-2 text-[12px]">
+                    {t('acl.form.sk')}{' '}
+                    <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                  </div>
+                  <input
+                    className="rl-input font-mono-design"
+                    type="password"
+                    placeholder={t('acl.form.skPlaceholder')}
+                    value={sk}
+                    onChange={(e) => setSk(e.target.value)}
+                  />
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.whiteIp')}</div>
+                  <input
+                    className="rl-input font-mono-design"
+                    placeholder={t('acl.form.whiteIpPlaceholder')}
+                    value={whiteIp}
+                    onChange={(e) => setWhiteIp(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.defaultTopicPerm')}</div>
+                  <select
+                    className="rl-select"
+                    value={defaultTopicPerm}
+                    onChange={(e) => setDefaultTopicPerm(e.target.value as (typeof PERMS)[number])}
+                  >
+                    {PERMS.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.defaultGroupPerm')}</div>
+                  <select
+                    className="rl-select"
+                    value={defaultGroupPerm}
+                    onChange={(e) => setDefaultGroupPerm(e.target.value as (typeof PERMS)[number])}
+                  >
+                    {PERMS.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={admin}
+                      onChange={(e) => setAdmin(e.target.checked)}
+                    />
+                    <span>{t('acl.form.admin')}</span>
+                    <span className="rl-muted text-[12px]">· {t('acl.form.adminHint')}</span>
+                  </label>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.topicPerms')}</div>
+                  <textarea
+                    className="rl-input font-mono-design"
+                    style={{ width: '100%', minHeight: 80, padding: 10, fontSize: 12, resize: 'vertical' }}
+                    placeholder="ORDER_TOPIC=PUB|SUB&#10;AUDIT_LOG=PUB"
+                    value={topicPerms}
+                    onChange={(e) => setTopicPerms(e.target.value)}
+                  />
+                  <div className="rl-muted mt-1 text-[11px]">{t('acl.form.topicPermsHint')}</div>
+                </div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.groupPerms')}</div>
+                  <textarea
+                    className="rl-input font-mono-design"
+                    style={{ width: '100%', minHeight: 60, padding: 10, fontSize: 12, resize: 'vertical' }}
+                    placeholder="GID_ADMIN=SUB"
+                    value={groupPerms}
+                    onChange={(e) => setGroupPerms(e.target.value)}
+                  />
+                  <div className="rl-muted mt-1 text-[11px]">{t('acl.form.groupPermsHint')}</div>
+                </div>
+              </div>
+              <div
+                className="mt-5 flex justify-end"
+                style={{ paddingTop: 16, borderTop: '1px solid hsl(var(--border))' }}
+              >
+                <button
+                  className="rl-btn rl-btn-primary rl-btn-sm"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  {saving ? t('acl.form.saving') : t('acl.form.submit')}
+                </button>
+              </div>
+            </div>
+
+            {/* Delete by AK */}
+            <div className="rl-section-label" style={{ marginTop: 24 }}>
+              {t('acl.delete.title')}
+            </div>
+            <div className="rl-card" style={{ padding: 20 }}>
+              <div className="rl-muted mb-3 text-[12px]">{t('acl.delete.subtitle')}</div>
+              <div className="flex gap-2">
+                <input
+                  className="rl-input font-mono-design"
+                  placeholder={t('acl.form.akPlaceholder')}
+                  value={deleteAk}
+                  onChange={(e) => setDeleteAk(e.target.value)}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  className="rl-btn rl-btn-outline rl-btn-sm"
+                  style={{ color: 'hsl(var(--destructive))' }}
+                  onClick={() => deleteAk.trim() && setConfirmDelete(deleteAk.trim())}
+                  disabled={!deleteAk.trim()}
+                >
+                  <Trash2 size={13} />
+                  {t('acl.delete.submit')}
+                </button>
+              </div>
+            </div>
+
+            {/* Global white list */}
+            <div className="rl-section-label" style={{ marginTop: 24 }}>
+              {t('acl.globalWhite.title')}
+            </div>
+            <div className="rl-card" style={{ padding: 20 }}>
+              <div className="rl-muted mb-3 text-[12px]">{t('acl.globalWhite.subtitle')}</div>
+              <div className="flex flex-col gap-2">
+                {whiteList.length === 0 ? (
+                  <div
+                    className="rl-muted text-[12px]"
+                    style={{ padding: '8px 0' }}
+                  >
+                    {t('acl.globalWhite.empty')}
+                  </div>
+                ) : (
+                  whiteList.map((ip) => (
+                    <div
+                      key={ip}
+                      className="flex items-center justify-between"
+                      style={{
+                        padding: '6px 10px',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: 6,
+                        background: 'hsl(var(--background))',
+                      }}
+                    >
+                      <span className="font-mono-design text-[12px]">
+                        <Key size={11} className="inline mr-2 rl-muted" />
+                        {ip}
+                      </span>
+                      <button
+                        className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"
+                        onClick={() => handleRemoveWhite(ip)}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  className="rl-input font-mono-design"
+                  placeholder={t('acl.globalWhite.addPlaceholder')}
+                  value={whiteInput}
+                  onChange={(e) => setWhiteInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddWhite()}
+                  style={{ flex: 1 }}
+                />
+                <button
+                  className="rl-btn rl-btn-outline rl-btn-sm"
+                  onClick={handleAddWhite}
+                  disabled={!whiteInput.trim()}
+                >
+                  <Plus size={13} />
+                  {t('acl.globalWhite.add')}
+                </button>
+              </div>
+              <div
+                className="mt-4 flex justify-end"
+                style={{ paddingTop: 12, borderTop: '1px solid hsl(var(--border))' }}
+              >
+                <button
+                  className="rl-btn rl-btn-primary rl-btn-sm"
+                  onClick={handleSaveWhite}
+                  disabled={whiteSaving}
+                >
+                  {whiteSaving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                  {whiteSaving ? t('acl.globalWhite.saving') : t('acl.globalWhite.save')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete != null}
+        title={t('acl.delete.confirmTitle')}
+        description={t('acl.delete.confirmDesc', { ak: confirmDelete ?? '' })}
+        confirmText={deleting ? t('common.loading') : t('common.delete')}
+        cancelText={t('common.cancel')}
+        variant="destructive"
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setConfirmDelete(null)}
+      />
     </div>
   )
 }

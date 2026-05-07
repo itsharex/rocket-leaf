@@ -1,140 +1,319 @@
-import { useState } from 'react'
-import { History, Plus, MoreHorizontal } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  PlugZap,
+  Settings,
+  RefreshCw,
+  Loader2,
+} from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { PageHeader } from '../shell'
+import { useOverview } from '@/hooks/useOverview'
+import { useSettings } from '@/hooks/useSettings'
+import type { NavId } from '../Sidebar'
 
-const RULES = [
-  { name: '消息堆积告警', target: 'order-consumer-group', cond: 'lag > 1,000 持续 5m', channel: '钉钉 · #ops', enabled: true, fired: 2 },
-  { name: '消费者下线', target: '* (全部)', cond: '在线实例 < 1', channel: 'PagerDuty · oncall', enabled: true, fired: 0 },
-  { name: 'Broker 离线', target: 'broker-2-master', cond: '状态 != online', channel: '邮件 · ops@', enabled: true, fired: 0 },
-  { name: 'TPS 突降', target: 'payment-events', cond: '比同比 -50%', channel: '钉钉 · #payments', enabled: false, fired: 0 },
-  { name: '死信激增', target: '* (全部)', cond: 'DLQ +50/min', channel: 'Slack · #alerts', enabled: true, fired: 1 },
-]
+type Severity = 'crit' | 'warn' | 'info'
 
-const FIRES: { t: string; level: 'crit' | 'warn' | 'info'; rule: string; text: string }[] = [
-  { t: '10:18', level: 'warn', rule: '消息堆积告警', text: 'audit-consumer 堆积 1,432，已持续 7 分钟' },
-  { t: '09:42', level: 'info', rule: '死信激增', text: 'payment-consumer 新增 12 条死信' },
-  { t: '08:30', level: 'warn', rule: '消息堆积告警', text: 'audit-consumer 堆积 1,083，已持续 5 分钟' },
-  { t: '昨天', level: 'crit', rule: 'Broker 离线', text: 'broker-3-slave 心跳超时（已自动恢复）' },
-]
+interface AlertEntry {
+  key: string
+  severity: Severity
+  ruleKey: string
+  title: string
+  desc: string
+  since?: string
+}
 
-export function AlertsScreen() {
+interface AlertsScreenProps {
+  onNavigate?: (id: NavId) => void
+}
+
+const DISK_THRESHOLD = 75
+
+export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState('规则')
+  const { data, refresh, refreshing, loading } = useOverview()
+  const { settings } = useSettings()
+  const lagThreshold = settings.lagAlertThreshold || 10000
+
+  const [tab, setTab] = useState<'active' | 'rules'>('active')
+
+  const hasOnline = data.activeConnection?.status === 'online'
+
+  const alerts = useMemo<AlertEntry[]>(() => {
+    if (!hasOnline) return []
+    const out: AlertEntry[] = []
+    // Offline brokers — critical
+    for (const b of data.brokers) {
+      if (b.status === 'offline') {
+        out.push({
+          key: `broker-off-${b.brokerName}-${b.brokerId}`,
+          severity: 'crit',
+          ruleKey: 'brokerOffline',
+          title: t('alerts.rule.brokerOffline'),
+          desc: `${b.brokerName}${b.brokerId !== 0 ? `-${b.brokerId}` : ''} (${b.address || '—'})`,
+          since: b.lastUpdate || undefined,
+        })
+      }
+    }
+    // Consumer groups: high lag + offline groups
+    for (const g of data.consumerGroups) {
+      const lag = Number(g.lag ?? 0)
+      if (lag > lagThreshold && (g.onlineClients ?? 0) === 0) {
+        out.push({
+          key: `group-off-${g.group}`,
+          severity: 'crit',
+          ruleKey: 'groupOffline',
+          title: t('alerts.rule.groupOffline'),
+          desc: `${g.group} · lag ${lag.toLocaleString()}`,
+          since: g.lastUpdate || undefined,
+        })
+      } else if (lag > lagThreshold) {
+        out.push({
+          key: `group-lag-${g.group}`,
+          severity: 'warn',
+          ruleKey: 'groupLag',
+          title: t('alerts.rule.groupLag'),
+          desc: `${g.group} · lag ${lag.toLocaleString()} > ${lagThreshold.toLocaleString()}`,
+          since: g.lastUpdate || undefined,
+        })
+      }
+      if ((g.dlq ?? 0) > 0) {
+        out.push({
+          key: `dlq-${g.group}`,
+          severity: 'info',
+          ruleKey: 'dlqGrowth',
+          title: t('alerts.rule.dlqGrowth'),
+          desc: `${g.group} · ${g.dlq} dead letters`,
+        })
+      }
+    }
+    // Disk usage warnings
+    for (const b of data.brokers) {
+      const usage = Number((b as unknown as { commitLogDiskUsage?: number }).commitLogDiskUsage ?? 0)
+      if (usage >= DISK_THRESHOLD) {
+        out.push({
+          key: `disk-${b.brokerName}-${b.brokerId}`,
+          severity: usage >= 90 ? 'crit' : 'warn',
+          ruleKey: 'diskUsage',
+          title: t('alerts.rule.diskUsage'),
+          desc: `${b.brokerName}${b.brokerId !== 0 ? `-${b.brokerId}` : ''} · ${Math.round(usage)}%`,
+          since: b.lastUpdate || undefined,
+        })
+      }
+    }
+    return out.sort((a, b) => severityWeight(b.severity) - severityWeight(a.severity))
+  }, [hasOnline, data, lagThreshold, t])
+
+  const handleRefresh = async () => {
+    try {
+      await refresh()
+      toast.success(t('common.refreshed'))
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    }
+  }
+
+  const subtitle = !hasOnline
+    ? t('alerts.subtitleNoConn')
+    : t('alerts.subtitle', { count: alerts.length })
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title={t('alerts.title')}
-        subtitle="3 条规则启用 · 近 24h 触发 3 次"
-        tabs={['规则', '近期触发', '通知渠道']}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        subtitle={subtitle}
+        tabs={[t('alerts.tabs.active'), t('alerts.tabs.rules')]}
+        activeTab={tab === 'active' ? t('alerts.tabs.active') : t('alerts.tabs.rules')}
+        onTabChange={(label) =>
+          setTab(label === t('alerts.tabs.active') ? 'active' : 'rules')
+        }
       >
-        <button className="rl-btn rl-btn-ghost rl-btn-sm"><History size={13} />历史</button>
-        <button className="rl-btn rl-btn-primary rl-btn-sm"><Plus size={13} />{t('common.create')}</button>
+        <button
+          className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm"
+          onClick={handleRefresh}
+          disabled={refreshing || !hasOnline}
+          title={t('common.refresh')}
+        >
+          {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+        </button>
       </PageHeader>
 
       <div className="scroll-thin min-h-0 flex-1 overflow-auto" style={{ padding: 20 }}>
-        <div className="grid items-start gap-3.5" style={{ gridTemplateColumns: '1fr 360px' }}>
-          <div className="rl-card" style={{ padding: 0 }}>
-            <table className="rl-table">
-              <thead>
-                <tr>
-                  <th>规则</th>
-                  <th>对象</th>
-                  <th>条件</th>
-                  <th>通知</th>
-                  <th>近 24h</th>
-                  <th>启用</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {RULES.map((r) => (
-                  <tr key={r.name}>
-                    <td className="font-medium">{r.name}</td>
-                    <td className="rl-muted text-[12px]">{r.target}</td>
-                    <td className="font-mono-design text-[12px]">{r.cond}</td>
-                    <td className="text-[12px]">{r.channel}</td>
-                    <td>
-                      {r.fired > 0 ? (
-                        <span className="rl-badge rl-badge-warn">{r.fired} 次</span>
-                      ) : (
-                        <span className="rl-muted text-[12px]">—</span>
-                      )}
-                    </td>
-                    <td>
-                      <div
-                        style={{
-                          width: 28,
-                          height: 16,
-                          borderRadius: 999,
-                          background: r.enabled ? 'hsl(var(--foreground))' : 'hsl(var(--border))',
-                          position: 'relative',
-                          display: 'inline-block',
-                        }}
-                      >
-                        <div
-                          style={{
-                            position: 'absolute',
-                            width: 12,
-                            height: 12,
-                            borderRadius: 999,
-                            background: 'white',
-                            top: 2,
-                            left: r.enabled ? 14 : 2,
-                            transition: 'left .15s',
-                          }}
-                        />
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm">
-                        <MoreHorizontal size={13} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {!hasOnline ? (
+          <div
+            className="rl-muted flex flex-col items-center justify-center text-center"
+            style={{ minHeight: 240 }}
+          >
+            <PlugZap size={32} className="mb-3 opacity-40" />
+            <div className="text-[13px]">{t('alerts.subtitleNoConn')}</div>
           </div>
+        ) : tab === 'active' ? (
+          <ActiveAlerts alerts={alerts} loading={loading} />
+        ) : (
+          <RulesPanel
+            lagThreshold={lagThreshold}
+            onOpenSettings={() => onNavigate?.('settings')}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
 
-          <div className="rl-card" style={{ padding: 16 }}>
-            <div className="mb-3 flex items-center justify-between">
-              <div className="text-[13px] font-medium">近期触发</div>
-              <span className="rl-badge rl-badge-outline">{FIRES.length}</span>
-            </div>
-            {FIRES.map((f, i) => (
-              <div
-                key={i}
-                style={{ padding: '8px 0', borderTop: i ? '1px solid hsl(var(--border))' : 'none' }}
-              >
-                <div className="flex items-center gap-2">
-                  <span
-                    style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 999,
-                      background:
-                        f.level === 'crit'
-                          ? 'hsl(var(--destructive))'
-                          : f.level === 'warn'
-                          ? 'hsl(38 92% 50%)'
-                          : 'hsl(217 80% 50%)',
-                    }}
-                  />
-                  <span className="text-[13px] font-medium">{f.rule}</span>
-                  <span className="flex-1" />
-                  <span className="font-mono-design rl-muted rl-tabular text-[12px]">{f.t}</span>
-                </div>
-                <div className="rl-muted mt-1 text-[12px]" style={{ lineHeight: 1.5 }}>
-                  {f.text}
-                </div>
-              </div>
-            ))}
+function severityWeight(s: Severity): number {
+  return s === 'crit' ? 3 : s === 'warn' ? 2 : 1
+}
+
+function severityIcon(s: Severity) {
+  if (s === 'crit') return <AlertCircle size={13} style={{ color: 'hsl(var(--destructive))' }} />
+  if (s === 'warn') return <AlertTriangle size={13} style={{ color: 'hsl(28 80% 45%)' }} />
+  return <Info size={13} style={{ color: 'hsl(217 80% 50%)' }} />
+}
+
+function ActiveAlerts({ alerts, loading }: { alerts: AlertEntry[]; loading: boolean }) {
+  const { t } = useTranslation()
+  if (loading && alerts.length === 0) {
+    return (
+      <div
+        className="flex items-center justify-center rl-muted"
+        style={{ padding: 60, gap: 8 }}
+      >
+        <Loader2 size={14} className="animate-spin" />
+        <span className="text-[12px]">{t('common.loading')}</span>
+      </div>
+    )
+  }
+  if (alerts.length === 0) {
+    return (
+      <div
+        className="rl-card rl-muted text-[12px] text-center"
+        style={{ padding: 32, maxWidth: 760 }}
+      >
+        {t('alerts.active.empty')}
+      </div>
+    )
+  }
+  return (
+    <div className="rl-card overflow-hidden" style={{ maxWidth: 760 }}>
+      {alerts.map((a, i) => (
+        <div
+          key={a.key}
+          style={{
+            padding: '12px 16px',
+            borderTop: i ? '1px solid hsl(var(--border))' : undefined,
+          }}
+        >
+          <div className="flex items-center gap-2">
+            {severityIcon(a.severity)}
+            <span className="text-[13px] font-medium">{a.title}</span>
+            <span className="rl-badge rl-badge-outline" style={{ marginLeft: 4 }}>
+              {t(`alerts.level.${a.severity}`)}
+            </span>
+            <span className="flex-1" />
+            {a.since && (
+              <span className="font-mono-design rl-muted rl-tabular text-[11px]">
+                {t('alerts.active.since', { time: a.since })}
+              </span>
+            )}
+          </div>
+          <div
+            className="rl-muted mt-1 text-[12px] font-mono-design"
+            style={{ lineHeight: 1.5 }}
+          >
+            {a.desc}
           </div>
         </div>
+      ))}
+    </div>
+  )
+}
+
+function RulesPanel({
+  lagThreshold,
+  onOpenSettings,
+}: {
+  lagThreshold: number
+  onOpenSettings: () => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="rl-card" style={{ padding: 20, maxWidth: 760 }}>
+      <div className="text-[13px] font-medium">{t('alerts.rules.title')}</div>
+      <div className="rl-muted mt-1 text-[12px]" style={{ lineHeight: 1.5 }}>
+        {t('alerts.rules.desc')}
+      </div>
+
+      <div
+        className="mt-4 grid gap-3"
+        style={{ gridTemplateColumns: '1fr 1fr' }}
+      >
+        <div
+          style={{
+            padding: 12,
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 8,
+          }}
+        >
+          <div className="rl-muted text-[12px]">{t('alerts.rules.lagThreshold')}</div>
+          <div className="rl-tabular mt-1 text-[18px] font-semibold">
+            {t('alerts.rules.lagThresholdValue', { n: lagThreshold.toLocaleString() })}
+          </div>
+        </div>
+        <div
+          style={{
+            padding: 12,
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 8,
+          }}
+        >
+          <div className="rl-muted text-[12px]">{t('alerts.rules.diskThreshold')}</div>
+          <div className="rl-tabular mt-1 text-[18px] font-semibold">
+            {t('alerts.rules.diskThresholdValue', { n: DISK_THRESHOLD })}
+          </div>
+        </div>
+      </div>
+
+      <div className="rl-section-label" style={{ marginTop: 20 }}>
+        {t('alerts.tabs.rules')}
+      </div>
+      <div>
+        {(['brokerOffline', 'groupOffline', 'groupLag', 'diskUsage', 'dlqGrowth'] as const).map(
+          (k, i) => (
+            <div
+              key={k}
+              className="flex items-center gap-3"
+              style={{
+                padding: '10px 0',
+                borderTop: i ? '1px solid hsl(var(--border))' : undefined,
+              }}
+            >
+              {severityIcon(
+                k === 'brokerOffline' || k === 'groupOffline'
+                  ? 'crit'
+                  : k === 'groupLag' || k === 'diskUsage'
+                    ? 'warn'
+                    : 'info',
+              )}
+              <span className="text-[13px] flex-1">{t(`alerts.rule.${k}`)}</span>
+            </div>
+          ),
+        )}
+      </div>
+
+      <div
+        className="mt-4 flex justify-end"
+        style={{ paddingTop: 12, borderTop: '1px solid hsl(var(--border))' }}
+      >
+        <button
+          className="rl-btn rl-btn-outline rl-btn-sm"
+          onClick={onOpenSettings}
+        >
+          <Settings size={13} />
+          {t('alerts.rules.openSettings')}
+        </button>
       </div>
     </div>
   )

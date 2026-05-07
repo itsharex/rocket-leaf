@@ -40,7 +40,7 @@ function App(): React.ReactElement {
       case 'cluster':
         return <ClusterScreen />
       case 'alerts':
-        return <AlertsScreen />
+        return <AlertsScreen onNavigate={setActiveNav} />
       case 'acl':
         return <AclScreen />
       case 'connections':

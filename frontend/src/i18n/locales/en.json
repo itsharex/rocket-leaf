@@ -479,42 +479,96 @@
     "loadError": "Failed to load cluster info: {{message}}"
   },
   "alerts": {
-    "title": "Alerts"
+    "title": "Alerts",
+    "subtitle": "{{count}} active alerts · derived from live cluster metrics",
+    "subtitleNoConn": "Not connected · open Connections first",
+    "level": {
+      "crit": "Critical",
+      "warn": "Warning",
+      "info": "Info"
+    },
+    "rule": {
+      "brokerOffline": "Broker offline",
+      "groupOffline": "Consumer group has no online instances",
+      "groupLag": "Consumer group lag",
+      "diskUsage": "Broker disk usage",
+      "dlqGrowth": "Dead letters growing"
+    },
+    "tabs": {
+      "active": "Active",
+      "rules": "Rules"
+    },
+    "active": {
+      "empty": "No active alerts. The cluster is healthy.",
+      "since": "Since {{time}}"
+    },
+    "rules": {
+      "title": "Alert rules",
+      "desc": "Rocket-Leaf derives alerts from live cluster metrics. Thresholds live in Settings → Messages.",
+      "lagThreshold": "Consumer lag threshold",
+      "lagThresholdValue": "{{n}} messages",
+      "diskThreshold": "Disk usage threshold",
+      "diskThresholdValue": "{{n}}%",
+      "openSettings": "Open settings"
+    }
   },
   "acl": {
     "title": "ACL",
     "subtitle": "Access control list",
-    "new": "New account",
-    "tabs": {
-      "accounts": "Accounts",
-      "topic": "Topic ACL",
-      "group": "Group ACL"
+    "subtitleNoConn": "Not connected · open Connections first",
+    "status": {
+      "loading": "Reading ACL status…",
+      "enabled": "ACL is enabled",
+      "disabled": "ACL is disabled",
+      "broker": "Broker {{addr}}",
+      "version": "Config version {{ver}}"
     },
-    "table": {
+    "form": {
+      "title": "Access config",
+      "subtitle": "Create or update an AccessKey; existing entries are overwritten",
       "ak": "AccessKey",
+      "akPlaceholder": "Unique identifier",
       "sk": "SecretKey",
-      "ip": "IP whitelist",
-      "tp": "Default Topic",
-      "gp": "Default Group",
-      "role": "Role",
-      "createdAt": "Created"
-    },
-    "role": {
+      "skPlaceholder": "At least 6 characters",
+      "whiteIp": "Allowed IPs",
+      "whiteIpPlaceholder": "* or 10.0.0.0/16, separate with ;",
       "admin": "Admin",
-      "normal": "User"
+      "adminHint": "Has full topic and group permissions",
+      "defaultTopicPerm": "Default Topic permission",
+      "defaultGroupPerm": "Default Group permission",
+      "topicPerms": "Topic permission overrides",
+      "topicPermsHint": "Format: TOPIC=PERM, separate with , or newlines",
+      "groupPerms": "Group permission overrides",
+      "groupPermsHint": "Format: GROUP=PERM",
+      "submit": "Save",
+      "saving": "Saving…",
+      "saveSuccess": "ACL config saved",
+      "validateAk": "Enter the AccessKey",
+      "validateSk": "Enter the SecretKey"
     },
-    "detail": {
-      "credentials": "Credentials",
-      "rotateSk": "Rotate SecretKey",
-      "ipWhitelist": "IP whitelist",
-      "policy": "Permission policy",
-      "defaultTopic": "Default Topic permission",
-      "defaultGroup": "Default Group permission",
-      "adminRights": "Admin rights",
-      "enabled": "Enabled",
-      "overrides": "Resource overrides",
-      "addOverride": "Add override",
-      "createdOn": "Created on {{date}}"
+    "perm": {
+      "deny": "DENY",
+      "pub": "PUB",
+      "sub": "SUB",
+      "pubsub": "PUB|SUB"
+    },
+    "delete": {
+      "title": "Delete account",
+      "subtitle": "Remove an ACL account by AccessKey",
+      "submit": "Delete",
+      "confirmTitle": "Delete ACL account",
+      "confirmDesc": "Delete AccessKey {{ak}}? That client will no longer be able to access the broker.",
+      "success": "Deleted"
+    },
+    "globalWhite": {
+      "title": "Global allow list",
+      "subtitle": "IPs in the allow list bypass ACL authentication",
+      "addPlaceholder": "10.0.0.0/24",
+      "add": "Add",
+      "save": "Save allow list",
+      "saving": "Saving…",
+      "saveSuccess": "Global allow list updated",
+      "empty": "No entries"
     }
   },
   "connections": {

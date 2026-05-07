@@ -479,42 +479,96 @@
     "loadError": "加载集群信息失败：{{message}}"
   },
   "alerts": {
-    "title": "告警"
+    "title": "告警",
+    "subtitle": "{{count}} 条活跃告警 · 来自实时集群指标",
+    "subtitleNoConn": "未连接 · 请先在「连接」页面建立连接",
+    "level": {
+      "crit": "严重",
+      "warn": "警告",
+      "info": "提示"
+    },
+    "rule": {
+      "brokerOffline": "Broker 离线",
+      "groupOffline": "消费者组无在线实例",
+      "groupLag": "消费组持续堆积",
+      "diskUsage": "磁盘水位偏高",
+      "dlqGrowth": "死信新增"
+    },
+    "tabs": {
+      "active": "活跃告警",
+      "rules": "规则"
+    },
+    "active": {
+      "empty": "当前没有活跃告警，集群运行良好。",
+      "since": "自 {{time}} 起"
+    },
+    "rules": {
+      "title": "告警规则",
+      "desc": "Rocket-Leaf 基于实时指标推断告警，阈值在「设置 → 消息查询」中配置。",
+      "lagThreshold": "消费积压阈值",
+      "lagThresholdValue": "{{n}} 条",
+      "diskThreshold": "磁盘使用阈值",
+      "diskThresholdValue": "{{n}}%",
+      "openSettings": "前往设置"
+    }
   },
   "acl": {
     "title": "ACL 管理",
     "subtitle": "访问控制列表",
-    "new": "新增账号",
-    "tabs": {
-      "accounts": "账号",
-      "topic": "Topic 权限",
-      "group": "Group 权限"
+    "subtitleNoConn": "未连接 · 请先在「连接」页面建立连接",
+    "status": {
+      "loading": "正在读取 ACL 状态…",
+      "enabled": "ACL 已启用",
+      "disabled": "ACL 已禁用",
+      "broker": "Broker {{addr}}",
+      "version": "配置版本 {{ver}}"
     },
-    "table": {
+    "form": {
+      "title": "账号配置",
+      "subtitle": "创建或更新一个 AccessKey；如已存在则覆盖原配置",
       "ak": "AccessKey",
+      "akPlaceholder": "唯一标识",
       "sk": "SecretKey",
-      "ip": "白名单 IP",
-      "tp": "默认 Topic",
-      "gp": "默认 Group",
-      "role": "角色",
-      "createdAt": "创建时间"
-    },
-    "role": {
+      "skPlaceholder": "至少 6 位",
+      "whiteIp": "白名单 IP",
+      "whiteIpPlaceholder": "* 或 10.0.0.0/16，多个用 ; 分隔",
       "admin": "管理员",
-      "normal": "普通"
+      "adminHint": "拥有所有 Topic / Group 权限",
+      "defaultTopicPerm": "默认 Topic 权限",
+      "defaultGroupPerm": "默认 Group 权限",
+      "topicPerms": "Topic 权限覆写",
+      "topicPermsHint": "格式：TOPIC=PERM，多条用 , 或换行分隔",
+      "groupPerms": "Group 权限覆写",
+      "groupPermsHint": "格式：GROUP=PERM",
+      "submit": "保存",
+      "saving": "保存中…",
+      "saveSuccess": "已保存 ACL 配置",
+      "validateAk": "请填写 AccessKey",
+      "validateSk": "请填写 SecretKey"
     },
-    "detail": {
-      "credentials": "凭证",
-      "rotateSk": "轮换 SecretKey",
-      "ipWhitelist": "白名单 IP",
-      "policy": "权限策略",
-      "defaultTopic": "默认 Topic 权限",
-      "defaultGroup": "默认 Group 权限",
-      "adminRights": "管理员权限",
-      "enabled": "已开启",
-      "overrides": "资源覆写",
-      "addOverride": "新增覆写",
-      "createdOn": "创建于 {{date}}"
+    "perm": {
+      "deny": "DENY",
+      "pub": "PUB",
+      "sub": "SUB",
+      "pubsub": "PUB|SUB"
+    },
+    "delete": {
+      "title": "删除 ACL 账号",
+      "subtitle": "按 AccessKey 删除一个 ACL 账号",
+      "submit": "删除",
+      "confirmTitle": "删除 ACL 账号",
+      "confirmDesc": "删除 AccessKey {{ak}}？该客户端将无法再访问 Broker。",
+      "success": "已删除"
+    },
+    "globalWhite": {
+      "title": "全局白名单 IP",
+      "subtitle": "白名单 IP 不需要鉴权即可访问",
+      "addPlaceholder": "10.0.0.0/24",
+      "add": "添加",
+      "save": "保存白名单",
+      "saving": "保存中…",
+      "saveSuccess": "已更新全局白名单",
+      "empty": "暂无全局白名单"
     }
   },
   "connections": {

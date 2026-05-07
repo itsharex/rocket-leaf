@@ -1,9 +1,27 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
-import { RefreshCw, Search, X, Trash2, Loader2, AlertTriangle, BarChart3, RotateCcw, Pencil, Skull, RotateCw, ChevronDown, Copy, Plus } from 'lucide-react'
+import {
+  RefreshCw,
+  Search,
+  X,
+  Trash2,
+  Loader2,
+  AlertTriangle,
+  BarChart3,
+  RotateCcw,
+  Pencil,
+  Skull,
+  RotateCw,
+  ChevronDown,
+  Copy,
+  Plus,
+} from 'lucide-react'
 import { cn, formatErrorMessage } from '@/lib/utils'
 import { useSettings } from '@/hooks/useSettings'
-import type { ConsumerGroupItem, MessageItem } from '../../bindings/rocket-leaf/internal/model/models.js'
+import type {
+  ConsumerGroupItem,
+  MessageItem,
+} from '../../bindings/rocket-leaf/internal/model/models.js'
 import { GroupStatus, ConsumeMode } from '../../bindings/rocket-leaf/internal/model/models.js'
 
 const CONSUME_MODE_OPTIONS: { value: ConsumeMode; label: string }[] = [
@@ -49,10 +67,16 @@ function parseConsumeStats(data: Record<string, unknown>): ConsumeStats {
 }
 
 function MessageCard({ msg }: { msg: MessageItem }) {
-  const copyId = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation()
-    navigator.clipboard.writeText(msg.messageId ?? '').then(() => toast.success('已复制 Message ID')).catch(() => toast.error('复制失败'))
-  }, [msg.messageId])
+  const copyId = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      navigator.clipboard
+        .writeText(msg.messageId ?? '')
+        .then(() => toast.success('已复制 Message ID'))
+        .catch(() => toast.error('复制失败'))
+    },
+    [msg.messageId],
+  )
 
   const bodyPreview = (() => {
     const body = msg.body ?? ''
@@ -63,13 +87,16 @@ function MessageCard({ msg }: { msg: MessageItem }) {
   return (
     <div className="rounded-md border border-border/40 bg-background/60 p-2.5">
       <div className="flex items-center gap-1.5">
-        <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-foreground" title={msg.messageId ?? ''}>
+        <span
+          className="min-w-0 flex-1 truncate font-mono text-[11px] text-foreground"
+          title={msg.messageId ?? ''}
+        >
           {msg.messageId ?? '-'}
         </span>
         <button
           type="button"
           onClick={copyId}
-          className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+          className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
           title="复制 ID"
         >
           <Copy className="h-3 w-3" />
@@ -80,7 +107,9 @@ function MessageCard({ msg }: { msg: MessageItem }) {
         {msg.storeTime && <span>{msg.storeTime}</span>}
       </div>
       {bodyPreview && (
-        <p className="mt-1.5 break-all font-mono text-[10px] leading-relaxed text-muted-foreground/80 line-clamp-2">{bodyPreview}</p>
+        <p className="mt-1.5 line-clamp-2 break-all font-mono text-[10px] leading-relaxed text-muted-foreground/80">
+          {bodyPreview}
+        </p>
       )}
     </div>
   )
@@ -241,7 +270,8 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
   }, [onRefresh])
 
   const handleOpenResetDialog = useCallback(() => {
-    const firstTopic = detail?.subscriptions?.find((sub) => (sub.topic ?? '').trim() !== '')?.topic ?? ''
+    const firstTopic =
+      detail?.subscriptions?.find((sub) => (sub.topic ?? '').trim() !== '')?.topic ?? ''
     setResetTopic(firstTopic)
     setResetTimestamp(getDefaultResetTimeValue())
     setResetForce(false)
@@ -319,14 +349,15 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
         setDeletingGroup(null)
       }
     },
-    [onRefresh, selectedGroup]
+    [onRefresh, selectedGroup],
   )
 
   useEffect(() => {
     if (!createOpen) return
     let cancelled = false
     setBrokerOptionsLoading(true)
-    clusterApi.getBrokers()
+    clusterApi
+      .getBrokers()
       .then((brokers) => {
         if (cancelled) return
         const addrs = brokers
@@ -334,9 +365,15 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
           .map((b) => b.address!.trim())
         setBrokerOptions(Array.from(new Set(addrs)))
       })
-      .catch(() => { if (!cancelled) setBrokerOptions([]) })
-      .finally(() => { if (!cancelled) setBrokerOptionsLoading(false) })
-    return () => { cancelled = true }
+      .catch(() => {
+        if (!cancelled) setBrokerOptions([])
+      })
+      .finally(() => {
+        if (!cancelled) setBrokerOptionsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [createOpen])
 
   const handleCreateSubmit = useCallback(
@@ -344,9 +381,14 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
       e.preventDefault()
       const form = e.currentTarget
       const group = (form.querySelector('[name="group"]') as HTMLInputElement)?.value?.trim()
-      const brokerAddr = (form.querySelector('[name="brokerAddr"]') as HTMLInputElement)?.value?.trim()
-      const consumeMode = (form.querySelector('[name="consumeMode"]') as HTMLSelectElement)?.value ?? ConsumeMode.ModeClustering
-      const maxRetry = Number((form.querySelector('[name="maxRetry"]') as HTMLInputElement)?.value) || 16
+      const brokerAddr = (
+        form.querySelector('[name="brokerAddr"]') as HTMLInputElement
+      )?.value?.trim()
+      const consumeMode =
+        (form.querySelector('[name="consumeMode"]') as HTMLSelectElement)?.value ??
+        ConsumeMode.ModeClustering
+      const maxRetry =
+        Number((form.querySelector('[name="maxRetry"]') as HTMLInputElement)?.value) || 16
       if (!group) {
         setCreateError('请输入消费者组名称')
         return
@@ -368,7 +410,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
         setCreateSubmitting(false)
       }
     },
-    [onRefresh]
+    [onRefresh],
   )
 
   const statusLabel = (status: GroupStatus) => {
@@ -403,7 +445,10 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => { setCreateError(null); setCreateOpen(true) }}
+              onClick={() => {
+                setCreateError(null)
+                setCreateOpen(true)
+              }}
               className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               aria-label="新建消费者组"
               title="新建消费者组"
@@ -418,7 +463,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                 onMouseEnter={onEnter}
                 onMouseLeave={onLeave}
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50'
+                  'flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50',
                 )}
                 aria-label="刷新"
               >
@@ -436,7 +481,10 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
           </div>
         </div>
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Search
+            className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <input
             type="text"
             value={searchQuery}
@@ -449,9 +497,11 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <div className="flex-1 overflow-y-auto scroll-thin p-4">
+        <div className="scroll-thin flex-1 overflow-y-auto p-4">
           {loading && list.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">加载中…</div>
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              加载中…
+            </div>
           ) : error ? (
             <div className="rounded-md border border-border/50 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
               {error}
@@ -468,7 +518,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                   onClick={() => setSelectedGroup(g.group ?? null)}
                   className={cn(
                     'flex cursor-pointer items-center justify-between rounded-md border border-border/40 px-3 py-2 transition-colors hover:border-primary/50 hover:bg-accent/50',
-                    selectedGroup === (g.group ?? '') && 'border-primary/50 bg-accent/50'
+                    selectedGroup === (g.group ?? '') && 'border-primary/50 bg-accent/50',
                   )}
                 >
                   <div className="min-w-0 flex-1">
@@ -477,9 +527,11 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                       <span
                         className={cn(
                           'rounded px-1.5 py-0.5',
-                          g.status === GroupStatus.GroupOnline && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-                          g.status === GroupStatus.GroupWarning && 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-                          (g.status === GroupStatus.GroupOffline || !g.status) && 'bg-muted/80'
+                          g.status === GroupStatus.GroupOnline &&
+                            'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+                          g.status === GroupStatus.GroupWarning &&
+                            'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+                          (g.status === GroupStatus.GroupOffline || !g.status) && 'bg-muted/80',
                         )}
                       >
                         {statusLabel(g.status)}
@@ -488,9 +540,13 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                       <span>在线 {g.onlineClients ?? 0}</span>
                       <span>Topic {g.topicCount ?? 0}</span>
                       {(g.lag ?? 0) > 0 && (
-                        <span className={cn(
-                          lagThreshold > 0 && (g.lag ?? 0) >= lagThreshold && 'text-destructive font-medium'
-                        )}>
+                        <span
+                          className={cn(
+                            lagThreshold > 0 &&
+                              (g.lag ?? 0) >= lagThreshold &&
+                              'font-medium text-destructive',
+                          )}
+                        >
                           {lagThreshold > 0 && (g.lag ?? 0) >= lagThreshold && '⚠ '}堆积 {g.lag}
                         </span>
                       )}
@@ -549,7 +605,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto scroll-thin p-3">
+            <div className="scroll-thin flex-1 overflow-y-auto p-3">
               {detailLoading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -573,24 +629,34 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="rounded-md border border-border/40 bg-card px-3 py-2">
                           <div className="text-[11px] text-muted-foreground">消费 TPS</div>
-                          <div className="mt-1 text-sm font-medium text-foreground">{stats?.consumeTps ?? 0}</div>
+                          <div className="mt-1 text-sm font-medium text-foreground">
+                            {stats?.consumeTps ?? 0}
+                          </div>
                         </div>
-                        <div className={cn(
-                          'rounded-md border px-3 py-2',
-                          lagThreshold > 0 && (stats?.diffTotal ?? 0) >= lagThreshold
-                            ? 'border-destructive/50 bg-destructive/5'
-                            : 'border-border/40 bg-card'
-                        )}>
+                        <div
+                          className={cn(
+                            'rounded-md border px-3 py-2',
+                            lagThreshold > 0 && (stats?.diffTotal ?? 0) >= lagThreshold
+                              ? 'border-destructive/50 bg-destructive/5'
+                              : 'border-border/40 bg-card',
+                          )}
+                        >
                           <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
                             总堆积
                             {lagThreshold > 0 && (stats?.diffTotal ?? 0) >= lagThreshold && (
                               <AlertTriangle className="h-3 w-3 text-destructive" />
                             )}
                           </div>
-                          <div className={cn(
-                            'mt-1 text-sm font-medium',
-                            lagThreshold > 0 && (stats?.diffTotal ?? 0) >= lagThreshold ? 'text-destructive' : 'text-foreground'
-                          )}>{stats?.diffTotal ?? 0}</div>
+                          <div
+                            className={cn(
+                              'mt-1 text-sm font-medium',
+                              lagThreshold > 0 && (stats?.diffTotal ?? 0) >= lagThreshold
+                                ? 'text-destructive'
+                                : 'text-foreground',
+                            )}
+                          >
+                            {stats?.diffTotal ?? 0}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -608,7 +674,9 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                     )}
                     <p>
                       <span className="text-muted-foreground">状态 / 模式：</span>
-                      <span className="text-foreground">{statusLabel(detail.status)} / {consumeModeLabel(detail.consumeMode)}</span>
+                      <span className="text-foreground">
+                        {statusLabel(detail.status)} / {consumeModeLabel(detail.consumeMode)}
+                      </span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">在线客户端：</span>
@@ -642,26 +710,45 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                   )}
                   {detail.clients != null && detail.clients.length > 0 && (
                     <div>
-                      <h3 className="mb-2 text-xs font-medium text-muted-foreground">客户端（{detail.clients.length}）</h3>
+                      <h3 className="mb-2 text-xs font-medium text-muted-foreground">
+                        客户端（{detail.clients.length}）
+                      </h3>
                       <div className="overflow-x-auto rounded-md border border-border/40">
                         <table className="w-full min-w-[360px] text-xs">
                           <thead>
                             <tr className="border-b border-border/40 bg-muted/30">
-                              <th className="px-2 py-1.5 text-left font-medium text-foreground">ClientID</th>
-                              <th className="px-2 py-1.5 text-left font-medium text-foreground">IP</th>
-                              <th className="px-2 py-1.5 text-left font-medium text-foreground">版本</th>
-                              <th className="px-2 py-1.5 text-left font-medium text-foreground">最后心跳</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                ClientID
+                              </th>
+                              <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                IP
+                              </th>
+                              <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                版本
+                              </th>
+                              <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                最后心跳
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
                             {detail.clients.map((c, i) => (
                               <tr key={i} className="border-b border-border/30 last:border-0">
-                                <td className="max-w-[120px] truncate px-2 py-1.5 font-mono text-foreground" title={c.clientId ?? ''}>
+                                <td
+                                  className="max-w-[120px] truncate px-2 py-1.5 font-mono text-foreground"
+                                  title={c.clientId ?? ''}
+                                >
                                   {c.clientId ?? '-'}
                                 </td>
-                                <td className="px-2 py-1.5 font-mono text-muted-foreground">{c.ip ?? '-'}</td>
-                                <td className="px-2 py-1.5 text-muted-foreground">{c.version ?? '-'}</td>
-                                <td className="px-2 py-1.5 text-muted-foreground whitespace-nowrap">{c.lastHeartbeat ?? '-'}</td>
+                                <td className="px-2 py-1.5 font-mono text-muted-foreground">
+                                  {c.ip ?? '-'}
+                                </td>
+                                <td className="px-2 py-1.5 text-muted-foreground">
+                                  {c.version ?? '-'}
+                                </td>
+                                <td className="whitespace-nowrap px-2 py-1.5 text-muted-foreground">
+                                  {c.lastHeartbeat ?? '-'}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -681,14 +768,21 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                           void loadDlqMessages(selectedGroup)
                         }
                       }}
-                      className="flex w-full items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      className="flex w-full items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <Skull className="h-3.5 w-3.5 shrink-0 text-destructive/70" />
                       <span>死信队列</span>
                       {dlqMessages.length > 0 && (
-                        <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">{dlqMessages.length}</span>
+                        <span className="rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">
+                          {dlqMessages.length}
+                        </span>
                       )}
-                      <ChevronDown className={cn('ml-auto h-3.5 w-3.5 transition-transform', dlqExpanded && 'rotate-180')} />
+                      <ChevronDown
+                        className={cn(
+                          'ml-auto h-3.5 w-3.5 transition-transform',
+                          dlqExpanded && 'rotate-180',
+                        )}
+                      />
                     </button>
                     {dlqExpanded && (
                       <div className="mt-2">
@@ -697,9 +791,11 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                             <Loader2 className="h-4 w-4 animate-spin" />
                           </div>
                         ) : dlqMessages.length === 0 ? (
-                          <p className="rounded-md border border-border/40 px-3 py-2 text-xs text-muted-foreground">暂无死信消息</p>
+                          <p className="rounded-md border border-border/40 px-3 py-2 text-xs text-muted-foreground">
+                            暂无死信消息
+                          </p>
                         ) : (
-                          <div className="space-y-1.5 max-h-[280px] overflow-y-auto scroll-thin">
+                          <div className="scroll-thin max-h-[280px] space-y-1.5 overflow-y-auto">
                             {dlqMessages.map((msg) => (
                               <MessageCard key={msg.messageId} msg={msg} />
                             ))}
@@ -710,7 +806,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                             type="button"
                             onClick={() => selectedGroup && loadDlqMessages(selectedGroup)}
                             disabled={dlqLoading}
-                            className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                            className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                           >
                             <RefreshCw className={cn('h-3 w-3', dlqLoading && 'animate-spin')} />
                             刷新
@@ -731,14 +827,21 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                           void loadRetryMessages(selectedGroup)
                         }
                       }}
-                      className="flex w-full items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      className="flex w-full items-center gap-2 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <RotateCw className="h-3.5 w-3.5 shrink-0 text-amber-500/70" />
                       <span>重试队列</span>
                       {retryMessages.length > 0 && (
-                        <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-600 dark:text-amber-400">{retryMessages.length}</span>
+                        <span className="rounded-full bg-amber-500/10 px-1.5 py-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+                          {retryMessages.length}
+                        </span>
                       )}
-                      <ChevronDown className={cn('ml-auto h-3.5 w-3.5 transition-transform', retryExpanded && 'rotate-180')} />
+                      <ChevronDown
+                        className={cn(
+                          'ml-auto h-3.5 w-3.5 transition-transform',
+                          retryExpanded && 'rotate-180',
+                        )}
+                      />
                     </button>
                     {retryExpanded && (
                       <div className="mt-2">
@@ -747,9 +850,11 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                             <Loader2 className="h-4 w-4 animate-spin" />
                           </div>
                         ) : retryMessages.length === 0 ? (
-                          <p className="rounded-md border border-border/40 px-3 py-2 text-xs text-muted-foreground">暂无重试消息</p>
+                          <p className="rounded-md border border-border/40 px-3 py-2 text-xs text-muted-foreground">
+                            暂无重试消息
+                          </p>
                         ) : (
-                          <div className="space-y-1.5 max-h-[280px] overflow-y-auto scroll-thin">
+                          <div className="scroll-thin max-h-[280px] space-y-1.5 overflow-y-auto">
                             {retryMessages.map((msg) => (
                               <MessageCard key={msg.messageId} msg={msg} />
                             ))}
@@ -760,7 +865,7 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                             type="button"
                             onClick={() => selectedGroup && loadRetryMessages(selectedGroup)}
                             disabled={retryLoading}
-                            className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                            className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
                           >
                             <RefreshCw className={cn('h-3 w-3', retryLoading && 'animate-spin')} />
                             刷新
@@ -792,7 +897,8 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
               编辑消费者组配置
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              修改「<span className="font-mono text-foreground">{selectedGroup}</span>」的消费模式和重试次数
+              修改「<span className="font-mono text-foreground">{selectedGroup}</span>
+              」的消费模式和重试次数
             </p>
             {editError && (
               <div className="mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -801,7 +907,12 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
             )}
             <div className="mt-4 space-y-3">
               <div>
-                <label id="edit-consumer-mode-label" className="mb-1 block text-xs text-muted-foreground">消费模式</label>
+                <label
+                  id="edit-consumer-mode-label"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  消费模式
+                </label>
                 <select
                   value={editConsumeMode}
                   onChange={(e) => setEditConsumeMode(e.target.value)}
@@ -816,7 +927,12 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                 </select>
               </div>
               <div>
-                <label id="edit-consumer-retry-label" className="mb-1 block text-xs text-muted-foreground">最大重试次数</label>
+                <label
+                  id="edit-consumer-retry-label"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  最大重试次数
+                </label>
                 <input
                   type="number"
                   min={0}
@@ -879,7 +995,9 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                   删除消费者组
                 </h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  确定删除消费者组「<span className="font-mono text-foreground">{deleteConfirmGroup}</span>」？此操作不可恢复。
+                  确定删除消费者组「
+                  <span className="font-mono text-foreground">{deleteConfirmGroup}</span>
+                  」？此操作不可恢复。
                 </p>
               </div>
             </div>
@@ -933,7 +1051,8 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                   重置消费位点
                 </h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  为消费者组「<span className="font-mono text-foreground">{selectedGroup}</span>」按时间重置位点。
+                  为消费者组「<span className="font-mono text-foreground">{selectedGroup}</span>
+                  」按时间重置位点。
                 </p>
               </div>
             </div>
@@ -970,7 +1089,10 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="reset-timestamp" className="text-xs font-medium text-muted-foreground">
+                <label
+                  htmlFor="reset-timestamp"
+                  className="text-xs font-medium text-muted-foreground"
+                >
                   重置时间
                 </label>
                 <input
@@ -1045,7 +1167,12 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
             )}
             <form onSubmit={handleCreateSubmit} className="mt-4 space-y-3">
               <div>
-                <label htmlFor="create-cg-group" className="mb-1 block text-xs text-muted-foreground">消费者组名称</label>
+                <label
+                  htmlFor="create-cg-group"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  消费者组名称
+                </label>
                 <input
                   id="create-cg-group"
                   name="group"
@@ -1056,7 +1183,12 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                 />
               </div>
               <div>
-                <label htmlFor="create-cg-broker" className="mb-1 block text-xs text-muted-foreground">Broker 地址</label>
+                <label
+                  htmlFor="create-cg-broker"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  Broker 地址
+                </label>
                 {brokerOptionsLoading ? (
                   <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -1069,7 +1201,9 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     {brokerOptions.map((addr) => (
-                      <option key={addr} value={addr}>{addr}</option>
+                      <option key={addr} value={addr}>
+                        {addr}
+                      </option>
                     ))}
                   </select>
                 ) : (
@@ -1083,7 +1217,12 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                 )}
               </div>
               <div>
-                <label htmlFor="create-cg-mode" className="mb-1 block text-xs text-muted-foreground">消费模式</label>
+                <label
+                  htmlFor="create-cg-mode"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  消费模式
+                </label>
                 <select
                   id="create-cg-mode"
                   name="consumeMode"
@@ -1091,12 +1230,19 @@ export function ConsumerGroupList({ list, loading, error, onRefresh }: Props) {
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   {CONSUME_MODE_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
               </div>
               <div>
-                <label htmlFor="create-cg-retry" className="mb-1 block text-xs text-muted-foreground">最大重试次数</label>
+                <label
+                  htmlFor="create-cg-retry"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  最大重试次数
+                </label>
                 <input
                   id="create-cg-retry"
                   name="maxRetry"

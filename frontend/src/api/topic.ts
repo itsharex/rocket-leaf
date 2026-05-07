@@ -33,7 +33,7 @@ export async function createTopic(
   brokerAddr: string,
   readQueue: number,
   writeQueue: number,
-  perm: string
+  perm: string,
 ): Promise<void> {
   try {
     await TopicService.CreateTopic(topic, brokerAddr, readQueue, writeQueue, perm)
@@ -57,7 +57,7 @@ export async function updateTopic(
   brokerAddr: string,
   readQueue: number,
   writeQueue: number,
-  perm: string
+  perm: string,
 ): Promise<void> {
   try {
     await TopicService.UpdateTopic(topic, brokerAddr, readQueue, writeQueue, perm)

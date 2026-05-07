@@ -43,7 +43,7 @@ export function ConfirmDialog({
     (e: React.MouseEvent) => {
       if (e.target === e.currentTarget) onCancel()
     },
-    [onCancel]
+    [onCancel],
   )
 
   if (!open) return null
@@ -59,7 +59,7 @@ export function ConfirmDialog({
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby="confirm-desc"
-        className="w-full max-w-sm rounded-xl border border-border/50 bg-background p-6 shadow-lg animate-in fade-in zoom-in-95 duration-150"
+        className="w-full max-w-sm rounded-xl border border-border/50 bg-background p-6 shadow-lg duration-150 animate-in fade-in zoom-in-95"
       >
         <h2 id="confirm-title" className="text-base font-semibold text-foreground">
           {title}
@@ -72,7 +72,7 @@ export function ConfirmDialog({
             type="button"
             data-cancel
             onClick={onCancel}
-            className="h-9 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground hover:bg-accent/50 transition-colors"
+            className="h-9 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground transition-colors hover:bg-accent/50"
           >
             {cancelText}
           </button>
@@ -83,7 +83,7 @@ export function ConfirmDialog({
               'h-9 rounded-lg px-4 text-sm font-medium transition-colors',
               variant === 'destructive'
                 ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
-                : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-primary text-primary-foreground hover:bg-primary/90',
             )}
           >
             {confirmText}

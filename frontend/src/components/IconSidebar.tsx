@@ -1,11 +1,30 @@
 import { useState, useRef, useCallback } from 'react'
-import { Home, LayoutGrid, Users, Mail, BarChart3, Server, Github, Settings, Shield } from 'lucide-react'
+import {
+  Home,
+  LayoutGrid,
+  Users,
+  Mail,
+  BarChart3,
+  Server,
+  Github,
+  Settings,
+  Shield,
+} from 'lucide-react'
 import { Browser } from '@wailsio/runtime'
 import { cn } from '@/lib/utils'
 
 const GITHUB_URL = 'https://github.com/amigoer/rocket-leaf'
 
-export type NavId = 'home' | 'topics' | 'consumers' | 'messages' | 'cluster' | 'acl' | 'connections' | 'settings' | 'github'
+export type NavId =
+  | 'home'
+  | 'topics'
+  | 'consumers'
+  | 'messages'
+  | 'cluster'
+  | 'acl'
+  | 'connections'
+  | 'settings'
+  | 'github'
 
 const TOOLTIP_DELAY_MS = 150
 
@@ -48,7 +67,7 @@ export function IconSidebar({
       clearTimer()
       timerRef.current = setTimeout(() => setHoveredId(id), TOOLTIP_DELAY_MS)
     },
-    [clearTimer]
+    [clearTimer],
   )
   const handleLeave = useCallback(() => {
     clearTimer()
@@ -64,7 +83,7 @@ export function IconSidebar({
     const buttonClass = cn(
       'flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground transition-[background-color,color] duration-200 ease-out',
       isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent',
-      disabled && 'opacity-40 cursor-not-allowed'
+      disabled && 'cursor-not-allowed opacity-40',
     )
 
     // 禁用时显示"请先连接集群"提示，正常时显示功能名称
@@ -79,7 +98,7 @@ export function IconSidebar({
               'absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md border px-3 py-2 text-base shadow-sm',
               disabled
                 ? 'border-orange-500/30 bg-orange-50 text-orange-700 dark:border-orange-400/30 dark:bg-orange-950/80 dark:text-orange-300'
-                : 'border-border/50 bg-card text-card-foreground'
+                : 'border-border/50 bg-card text-card-foreground',
             )}
             role="tooltip"
           >
@@ -136,4 +155,3 @@ export function IconSidebar({
     </aside>
   )
 }
-

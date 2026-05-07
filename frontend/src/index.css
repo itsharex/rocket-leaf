@@ -1,12 +1,12 @@
-@import "tailwindcss";
-@import "./design.css";
+@import 'tailwindcss';
+@import './design.css';
 
 @config "../tailwind.config.js";
 
 @layer base {
   :root {
     --app-font-size: 14px;
-    --app-monospace-font: "JetBrains Mono";
+    --app-monospace-font: 'JetBrains Mono';
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -61,7 +61,17 @@ body {
   min-height: 100vh;
   background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--app-ui-font, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif);
+  font-family: var(
+    --app-ui-font,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    'Noto Sans',
+    sans-serif
+  );
   -webkit-user-select: none;
   user-select: none;
 }
@@ -69,7 +79,7 @@ body {
 /* 输入框、文本域内仍可选中以便编辑与复制 */
 input,
 textarea,
-[contenteditable="true"] {
+[contenteditable='true'] {
   -webkit-user-select: text;
   user-select: text;
 }
@@ -81,15 +91,8 @@ textarea,
 @layer utilities {
   .font-mono {
     font-family:
-      var(--app-monospace-font),
-      ui-monospace,
-      SFMono-Regular,
-      Menlo,
-      Monaco,
-      Consolas,
-      "Liberation Mono",
-      "Courier New",
-      monospace;
+      var(--app-monospace-font), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+      'Liberation Mono', 'Courier New', monospace;
   }
 }
 
@@ -122,75 +125,75 @@ textarea,
 }
 
 /* Sonner toast 颜色主题 */
-[data-sonner-toast][data-type="success"] {
+[data-sonner-toast][data-type='success'] {
   background: #ecfdf5 !important;
   border-color: #a7f3d0 !important;
   color: #065f46 !important;
 }
-[data-sonner-toast][data-type="success"] [data-icon] svg {
+[data-sonner-toast][data-type='success'] [data-icon] svg {
   color: #059669 !important;
 }
 
-[data-sonner-toast][data-type="error"] {
+[data-sonner-toast][data-type='error'] {
   background: #fef2f2 !important;
   border-color: #fecaca !important;
   color: #991b1b !important;
 }
-[data-sonner-toast][data-type="error"] [data-icon] svg {
+[data-sonner-toast][data-type='error'] [data-icon] svg {
   color: #dc2626 !important;
 }
 
-[data-sonner-toast][data-type="warning"] {
+[data-sonner-toast][data-type='warning'] {
   background: #fffbeb !important;
   border-color: #fde68a !important;
   color: #92400e !important;
 }
-[data-sonner-toast][data-type="warning"] [data-icon] svg {
+[data-sonner-toast][data-type='warning'] [data-icon] svg {
   color: #d97706 !important;
 }
 
-[data-sonner-toast][data-type="info"] {
+[data-sonner-toast][data-type='info'] {
   background: #eff6ff !important;
   border-color: #bfdbfe !important;
   color: #1e40af !important;
 }
-[data-sonner-toast][data-type="info"] [data-icon] svg {
+[data-sonner-toast][data-type='info'] [data-icon] svg {
   color: #2563eb !important;
 }
 
 /* 深色模式 */
-.dark [data-sonner-toast][data-type="success"] {
+.dark [data-sonner-toast][data-type='success'] {
   background: #052e16 !important;
   border-color: #065f4680 !important;
   color: #a7f3d0 !important;
 }
-.dark [data-sonner-toast][data-type="success"] [data-icon] svg {
+.dark [data-sonner-toast][data-type='success'] [data-icon] svg {
   color: #34d399 !important;
 }
 
-.dark [data-sonner-toast][data-type="error"] {
+.dark [data-sonner-toast][data-type='error'] {
   background: #450a0a !important;
   border-color: #991b1b80 !important;
   color: #fecaca !important;
 }
-.dark [data-sonner-toast][data-type="error"] [data-icon] svg {
+.dark [data-sonner-toast][data-type='error'] [data-icon] svg {
   color: #f87171 !important;
 }
 
-.dark [data-sonner-toast][data-type="warning"] {
+.dark [data-sonner-toast][data-type='warning'] {
   background: #451a03 !important;
   border-color: #92400e80 !important;
   color: #fde68a !important;
 }
-.dark [data-sonner-toast][data-type="warning"] [data-icon] svg {
+.dark [data-sonner-toast][data-type='warning'] [data-icon] svg {
   color: #fbbf24 !important;
 }
 
-.dark [data-sonner-toast][data-type="info"] {
+.dark [data-sonner-toast][data-type='info'] {
   background: #172554 !important;
   border-color: #1e40af80 !important;
   color: #bfdbfe !important;
 }
-.dark [data-sonner-toast][data-type="info"] [data-icon] svg {
+.dark [data-sonner-toast][data-type='info'] [data-icon] svg {
   color: #60a5fa !important;
 }

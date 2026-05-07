@@ -59,18 +59,30 @@ const SECTIONS: { id: SectionId; icon: LucideIcon }[] = [
 
 const ACCENT_COLORS: { key: AccentKey; c: string }[] = [
   { key: 'default', c: '#0a0a0a' },
-  { key: 'blue',    c: '#2563eb' },
-  { key: 'green',   c: '#16a34a' },
-  { key: 'orange',  c: '#ea580c' },
-  { key: 'red',     c: '#dc2626' },
-  { key: 'purple',  c: '#9333ea' },
-  { key: 'cyan',    c: '#0891b2' },
+  { key: 'blue', c: '#2563eb' },
+  { key: 'green', c: '#16a34a' },
+  { key: 'orange', c: '#ea580c' },
+  { key: 'red', c: '#dc2626' },
+  { key: 'purple', c: '#9333ea' },
+  { key: 'cyan', c: '#0891b2' },
 ]
 
 const THEMES: { mode: ThemeMode; nameKey: string; descKey: string }[] = [
-  { mode: 'light',  nameKey: 'settings.appearance.themes.light',  descKey: 'settings.appearance.themes.lightDesc' },
-  { mode: 'dark',   nameKey: 'settings.appearance.themes.dark',   descKey: 'settings.appearance.themes.darkDesc' },
-  { mode: 'system', nameKey: 'settings.appearance.themes.system', descKey: 'settings.appearance.themes.systemDesc' },
+  {
+    mode: 'light',
+    nameKey: 'settings.appearance.themes.light',
+    descKey: 'settings.appearance.themes.lightDesc',
+  },
+  {
+    mode: 'dark',
+    nameKey: 'settings.appearance.themes.dark',
+    descKey: 'settings.appearance.themes.darkDesc',
+  },
+  {
+    mode: 'system',
+    nameKey: 'settings.appearance.themes.system',
+    descKey: 'settings.appearance.themes.systemDesc',
+  },
 ]
 
 const FETCH_LIMITS: FetchLimit[] = [32, 64, 128]
@@ -94,9 +106,30 @@ const DATA_PATHS: { platform: string; path: string }[] = [
 const MIN_FONT_SIZE = 12
 const MAX_FONT_SIZE = 18
 
-type Palette = { bg: string; panel: string; border: string; fg: string; muted: string; line: string }
-const LIGHT_P: Palette = { bg: '#ffffff', panel: '#fafafa', border: '#e5e5e5', fg: '#0a0a0a', muted: '#a3a3a3', line: '#f0f0f0' }
-const DARK_P: Palette = { bg: '#0a0a0a', panel: '#141414', border: '#262626', fg: '#fafafa', muted: '#737373', line: '#262626' }
+type Palette = {
+  bg: string
+  panel: string
+  border: string
+  fg: string
+  muted: string
+  line: string
+}
+const LIGHT_P: Palette = {
+  bg: '#ffffff',
+  panel: '#fafafa',
+  border: '#e5e5e5',
+  fg: '#0a0a0a',
+  muted: '#a3a3a3',
+  line: '#f0f0f0',
+}
+const DARK_P: Palette = {
+  bg: '#0a0a0a',
+  panel: '#141414',
+  border: '#262626',
+  fg: '#fafafa',
+  muted: '#737373',
+  line: '#262626',
+}
 
 function MiniAppChrome({ p, half }: { p: Palette; half?: 'left' | 'right' }) {
   const sidebarW = half === 'right' ? 0 : 18
@@ -132,7 +165,9 @@ function MiniAppChrome({ p, half }: { p: Palette; half?: 'left' | 'right' }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
           <div style={{ width: 14, height: 3, background: p.fg, opacity: 0.9, borderRadius: 1 }} />
           <div style={{ flex: 1 }} />
-          <div style={{ width: 6, height: 3, background: p.muted, opacity: 0.5, borderRadius: 1 }} />
+          <div
+            style={{ width: 6, height: 3, background: p.muted, opacity: 0.5, borderRadius: 1 }}
+          />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2.5, marginTop: 2 }}>
           <div style={{ height: 2.5, background: p.line, borderRadius: 1, width: '85%' }} />
@@ -171,13 +206,7 @@ function SettingsRow({
   )
 }
 
-function Switch({
-  on,
-  onClick,
-}: {
-  on: boolean
-  onClick: () => void
-}) {
+function Switch({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
     <button
       type="button"
@@ -197,7 +226,9 @@ function AppearancePanel() {
   const { prefs, setAccent, setAnimations, setReduceTransparency, setHighContrast } = useUIPrefs()
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.appearance.theme')}</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>
+        {t('settings.appearance.theme')}
+      </div>
       <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
         {THEMES.map((th) => {
           const active = settings.theme === th.mode
@@ -227,7 +258,14 @@ function AppearancePanel() {
                 }}
               >
                 {th.mode === 'system' ? (
-                  <div style={{ position: 'absolute', inset: 0, display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                    }}
+                  >
                     <MiniAppChrome p={LIGHT_P} half="left" />
                     <MiniAppChrome p={DARK_P} half="right" />
                   </div>
@@ -237,15 +275,20 @@ function AppearancePanel() {
               </div>
               <div className="flex items-center justify-between" style={{ padding: '10px 12px' }}>
                 <div>
-                  <div className="text-[13px] font-medium" style={{ lineHeight: 1.2 }}>{t(th.nameKey)}</div>
-                  <div className="rl-muted text-[12px]" style={{ marginTop: 2 }}>{t(th.descKey)}</div>
+                  <div className="text-[13px] font-medium" style={{ lineHeight: 1.2 }}>
+                    {t(th.nameKey)}
+                  </div>
+                  <div className="rl-muted text-[12px]" style={{ marginTop: 2 }}>
+                    {t(th.descKey)}
+                  </div>
                 </div>
                 <div
                   style={{
                     width: 16,
                     height: 16,
                     borderRadius: 999,
-                    border: '1px solid ' + (active ? 'hsl(var(--foreground))' : 'hsl(var(--border))'),
+                    border:
+                      '1px solid ' + (active ? 'hsl(var(--foreground))' : 'hsl(var(--border))'),
                     background: active ? 'hsl(var(--foreground))' : 'transparent',
                     display: 'grid',
                     placeItems: 'center',
@@ -260,7 +303,9 @@ function AppearancePanel() {
         })}
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.appearance.accent')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.appearance.accent')}
+      </div>
       <div className="rl-card" style={{ padding: 16 }}>
         <div className="flex flex-wrap items-center gap-2">
           {ACCENT_COLORS.map((c) => {
@@ -271,7 +316,7 @@ function AppearancePanel() {
                 key={c.key}
                 onClick={() => setAccent(c.key)}
                 aria-pressed={active}
-                className="flex flex-col items-center gap-1 cursor-pointer bg-transparent border-0 p-0"
+                className="flex cursor-pointer flex-col items-center gap-1 border-0 bg-transparent p-0"
                 style={{ width: 48 }}
               >
                 <div
@@ -292,7 +337,9 @@ function AppearancePanel() {
                 </div>
                 <span
                   className="text-[12px]"
-                  style={{ color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))' }}
+                  style={{
+                    color: active ? 'hsl(var(--foreground))' : 'hsl(var(--muted-foreground))',
+                  }}
                 >
                   {t(`settings.appearance.accentNames.${c.key}`)}
                 </span>
@@ -303,7 +350,9 @@ function AppearancePanel() {
         <div className="rl-muted mt-3 text-[12px]">{t('settings.appearance.accentHint')}</div>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.appearance.a11y')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.appearance.a11y')}
+      </div>
       <div className="rl-card">
         <SettingsRow
           title={t('settings.appearance.animations')}
@@ -337,9 +386,14 @@ function GeneralPanel() {
   const { settings, setSetting } = useSettings()
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.general.languageRegion')}</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>
+        {t('settings.general.languageRegion')}
+      </div>
       <div className="rl-card">
-        <SettingsRow title={t('settings.general.language')} hint={t('settings.general.languageHint')}>
+        <SettingsRow
+          title={t('settings.general.language')}
+          hint={t('settings.general.languageHint')}
+        >
           <select
             className="rl-select"
             style={{ width: 200 }}
@@ -347,11 +401,17 @@ function GeneralPanel() {
             onChange={(e) => setSetting('language', e.target.value as Language)}
           >
             {LANGUAGE_OPTIONS.map((l) => (
-              <option key={l.value} value={l.value}>{l.label}</option>
+              <option key={l.value} value={l.value}>
+                {l.label}
+              </option>
             ))}
           </select>
         </SettingsRow>
-        <SettingsRow title={t('settings.general.timezone')} hint={t('settings.general.timezoneHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.general.timezone')}
+          hint={t('settings.general.timezoneHint')}
+          bordered={false}
+        >
           <select
             className="rl-select"
             style={{ width: 200 }}
@@ -364,7 +424,9 @@ function GeneralPanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.general.startup')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.general.startup')}
+      </div>
       <div className="rl-card">
         <SettingsRow
           title={t('settings.general.autoConnect')}
@@ -392,7 +454,9 @@ function FontsPanel() {
 
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.fonts.fontsTypography')}</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>
+        {t('settings.fonts.fontsTypography')}
+      </div>
       <div className="rl-card">
         <SettingsRow title={t('settings.fonts.fontSize')} hint={t('settings.fonts.fontSizeHint')}>
           <button
@@ -431,7 +495,11 @@ function FontsPanel() {
             <option value="HarmonyOS Sans">HarmonyOS Sans</option>
           </select>
         </SettingsRow>
-        <SettingsRow title={t('settings.fonts.monospaceFont')} hint={t('settings.fonts.monospaceFontHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.fonts.monospaceFont')}
+          hint={t('settings.fonts.monospaceFontHint')}
+          bordered={false}
+        >
           <select
             className="rl-select"
             style={{ width: 200 }}
@@ -449,9 +517,15 @@ function FontsPanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.fonts.timeDisplay')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.fonts.timeDisplay')}
+      </div>
       <div className="rl-card">
-        <SettingsRow title={t('settings.fonts.timeFormat')} hint={t('settings.fonts.timeFormatHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.fonts.timeFormat')}
+          hint={t('settings.fonts.timeFormatHint')}
+          bordered={false}
+        >
           <select
             className="rl-select"
             style={{ width: 200 }}
@@ -464,7 +538,9 @@ function FontsPanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.fonts.preview')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.fonts.preview')}
+      </div>
       <div className="rl-card" style={{ padding: 16 }}>
         <div className="text-[13px]" style={{ fontSize: settings.fontSize }}>
           {t('settings.fonts.previewSample')}
@@ -486,9 +562,14 @@ function MessagePanel() {
   const payloadKB = Math.round(settings.maxPayloadRenderBytes / 1024)
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.message.defaults')}</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>
+        {t('settings.message.defaults')}
+      </div>
       <div className="rl-card">
-        <SettingsRow title={t('settings.message.fetchLimit')} hint={t('settings.message.fetchLimitHint')}>
+        <SettingsRow
+          title={t('settings.message.fetchLimit')}
+          hint={t('settings.message.fetchLimitHint')}
+        >
           <select
             className="rl-select"
             style={{ width: 140 }}
@@ -496,17 +577,26 @@ function MessagePanel() {
             onChange={(e) => setSetting('fetchLimit', Number(e.target.value) as FetchLimit)}
           >
             {FETCH_LIMITS.map((n) => (
-              <option key={n} value={n}>{t('settings.message.fetchUnit', { count: n })}</option>
+              <option key={n} value={n}>
+                {t('settings.message.fetchUnit', { count: n })}
+              </option>
             ))}
           </select>
         </SettingsRow>
-        <SettingsRow title={t('settings.message.autoFormatJson')} hint={t('settings.message.autoFormatJsonHint')}>
+        <SettingsRow
+          title={t('settings.message.autoFormatJson')}
+          hint={t('settings.message.autoFormatJsonHint')}
+        >
           <Switch
             on={settings.autoFormatJson}
             onClick={() => setSetting('autoFormatJson', !settings.autoFormatJson)}
           />
         </SettingsRow>
-        <SettingsRow title={t('settings.message.payloadLimit')} hint={t('settings.message.payloadLimitHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.message.payloadLimit')}
+          hint={t('settings.message.payloadLimitHint')}
+          bordered={false}
+        >
           <input
             type="number"
             className="rl-input"
@@ -518,7 +608,10 @@ function MessagePanel() {
               setSetting('maxPayloadRenderBytes', (Number(e.target.value) || 500) * 1024)
             }
             onBlur={() => {
-              const kb = Math.max(64, Math.min(4096, Math.round(settings.maxPayloadRenderBytes / 1024)))
+              const kb = Math.max(
+                64,
+                Math.min(4096, Math.round(settings.maxPayloadRenderBytes / 1024)),
+              )
               setSetting('maxPayloadRenderBytes', kb * 1024)
             }}
           />
@@ -526,7 +619,9 @@ function MessagePanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.message.alertThresholds')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.message.alertThresholds')}
+      </div>
       <div className="rl-card">
         <SettingsRow
           title={t('settings.message.lagAlert')}
@@ -554,7 +649,9 @@ function ProxyPanel() {
   const { settings, setSetting } = useSettings()
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.proxy.timeout')}</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>
+        {t('settings.proxy.timeout')}
+      </div>
       <div className="rl-card">
         <SettingsRow title={t('settings.proxy.connect')} hint={t('settings.proxy.connectHint')}>
           <input
@@ -569,13 +666,17 @@ function ProxyPanel() {
             onBlur={() =>
               setSetting(
                 'connectTimeoutMs',
-                Math.max(1000, Math.min(30000, settings.connectTimeoutMs))
+                Math.max(1000, Math.min(30000, settings.connectTimeoutMs)),
               )
             }
           />
           <span className="rl-muted text-[12px]">ms</span>
         </SettingsRow>
-        <SettingsRow title={t('settings.proxy.request')} hint={t('settings.proxy.requestHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.proxy.request')}
+          hint={t('settings.proxy.requestHint')}
+          bordered={false}
+        >
           <input
             type="number"
             className="rl-input"
@@ -588,7 +689,7 @@ function ProxyPanel() {
             onBlur={() =>
               setSetting(
                 'requestTimeoutMs',
-                Math.max(1000, Math.min(60000, settings.requestTimeoutMs))
+                Math.max(1000, Math.min(60000, settings.requestTimeoutMs)),
               )
             }
           />
@@ -596,7 +697,9 @@ function ProxyPanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.proxy.credentials')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.proxy.credentials')}
+      </div>
       <div className="rl-card">
         <SettingsRow title={t('settings.proxy.ak')} hint={t('settings.proxy.akHint')}>
           <input
@@ -618,7 +721,11 @@ function ProxyPanel() {
             onChange={(e) => setSetting('globalSecretKey', e.target.value)}
           />
         </SettingsRow>
-        <SettingsRow title={t('settings.proxy.skipTls')} hint={t('settings.proxy.skipTlsHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.proxy.skipTls')}
+          hint={t('settings.proxy.skipTlsHint')}
+          bordered={false}
+        >
           <Switch
             on={settings.skipTlsVerify}
             onClick={() => setSetting('skipTlsVerify', !settings.skipTlsVerify)}
@@ -626,7 +733,9 @@ function ProxyPanel() {
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.proxy.httpProxy')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.proxy.httpProxy')}
+      </div>
       <div className="rl-card">
         <SettingsRow title={t('settings.proxy.enable')} hint={t('settings.proxy.enableHint')}>
           <Switch
@@ -644,7 +753,9 @@ function ProxyPanel() {
                 onChange={(e) => setSetting('proxyType', e.target.value as ProxyType)}
               >
                 {PROXY_TYPE_OPTIONS.map((p) => (
-                  <option key={p.value} value={p.value}>{p.label}</option>
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
                 ))}
               </select>
             </SettingsRow>
@@ -700,23 +811,28 @@ function DataPanel({
   onClearCache: () => void
 }) {
   const { t } = useTranslation()
-  const copyPath = useCallback(async (p: string) => {
-    try {
-      await navigator.clipboard.writeText(p)
-      toast.success(t('settings.data.copySuccess'))
-    } catch {
-      toast.error(t('settings.data.copyError'))
-    }
-  }, [t])
+  const copyPath = useCallback(
+    async (p: string) => {
+      try {
+        await navigator.clipboard.writeText(p)
+        toast.success(t('settings.data.copySuccess'))
+      } catch {
+        toast.error(t('settings.data.copyError'))
+      }
+    },
+    [t],
+  )
 
   return (
     <>
-      <div className="rl-section-label" style={{ marginTop: 0 }}>{t('settings.data.storage')}</div>
+      <div className="rl-section-label" style={{ marginTop: 0 }}>
+        {t('settings.data.storage')}
+      </div>
       <div className="rl-card overflow-hidden">
         {DATA_PATHS.map((p, i) => (
           <div
             key={p.platform}
-            className="flex items-center gap-3 cursor-pointer hover:bg-muted/40"
+            className="flex cursor-pointer items-center gap-3 hover:bg-muted/40"
             style={{
               padding: '10px 16px',
               borderTop: i ? '1px solid hsl(var(--border))' : undefined,
@@ -724,7 +840,9 @@ function DataPanel({
             onClick={() => copyPath(p.path)}
           >
             <Folder size={14} className="rl-muted" />
-            <span className="text-[13px] font-medium" style={{ width: 80 }}>{p.platform}</span>
+            <span className="text-[13px] font-medium" style={{ width: 80 }}>
+              {p.platform}
+            </span>
             <code className="font-mono-design rl-muted min-w-0 flex-1 truncate text-[12px]">
               {p.path}
             </code>
@@ -733,29 +851,47 @@ function DataPanel({
         ))}
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.data.ioSection')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.data.ioSection')}
+      </div>
       <div className="rl-card">
         <SettingsRow title={t('settings.data.exportTitle')} hint={t('settings.data.exportHint')}>
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onExport}>
-            <Download size={13} />{t('common.export')}
+            <Download size={13} />
+            {t('common.export')}
           </button>
         </SettingsRow>
-        <SettingsRow title={t('settings.data.importTitle')} hint={t('settings.data.importHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.data.importTitle')}
+          hint={t('settings.data.importHint')}
+          bordered={false}
+        >
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onImport}>
-            <Upload size={13} />{t('common.selectFile')}
+            <Upload size={13} />
+            {t('common.selectFile')}
           </button>
         </SettingsRow>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 24 }}>{t('settings.data.cleanup')}</div>
+      <div className="rl-section-label" style={{ marginTop: 24 }}>
+        {t('settings.data.cleanup')}
+      </div>
       <div className="rl-card">
-        <SettingsRow title={t('settings.data.clearCache')} hint={t('settings.data.clearCacheHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.data.clearCache')}
+          hint={t('settings.data.clearCacheHint')}
+          bordered={false}
+        >
           <button
             className="rl-btn rl-btn-outline rl-btn-sm"
-            style={{ color: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive) / 0.5)' }}
+            style={{
+              color: 'hsl(var(--destructive))',
+              borderColor: 'hsl(var(--destructive) / 0.5)',
+            }}
             onClick={onClearCache}
           >
-            <Trash2 size={13} />{t('settings.data.clearCache')}
+            <Trash2 size={13} />
+            {t('settings.data.clearCache')}
           </button>
         </SettingsRow>
       </div>
@@ -763,7 +899,13 @@ function DataPanel({
   )
 }
 
-function AboutPanel({ onCheckUpdate, onResetSettings }: { onCheckUpdate: () => void; onResetSettings: () => void }) {
+function AboutPanel({
+  onCheckUpdate,
+  onResetSettings,
+}: {
+  onCheckUpdate: () => void
+  onResetSettings: () => void
+}) {
   const { t } = useTranslation()
   const openLink = (url: string) =>
     Browser.OpenURL(url).catch(() => window.open(url, '_blank', 'noopener,noreferrer'))
@@ -772,7 +914,12 @@ function AboutPanel({ onCheckUpdate, onResetSettings }: { onCheckUpdate: () => v
     <>
       <div className="rl-card" style={{ padding: 20 }}>
         <div className="flex items-start gap-4">
-          <img src={logoUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-contain" aria-hidden />
+          <img
+            src={logoUrl}
+            alt=""
+            className="h-14 w-14 shrink-0 rounded-xl object-contain"
+            aria-hidden
+          />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h2 className="text-[16px] font-semibold">{t('app.name')}</h2>
@@ -788,28 +935,46 @@ function AboutPanel({ onCheckUpdate, onResetSettings }: { onCheckUpdate: () => v
         </div>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 20 }}>{t('settings.about.resources')}</div>
+      <div className="rl-section-label" style={{ marginTop: 20 }}>
+        {t('settings.about.resources')}
+      </div>
       <div className="flex flex-wrap gap-2">
         <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onCheckUpdate}>
-          <RefreshCw size={13} />{t('settings.about.checkUpdate')}
+          <RefreshCw size={13} />
+          {t('settings.about.checkUpdate')}
         </button>
         <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={() => openLink(GITHUB_URL)}>
-          <Github size={13} />GitHub
+          <Github size={13} />
+          GitHub
         </button>
-        <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={() => openLink(GITHUB_ISSUES_URL)}>
-          <ExternalLink size={13} />{t('settings.about.openIssue')}
+        <button
+          className="rl-btn rl-btn-outline rl-btn-sm"
+          onClick={() => openLink(GITHUB_ISSUES_URL)}
+        >
+          <ExternalLink size={13} />
+          {t('settings.about.openIssue')}
         </button>
       </div>
 
-      <div className="rl-section-label" style={{ marginTop: 20 }}>{t('settings.about.preferences')}</div>
+      <div className="rl-section-label" style={{ marginTop: 20 }}>
+        {t('settings.about.preferences')}
+      </div>
       <div className="rl-card">
-        <SettingsRow title={t('settings.about.resetTitle')} hint={t('settings.about.resetHint')} bordered={false}>
+        <SettingsRow
+          title={t('settings.about.resetTitle')}
+          hint={t('settings.about.resetHint')}
+          bordered={false}
+        >
           <button
             className="rl-btn rl-btn-outline rl-btn-sm"
-            style={{ color: 'hsl(var(--destructive))', borderColor: 'hsl(var(--destructive) / 0.5)' }}
+            style={{
+              color: 'hsl(var(--destructive))',
+              borderColor: 'hsl(var(--destructive) / 0.5)',
+            }}
             onClick={onResetSettings}
           >
-            <RotateCcw size={13} />{t('settings.about.reset')}
+            <RotateCcw size={13} />
+            {t('settings.about.reset')}
           </button>
         </SettingsRow>
       </div>
@@ -910,7 +1075,7 @@ export function SettingsScreen() {
 
   const handleCheckUpdate = useCallback(() => {
     Browser.OpenURL(GITHUB_RELEASES_URL).catch(() =>
-      window.open(GITHUB_RELEASES_URL, '_blank', 'noopener,noreferrer')
+      window.open(GITHUB_RELEASES_URL, '_blank', 'noopener,noreferrer'),
     )
   }, [])
 
@@ -945,7 +1110,8 @@ export function SettingsScreen() {
                   borderLeft: active ? '2px solid hsl(var(--foreground))' : '2px solid transparent',
                 }}
               >
-                <s.icon size={14} />{t(`settings.section.${s.id}.label`)}
+                <s.icon size={14} />
+                {t(`settings.section.${s.id}.label`)}
               </div>
             )
           })}
@@ -987,7 +1153,10 @@ export function SettingsScreen() {
                 />
               )}
               {activeSection === 'about' && (
-                <AboutPanel onCheckUpdate={handleCheckUpdate} onResetSettings={handleResetSettings} />
+                <AboutPanel
+                  onCheckUpdate={handleCheckUpdate}
+                  onResetSettings={handleResetSettings}
+                />
               )}
             </div>
           </fieldset>
@@ -1001,7 +1170,7 @@ export function SettingsScreen() {
         confirmText={t('common.confirm')}
         cancelText={t('common.cancel')}
         variant="destructive"
-        onConfirm={confirmAction?.onConfirm ?? (() => { })}
+        onConfirm={confirmAction?.onConfirm ?? (() => {})}
         onCancel={() => setConfirmAction(null)}
       />
     </div>

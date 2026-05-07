@@ -188,10 +188,7 @@ export function AclScreen() {
         ) : (
           <div style={{ maxWidth: 760 }}>
             {/* Status */}
-            <div
-              className="rl-card mb-5 flex items-center gap-3"
-              style={{ padding: 16 }}
-            >
+            <div className="rl-card mb-5 flex items-center gap-3" style={{ padding: 16 }}>
               {statusLoading ? (
                 <Spinner size={18} className="rl-muted shrink-0" />
               ) : enabled ? (
@@ -208,7 +205,7 @@ export function AclScreen() {
                       : t('acl.status.disabled')}
                 </div>
                 {version && (
-                  <div className="rl-muted mt-1 text-[12px] flex flex-wrap gap-3">
+                  <div className="rl-muted mt-1 flex flex-wrap gap-3 text-[12px]">
                     <span className="font-mono-design">
                       {t('acl.status.broker', { addr: version.brokerAddr || '—' })}
                     </span>
@@ -238,8 +235,7 @@ export function AclScreen() {
               <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <div>
                   <div className="rl-muted mb-2 text-[12px]">
-                    {t('acl.form.ak')}{' '}
-                    <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                    {t('acl.form.ak')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                   </div>
                   <input
                     className="rl-input font-mono-design"
@@ -250,8 +246,7 @@ export function AclScreen() {
                 </div>
                 <div>
                   <div className="rl-muted mb-2 text-[12px]">
-                    {t('acl.form.sk')}{' '}
-                    <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                    {t('acl.form.sk')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                   </div>
                   <input
                     className="rl-input font-mono-design"
@@ -299,7 +294,10 @@ export function AclScreen() {
                   </select>
                 </div>
                 <div style={{ gridColumn: '1 / -1' }}>
-                  <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
+                  <label
+                    className="flex items-center gap-2 text-[13px]"
+                    style={{ cursor: 'pointer' }}
+                  >
                     <input
                       type="checkbox"
                       checked={admin}
@@ -313,7 +311,13 @@ export function AclScreen() {
                   <div className="rl-muted mb-2 text-[12px]">{t('acl.form.topicPerms')}</div>
                   <textarea
                     className="rl-input font-mono-design"
-                    style={{ width: '100%', minHeight: 80, padding: 10, fontSize: 12, resize: 'vertical' }}
+                    style={{
+                      width: '100%',
+                      minHeight: 80,
+                      padding: 10,
+                      fontSize: 12,
+                      resize: 'vertical',
+                    }}
                     placeholder="ORDER_TOPIC=PUB|SUB&#10;AUDIT_LOG=PUB"
                     value={topicPerms}
                     onChange={(e) => setTopicPerms(e.target.value)}
@@ -324,7 +328,13 @@ export function AclScreen() {
                   <div className="rl-muted mb-2 text-[12px]">{t('acl.form.groupPerms')}</div>
                   <textarea
                     className="rl-input font-mono-design"
-                    style={{ width: '100%', minHeight: 60, padding: 10, fontSize: 12, resize: 'vertical' }}
+                    style={{
+                      width: '100%',
+                      minHeight: 60,
+                      padding: 10,
+                      fontSize: 12,
+                      resize: 'vertical',
+                    }}
                     placeholder="GID_ADMIN=SUB"
                     value={groupPerms}
                     onChange={(e) => setGroupPerms(e.target.value)}
@@ -381,10 +391,7 @@ export function AclScreen() {
               <div className="rl-muted mb-3 text-[12px]">{t('acl.globalWhite.subtitle')}</div>
               <div className="flex flex-col gap-2">
                 {whiteList.length === 0 ? (
-                  <div
-                    className="rl-muted text-[12px]"
-                    style={{ padding: '8px 0' }}
-                  >
+                  <div className="rl-muted text-[12px]" style={{ padding: '8px 0' }}>
                     {t('acl.globalWhite.empty')}
                   </div>
                 ) : (
@@ -400,7 +407,7 @@ export function AclScreen() {
                       }}
                     >
                       <span className="font-mono-design text-[12px]">
-                        <Key size={11} className="inline mr-2 rl-muted" />
+                        <Key size={11} className="rl-muted mr-2 inline" />
                         {ip}
                       </span>
                       <button

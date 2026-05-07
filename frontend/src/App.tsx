@@ -23,7 +23,12 @@ function App(): React.ReactElement {
   const hasConnected = activeConn != null
 
   const renderContent = () => {
-    if (!hasConnected && activeNav !== 'connections' && activeNav !== 'settings' && activeNav !== 'home') {
+    if (
+      !hasConnected &&
+      activeNav !== 'connections' &&
+      activeNav !== 'settings' &&
+      activeNav !== 'home'
+    ) {
       return <EmptyStateScreen onAddConnection={() => setActiveNav('connections')} />
     }
     switch (activeNav) {
@@ -65,9 +70,7 @@ function App(): React.ReactElement {
               : []
           }
         />
-        <main className="rl-app-bg min-w-0 flex-1 overflow-hidden">
-          {renderContent()}
-        </main>
+        <main className="rl-app-bg min-w-0 flex-1 overflow-hidden">{renderContent()}</main>
       </div>
       <Toaster
         position="top-center"

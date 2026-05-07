@@ -5,13 +5,13 @@ version: '3'
 
 # This information is used to generate the build assets.
 info:
-  companyName: "Rocket Leaf" # The name of the company
-  productName: "Rocket Leaf" # The name of the application
-  productIdentifier: "com.rocketleaf.app" # The unique product identifier
-  description: "RocketMQ desktop management client" # The application description
-  copyright: "(c) 2026, Rocket Leaf" # Copyright text
-  comments: "Rocket Leaf desktop client" # Comments
-  version: "1.0.0" # The application version
+  companyName: 'Rocket Leaf' # The name of the company
+  productName: 'Rocket Leaf' # The name of the application
+  productIdentifier: 'com.rocketleaf.app' # The unique product identifier
+  description: 'RocketMQ desktop management client' # The application description
+  copyright: '(c) 2026, Rocket Leaf' # Copyright text
+  comments: 'Rocket Leaf desktop client' # Comments
+  version: '1.0.0' # The application version
   # cfBundleIconName: "appicon" # The macOS icon name in Assets.car icon bundles (optional)
   #                               # Should match the name of your .icon file without the extension
   #                               # If not set and Assets.car exists, defaults to "appicon"
@@ -46,9 +46,9 @@ dev_mode:
       - .gitignore
       - .gitkeep
     watched_extension:
-      - "*.go"
-      - "*.js" # Watch for changes to JS/TS files included using the //wails:include directive.
-      - "*.ts" # The frontend directory will be excluded entirely by the setting above.
+      - '*.go'
+      - '*.js' # Watch for changes to JS/TS files included using the //wails:include directive.
+      - '*.ts' # The frontend directory will be excluded entirely by the setting above.
     git_ignore: true
   executes:
     - cmd: wails3 build DEV=true

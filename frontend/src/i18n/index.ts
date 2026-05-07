@@ -15,18 +15,16 @@ function readInitialLanguage(): SupportedLanguage {
   return 'zh'
 }
 
-void i18n
-  .use(initReactI18next)
-  .init({
-    resources: {
-      zh: { translation: zh },
-      en: { translation: en },
-    },
-    lng: readInitialLanguage(),
-    fallbackLng: 'zh',
-    interpolation: { escapeValue: false },
-    returnNull: false,
-  })
+void i18n.use(initReactI18next).init({
+  resources: {
+    zh: { translation: zh },
+    en: { translation: en },
+  },
+  lng: readInitialLanguage(),
+  fallbackLng: 'zh',
+  interpolation: { escapeValue: false },
+  returnNull: false,
+})
 
 export function setLanguage(lang: SupportedLanguage) {
   if (i18n.language === lang) return

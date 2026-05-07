@@ -37,10 +37,12 @@ export function TitleBar({
   }, [refreshMaximised])
 
   const handleMinimise = useCallback(() => {
-    Window.Minimise().catch(() => { })
+    Window.Minimise().catch(() => {})
   }, [])
   const handleToggleMaximise = useCallback(() => {
-    Window.ToggleMaximise().then(refreshMaximised).catch(() => { })
+    Window.ToggleMaximise()
+      .then(refreshMaximised)
+      .catch(() => {})
   }, [refreshMaximised])
 
   const winBtnClass =
@@ -51,22 +53,20 @@ export function TitleBar({
   return (
     <>
       <header
-        className={cn(
-          'rl-title-bar [--wails-draggable:drag]',
-          mac ? '' : '!pl-3'
-        )}
+        className={cn('rl-title-bar [--wails-draggable:drag]', mac ? '' : '!pl-3')}
         style={mac ? undefined : { paddingLeft: 12 }}
       >
         <img src={logoUrl} alt="" className="logo-img" aria-hidden />
         <div className="title">{t('app.name')}</div>
-        <div className="rl-muted" style={{ fontSize: 11 }}>— {t('app.tagline')}</div>
+        <div className="rl-muted" style={{ fontSize: 11 }}>
+          — {t('app.tagline')}
+        </div>
         <div className="rl-titlebar-spacer" />
         {aiEnabled && (
-          <button
-            className="rl-ai-pill [--wails-draggable:no-drag]"
-            type="button"
-          >
-            <span className="ai-spark"><Sparkles size={13} /></span>
+          <button className="rl-ai-pill [--wails-draggable:no-drag]" type="button">
+            <span className="ai-spark">
+              <Sparkles size={13} />
+            </span>
             <span>{t('titlebar.aiAssistant')}</span>
             <span className="kbd-mini">⌘K</span>
           </button>
@@ -74,12 +74,20 @@ export function TitleBar({
         {connected && (
           <div className="conn-pill">
             <span className="dot" />
-            <span className="font-mono-design" style={{ fontSize: 11 }}>{connected}</span>
+            <span className="font-mono-design" style={{ fontSize: 11 }}>
+              {connected}
+            </span>
           </div>
         )}
         {!mac && (
           <div className="flex shrink-0 items-center gap-0.5" style={{ marginLeft: 8 }}>
-            <button type="button" onClick={handleMinimise} className={winBtnClass} title={t('common.minimize')} aria-label={t('common.minimize')}>
+            <button
+              type="button"
+              onClick={handleMinimise}
+              className={winBtnClass}
+              title={t('common.minimize')}
+              aria-label={t('common.minimize')}
+            >
               <Minus className="h-4 w-4" />
             </button>
             <button
@@ -111,7 +119,7 @@ export function TitleBar({
         confirmText={t('common.exit')}
         cancelText={t('common.cancel')}
         variant="destructive"
-        onConfirm={() => Window.Close().catch(() => { })}
+        onConfirm={() => Window.Close().catch(() => {})}
         onCancel={() => setShowCloseConfirm(false)}
       />
     </>

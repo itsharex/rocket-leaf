@@ -19,11 +19,17 @@ export async function createOrUpdateAccessConfig(
   defaultTopicPerm: string,
   defaultGroupPerm: string,
   topicPerms: string[],
-  groupPerms: string[]
+  groupPerms: string[],
 ): Promise<void> {
   await AclService.CreateOrUpdateAccessConfig(
-    accessKey, secretKey, whiteRemoteAddress, isAdmin,
-    defaultTopicPerm, defaultGroupPerm, topicPerms, groupPerms
+    accessKey,
+    secretKey,
+    whiteRemoteAddress,
+    isAdmin,
+    defaultTopicPerm,
+    defaultGroupPerm,
+    topicPerms,
+    groupPerms,
   )
 }
 

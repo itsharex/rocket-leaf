@@ -4,7 +4,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const packageJson = JSON.parse(
-  readFileSync(new URL('./package.json', import.meta.url), 'utf-8')
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8'),
 ) as { version?: string }
 
 export default defineConfig({

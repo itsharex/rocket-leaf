@@ -30,12 +30,12 @@ export function TitleBar() {
   }, [refreshMaximised])
 
   const handleMinimise = useCallback(() => {
-    Window.Minimise().catch(() => { })
+    Window.Minimise().catch(() => {})
   }, [])
   const handleToggleMaximise = useCallback(() => {
     Window.ToggleMaximise()
       .then(refreshMaximised)
-      .catch(() => { })
+      .catch(() => {})
   }, [refreshMaximised])
 
   const btnClass =
@@ -49,14 +49,22 @@ export function TitleBar() {
         className={cn(
           'flex h-12 shrink-0 select-none items-center gap-2.5 border-b border-border/50 bg-background px-4',
           '[--wails-draggable:drag]',
-          mac && 'pl-[72px]'
+          mac && 'pl-[72px]',
         )}
       >
         <img src={logoUrl} alt="" className="h-9 w-9 shrink-0 object-contain" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">Rocket-Leaf</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+          Rocket-Leaf
+        </span>
         {!mac && (
           <div className="flex shrink-0 items-center gap-0.5">
-            <button type="button" onClick={handleMinimise} className={btnClass} title="最小化" aria-label="最小化">
+            <button
+              type="button"
+              onClick={handleMinimise}
+              className={btnClass}
+              title="最小化"
+              aria-label="最小化"
+            >
               <Minus className="h-4 w-4" />
             </button>
             <button
@@ -88,7 +96,7 @@ export function TitleBar() {
         confirmText="退出"
         cancelText="取消"
         variant="destructive"
-        onConfirm={() => Window.Close().catch(() => { })}
+        onConfirm={() => Window.Close().catch(() => {})}
         onCancel={() => setShowCloseConfirm(false)}
       />
     </>

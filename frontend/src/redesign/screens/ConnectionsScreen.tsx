@@ -1,15 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import {
-  Search,
-  Plus,
-  Server,
-  Check,
-  Unlink,
-  PlugZap,
-  Trash2,
-  Wifi,
-  Star,
-} from 'lucide-react'
+import { Search, Plus, Server, Check, Unlink, PlugZap, Trash2, Wifi, Star } from 'lucide-react'
 import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -17,7 +7,10 @@ import { PageHeader } from '../shell'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useConnections } from '@/hooks/useConnections'
 import * as connectionApi from '@/api/connection'
-import { ConnectionEnv, type Connection } from '../../../bindings/rocket-leaf/internal/model/models.js'
+import {
+  ConnectionEnv,
+  type Connection,
+} from '../../../bindings/rocket-leaf/internal/model/models.js'
 
 const NEW_FORM_ID = -1
 
@@ -67,7 +60,9 @@ export function ConnectionsScreen() {
   const [search, setSearch] = useState('')
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [originalForm, setOriginalForm] = useState<FormState>(EMPTY_FORM)
-  const [busy, setBusy] = useState<'test' | 'connect' | 'disconnect' | 'save' | 'delete' | null>(null)
+  const [busy, setBusy] = useState<'test' | 'connect' | 'disconnect' | 'save' | 'delete' | null>(
+    null,
+  )
   const [confirmDelete, setConfirmDelete] = useState<Connection | null>(null)
 
   // Auto-select first connection on mount
@@ -79,7 +74,7 @@ export function ConnectionsScreen() {
 
   // Sync form with the selected connection
   const selected = useMemo<Connection | null>(
-    () => (selectedId == null ? null : list.find((c) => c.id === selectedId) ?? null),
+    () => (selectedId == null ? null : (list.find((c) => c.id === selectedId) ?? null)),
     [list, selectedId],
   )
 
@@ -289,7 +284,7 @@ export function ConnectionsScreen() {
         >
           {loading && list.length === 0 ? (
             <div
-              className="flex items-center justify-center rl-muted"
+              className="rl-muted flex items-center justify-center"
               style={{ padding: 32, gap: 8 }}
             >
               <Spinner size={14} />
@@ -333,10 +328,10 @@ export function ConnectionsScreen() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-[13px] font-medium truncate">{c.name}</span>
+                      <span className="truncate text-[13px] font-medium">{c.name}</span>
                       {c.isDefault && <Check size={11} className="rl-muted" />}
                     </div>
-                    <div className="font-mono-design rl-muted mt-1 text-[12px] truncate">
+                    <div className="font-mono-design rl-muted mt-1 truncate text-[12px]">
                       {(c.nameServer || '').split(/[;\s,]+/)[0] || '—'}
                     </div>
                   </div>
@@ -400,7 +395,7 @@ export function ConnectionsScreen() {
                   <Server size={20} />
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="text-[16px] font-semibold">
                       {isNew ? t('connections.newTitle') : selected?.name || form.name}
                     </span>
@@ -419,9 +414,7 @@ export function ConnectionsScreen() {
                             {t('common.connected')}
                           </span>
                         ) : (
-                          <span className="rl-badge rl-badge-outline">
-                            {t('common.offline')}
-                          </span>
+                          <span className="rl-badge rl-badge-outline">{t('common.offline')}</span>
                         )}
                         {selected.isDefault && (
                           <span className="rl-badge">
@@ -446,11 +439,7 @@ export function ConnectionsScreen() {
                         onClick={handleDisconnect}
                         disabled={busy === 'disconnect'}
                       >
-                        {busy === 'disconnect' ? (
-                          <Spinner size={13} />
-                        ) : (
-                          <Unlink size={13} />
-                        )}
+                        {busy === 'disconnect' ? <Spinner size={13} /> : <Unlink size={13} />}
                         {t('connections.disconnect')}
                       </button>
                     ) : (
@@ -459,11 +448,7 @@ export function ConnectionsScreen() {
                         onClick={handleConnect}
                         disabled={busy === 'connect'}
                       >
-                        {busy === 'connect' ? (
-                          <Spinner size={13} />
-                        ) : (
-                          <PlugZap size={13} />
-                        )}
+                        {busy === 'connect' ? <Spinner size={13} /> : <PlugZap size={13} />}
                         {t('connections.connect')}
                       </button>
                     )}
@@ -502,9 +487,7 @@ export function ConnectionsScreen() {
                     <select
                       className="rl-select"
                       value={form.env}
-                      onChange={(e) =>
-                        setForm({ ...form, env: e.target.value as ConnectionEnv })
-                      }
+                      onChange={(e) => setForm({ ...form, env: e.target.value as ConnectionEnv })}
                     >
                       <option value={ConnectionEnv.EnvProduction}>
                         {t('connections.envProd')}
@@ -592,7 +575,7 @@ export function ConnectionsScreen() {
                   </div>
                 </div>
                 <div
-                  className="mt-5 flex gap-2 flex-wrap"
+                  className="mt-5 flex flex-wrap gap-2"
                   style={{ paddingTop: 16, borderTop: '1px solid hsl(var(--border))' }}
                 >
                   {!isNew && (
@@ -601,11 +584,7 @@ export function ConnectionsScreen() {
                       onClick={handleTest}
                       disabled={busy === 'test'}
                     >
-                      {busy === 'test' ? (
-                        <Spinner size={13} />
-                      ) : (
-                        <Wifi size={13} />
-                      )}
+                      {busy === 'test' ? <Spinner size={13} /> : <Wifi size={13} />}
                       {busy === 'test' ? t('connections.testing') : t('connections.test')}
                     </button>
                   )}
@@ -625,11 +604,7 @@ export function ConnectionsScreen() {
                     onClick={handleSave}
                     disabled={busy === 'save' || (!isNew && !dirty)}
                   >
-                    {busy === 'save' ? (
-                      <Spinner size={13} />
-                    ) : (
-                      <Check size={13} />
-                    )}
+                    {busy === 'save' ? <Spinner size={13} /> : <Check size={13} />}
                     {isNew ? t('connections.create') : t('connections.save')}
                   </button>
                 </div>

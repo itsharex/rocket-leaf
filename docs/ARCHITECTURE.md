@@ -204,7 +204,7 @@ export async function testConnection(config: ConnectionConfig) {
   --accent-color: #18a058;
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --bg-primary: #1a1a1a;
   --bg-secondary: #262626;
   --text-primary: #e0e0e0;

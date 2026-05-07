@@ -10,10 +10,10 @@ import (
 	"rocket-leaf/internal/model"
 	"rocket-leaf/internal/rocketmq"
 
+	admin "github.com/amigoer/rocketmq-admin-go"
 	rocketmqClient "github.com/apache/rocketmq-client-go/v2"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
 	"github.com/apache/rocketmq-client-go/v2/producer"
-	admin "github.com/amigoer/rocketmq-admin-go"
 )
 
 // MessageService 消息查询服务
@@ -40,8 +40,6 @@ func (s *MessageService) QueryMessages(topic string, key string, tag string, max
 	if err != nil {
 		return nil, fmt.Errorf("获取客户端失败: %w", err)
 	}
-
-
 
 	if maxResults <= 0 {
 		maxResults = s.settingsService.GetFetchLimit()

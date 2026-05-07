@@ -89,7 +89,7 @@ function highlightJSON(src: string): string {
       if (num) return `<span class="n">${num}</span>`
       if (br) return `<span class="br">${br}</span>`
       return m
-    }
+    },
   )
 }
 

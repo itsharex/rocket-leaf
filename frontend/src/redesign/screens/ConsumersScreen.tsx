@@ -59,7 +59,9 @@ export function ConsumersScreen() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selectedName, setSelectedName] = useState<string | null>(null)
   const [panelDismissed, setPanelDismissed] = useState(false)
-  const [editorOpen, setEditorOpen] = useState<{ mode: 'create' } | { mode: 'edit'; group: ConsumerGroupItem } | null>(null)
+  const [editorOpen, setEditorOpen] = useState<
+    { mode: 'create' } | { mode: 'edit'; group: ConsumerGroupItem } | null
+  >(null)
   const [resetTarget, setResetTarget] = useState<ConsumerGroupItem | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<ConsumerGroupItem | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -197,12 +199,14 @@ export function ConsumersScreen() {
             background: 'hsl(var(--background))',
           }}
         >
-          {([
-            ['all', 'consumers.filterAll'],
-            ['online', 'consumers.filterOnline'],
-            ['warning', 'consumers.filterWarning'],
-            ['offline', 'consumers.filterOffline'],
-          ] as const).map(([k, key]) => (
+          {(
+            [
+              ['all', 'consumers.filterAll'],
+              ['online', 'consumers.filterOnline'],
+              ['warning', 'consumers.filterWarning'],
+              ['offline', 'consumers.filterOffline'],
+            ] as const
+          ).map(([k, key]) => (
             <button
               key={k}
               type="button"
@@ -220,7 +224,7 @@ export function ConsumersScreen() {
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
-          className="min-w-0 flex-1 overflow-auto scroll-thin"
+          className="scroll-thin min-w-0 flex-1 overflow-auto"
           onClick={handleListBackgroundClick}
         >
           {!hasOnline ? (
@@ -233,7 +237,7 @@ export function ConsumersScreen() {
             </div>
           ) : loading && groups.length === 0 ? (
             <div
-              className="flex items-center justify-center rl-muted"
+              className="rl-muted flex items-center justify-center"
               style={{ padding: 60, gap: 8 }}
             >
               <Spinner size={14} />
@@ -260,10 +264,7 @@ export function ConsumersScreen() {
                 </div>
               )}
               {filtered.length === 0 ? (
-                <div
-                  className="rl-muted text-center"
-                  style={{ padding: 40, fontSize: 12 }}
-                >
+                <div className="rl-muted text-center" style={{ padding: 40, fontSize: 12 }}>
                   {t('consumers.empty')}
                 </div>
               ) : (
@@ -277,9 +278,7 @@ export function ConsumersScreen() {
                       <th style={{ width: 90, textAlign: 'right' }}>
                         {t('consumers.table.instances')}
                       </th>
-                      <th style={{ width: 130, textAlign: 'right' }}>
-                        {t('consumers.table.lag')}
-                      </th>
+                      <th style={{ width: 130, textAlign: 'right' }}>{t('consumers.table.lag')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -450,23 +449,25 @@ function GroupDetailPanel({
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <Users size={15} className="rl-muted" />
-            <span className="font-mono-design font-semibold truncate">{group.group}</span>
-            {group.lag > 1000 && (
-              <span className="rl-badge rl-badge-warn shrink-0">堆积</span>
-            )}
+            <span className="font-mono-design truncate font-semibold">{group.group}</span>
+            {group.lag > 1000 && <span className="rl-badge rl-badge-warn shrink-0">堆积</span>}
           </div>
           <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm" onClick={onClose}>
             <X size={14} />
           </button>
         </div>
-        <div className="rl-muted mt-2 flex items-center gap-2 text-[12px] flex-wrap">
+        <div className="rl-muted mt-2 flex flex-wrap items-center gap-2 text-[12px]">
           <Tag size={11} />
           <span>
             {group.topicCount} {t('topics.title')}
           </span>
-          <span style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }} />
+          <span
+            style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }}
+          />
           <span>{group.consumeMode || '—'}</span>
-          <span style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }} />
+          <span
+            style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }}
+          />
           <span>
             {group.onlineClients} {t('consumers.detail.instances')}
           </span>
@@ -493,10 +494,7 @@ function GroupDetailPanel({
         ))}
       </div>
 
-      <div
-        className="scroll-thin min-h-0 flex-1 overflow-auto"
-        style={{ padding: '16px 20px' }}
-      >
+      <div className="scroll-thin min-h-0 flex-1 overflow-auto" style={{ padding: '16px 20px' }}>
         {tab === 'overview' && (
           <>
             <div
@@ -514,9 +512,7 @@ function GroupDetailPanel({
                   {group.onlineClients}
                 </div>
               </div>
-              <div
-                style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}
-              >
+              <div style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}>
                 <div className="flex items-center gap-1">
                   <div className="rl-muted text-[12px]">{t('consumers.stat.lag')}</div>
                   {group.lag > 1000 && (
@@ -533,9 +529,7 @@ function GroupDetailPanel({
                   {group.lag.toLocaleString()}
                 </div>
               </div>
-              <div
-                style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}
-              >
+              <div style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}>
                 <div className="rl-muted text-[12px]">{t('consumers.stat.tps')}</div>
                 <div className="mt-1 flex items-center gap-1">
                   <span className="rl-tabular font-semibold" style={{ fontSize: 18 }}>
@@ -570,10 +564,7 @@ function GroupDetailPanel({
               {t('consumers.detail.instances')}
             </div>
             {group.clients.length === 0 ? (
-              <div
-                className="rl-muted text-[12px]"
-                style={{ padding: 16, textAlign: 'center' }}
-              >
+              <div className="rl-muted text-[12px]" style={{ padding: 16, textAlign: 'center' }}>
                 {t('consumers.detail.instancesEmpty')}
               </div>
             ) : (
@@ -587,9 +578,7 @@ function GroupDetailPanel({
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono-design text-[12px] truncate">
-                        {c.clientId}
-                      </span>
+                      <span className="font-mono-design truncate text-[12px]">{c.clientId}</span>
                       {c.version && (
                         <span
                           className="rl-badge rl-badge-outline"
@@ -650,7 +639,7 @@ function GroupDetailPanel({
       </div>
 
       <div
-        className="flex items-center gap-2 rl-subtle-bg"
+        className="rl-subtle-bg flex items-center gap-2"
         style={{ padding: '12px 20px', borderTop: '1px solid hsl(var(--border))' }}
       >
         <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onReset}>
@@ -681,10 +670,7 @@ function SubscriptionList({ subs }: { subs: GroupSubscription[] }) {
   const { t } = useTranslation()
   if (subs.length === 0) {
     return (
-      <div
-        className="rl-muted text-[12px]"
-        style={{ padding: 16, textAlign: 'center' }}
-      >
+      <div className="rl-muted text-[12px]" style={{ padding: 16, textAlign: 'center' }}>
         {t('consumers.detail.subscriptionsEmpty')}
       </div>
     )
@@ -701,7 +687,7 @@ function SubscriptionList({ subs }: { subs: GroupSubscription[] }) {
           }}
         >
           <Tag size={12} className="rl-muted" />
-          <span className="font-mono-design text-[13px] flex-1 truncate">{s.topic}</span>
+          <span className="font-mono-design flex-1 truncate text-[13px]">{s.topic}</span>
           {s.expression && s.expression !== '*' && (
             <span
               className="font-mono-design rl-muted text-[11px]"
@@ -805,11 +791,7 @@ function ResetOffsetDialog({
             <div className="rl-muted mb-2 text-[12px]">{t('consumers.reset.time')}</div>
             <div className="flex flex-col gap-2">
               <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  checked={mode === 'now'}
-                  onChange={() => setMode('now')}
-                />
+                <input type="radio" checked={mode === 'now'} onChange={() => setMode('now')} />
                 {t('consumers.reset.timeNow')}
               </label>
               <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
@@ -838,15 +820,8 @@ function ResetOffsetDialog({
               )}
             </div>
           </div>
-          <label
-            className="flex items-center gap-2 text-[13px]"
-            style={{ cursor: 'pointer' }}
-          >
-            <input
-              type="checkbox"
-              checked={force}
-              onChange={(e) => setForce(e.target.checked)}
-            />
+          <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
+            <input type="checkbox" checked={force} onChange={(e) => setForce(e.target.checked)} />
             {t('consumers.reset.force')}
           </label>
         </div>
@@ -962,7 +937,8 @@ function GroupEditor({
           </div>
           <div>
             <div className="rl-muted mb-2 text-[12px]">
-              {t('consumers.edit.broker')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+              {t('consumers.edit.broker')}{' '}
+              <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
             </div>
             {masterBrokers.length === 0 ? (
               <div className="rl-muted text-[12px]" style={{ padding: 8 }}>

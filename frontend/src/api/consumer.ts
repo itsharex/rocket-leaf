@@ -32,7 +32,7 @@ export async function createConsumerGroup(
   group: string,
   brokerAddr: string,
   consumeMode: string,
-  maxRetry: number
+  maxRetry: number,
 ): Promise<void> {
   try {
     await ConsumerService.CreateConsumerGroup(group, brokerAddr, consumeMode, maxRetry)
@@ -46,7 +46,7 @@ export async function updateConsumerGroup(
   group: string,
   brokerAddr: string,
   consumeMode: string,
-  maxRetry: number
+  maxRetry: number,
 ): Promise<void> {
   try {
     await ConsumerService.UpdateConsumerGroup(group, brokerAddr, consumeMode, maxRetry)
@@ -69,7 +69,7 @@ export async function resetOffset(
   group: string,
   topic: string,
   timestamp: number,
-  force: boolean
+  force: boolean,
 ): Promise<void> {
   try {
     await ConsumerService.ResetOffset(group, topic, timestamp, force)

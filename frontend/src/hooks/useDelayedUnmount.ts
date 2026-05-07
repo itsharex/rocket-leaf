@@ -24,8 +24,7 @@ export function useDelayedUnmount(visible: boolean, exitMs = 180) {
     if (!shouldRender) return
 
     const animationsOff =
-      typeof document !== 'undefined' &&
-      document.documentElement.dataset.animations === 'off'
+      typeof document !== 'undefined' && document.documentElement.dataset.animations === 'off'
 
     if (animationsOff || exitMs <= 0) {
       setShouldRender(false)

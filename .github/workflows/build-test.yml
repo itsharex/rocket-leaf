@@ -3,7 +3,7 @@ name: Cross-Platform Build Test
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
   workflow_dispatch:
 
 permissions:
@@ -11,7 +11,7 @@ permissions:
 
 env:
   WAILS_VERSION: v3.0.0-alpha.71
-  NODE_VERSION: "20"
+  NODE_VERSION: '20'
 
 jobs:
   build-linux:
@@ -74,7 +74,7 @@ jobs:
         shell: bash
         run: |
           wails3 task setup:docker
-        
+
       - name: Package Linux app
         shell: bash
         run: |

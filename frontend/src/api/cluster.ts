@@ -1,5 +1,9 @@
 import * as ClusterService from '../../bindings/rocket-leaf/internal/service/clusterservice.js'
-import type { BrokerNode, ClusterInfo, ClusterSummary } from '../../bindings/rocket-leaf/internal/model/models.js'
+import type {
+  BrokerNode,
+  ClusterInfo,
+  ClusterSummary,
+} from '../../bindings/rocket-leaf/internal/model/models.js'
 
 export async function getBrokers(): Promise<(BrokerNode | null)[]> {
   try {

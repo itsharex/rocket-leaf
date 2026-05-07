@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { LayoutGrid, Users, Mail, BarChart3, Server, CircleDot, HardDrive } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Connection, ClusterSummary } from '../../bindings/rocket-leaf/internal/model/models.js'
+import type {
+  Connection,
+  ClusterSummary,
+} from '../../bindings/rocket-leaf/internal/model/models.js'
 import { ConnectionStatus } from '../../bindings/rocket-leaf/internal/model/models.js'
 import type { NavId } from './IconSidebar'
 import * as clusterApi from '@/api/cluster'
@@ -20,19 +23,29 @@ const SHORTCUTS: { id: NavId; icon: React.ElementType; label: string; descriptio
   { id: 'cluster', icon: BarChart3, label: '集群', description: '状态与 TPS' },
 ]
 
-export function OverviewView({ connections, topicCount, consumerGroupCount = 0, onSelectNav }: Props) {
+export function OverviewView({
+  connections,
+  topicCount,
+  consumerGroupCount = 0,
+  onSelectNav,
+}: Props) {
   const currentConn = connections.find((c) => c.status === ConnectionStatus.StatusOnline)
   const defaultConn = connections.find((c) => c.isDefault)
   const [summary, setSummary] = useState<ClusterSummary | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    clusterApi.getClusterSummary().then((data) => {
-      if (!cancelled) setSummary(data)
-    }).catch(() => {
-      if (!cancelled) setSummary(null)
-    })
-    return () => { cancelled = true }
+    clusterApi
+      .getClusterSummary()
+      .then((data) => {
+        if (!cancelled) setSummary(data)
+      })
+      .catch(() => {
+        if (!cancelled) setSummary(null)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (
@@ -44,7 +57,9 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
         <div className="mx-auto w-full max-w-3xl space-y-6">
           {/* 当前连接 */}
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">当前连接</h2>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              当前连接
+            </h2>
             <div className="rounded-lg border border-border/40 bg-card p-4 shadow-sm">
               {currentConn ? (
                 <div className="flex items-center gap-3">
@@ -64,7 +79,9 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 font-mono text-sm text-muted-foreground">{currentConn.nameServer}</p>
+                    <p className="mt-0.5 font-mono text-sm text-muted-foreground">
+                      {currentConn.nameServer}
+                    </p>
                   </div>
                 </div>
               ) : defaultConn ? (
@@ -74,7 +91,9 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-foreground">{defaultConn.name}</p>
-                    <p className="mt-0.5 text-sm text-muted-foreground">未连接，请至连接管理连接集群</p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      未连接，请至连接管理连接集群
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -85,7 +104,9 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
 
           {/* 数据概览 */}
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">数据概览</h2>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              数据概览
+            </h2>
             <div className="grid grid-cols-4 gap-3">
               <button
                 type="button"
@@ -100,7 +121,9 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
                 onClick={() => onSelectNav('consumers')}
                 className="rounded-lg border border-border/40 bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50"
               >
-                <p className="text-2xl font-semibold tabular-nums text-foreground">{consumerGroupCount}</p>
+                <p className="text-2xl font-semibold tabular-nums text-foreground">
+                  {consumerGroupCount}
+                </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">消费者组</p>
               </button>
               <button
@@ -133,7 +156,9 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
 
           {/* 快捷入口 */}
           <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">快捷入口</h2>
+            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              快捷入口
+            </h2>
             <div className="grid grid-cols-4 gap-3">
               {SHORTCUTS.map(({ id, icon: Icon, label, description }) => (
                 <button
@@ -141,7 +166,7 @@ export function OverviewView({ connections, topicCount, consumerGroupCount = 0, 
                   type="button"
                   onClick={() => onSelectNav(id)}
                   className={cn(
-                    'flex flex-col items-start gap-2.5 rounded-lg border border-border/40 bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50'
+                    'flex flex-col items-start gap-2.5 rounded-lg border border-border/40 bg-card p-4 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-accent/50',
                   )}
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted/80 text-muted-foreground">

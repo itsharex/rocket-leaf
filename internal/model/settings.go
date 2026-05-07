@@ -16,11 +16,11 @@ type AppSettings struct {
 	RequestTimeoutMs int    `json:"requestTimeoutMs"` // 请求超时(ms)
 	GlobalAccessKey  string `json:"globalAccessKey"`  // 默认 AccessKey
 	GlobalSecretKey  string `json:"globalSecretKey"`  // 默认 SecretKey
-	SkipTlsVerify   bool   `json:"skipTlsVerify"`    // 跳过 TLS 校验
-	ProxyEnabled    bool   `json:"proxyEnabled"`     // 启用代理
-	ProxyType       string `json:"proxyType"`        // 代理类型: "http" | "socks5"
-	ProxyHost       string `json:"proxyHost"`        // 代理地址
-	ProxyPort       string `json:"proxyPort"`        // 代理端口
+	SkipTlsVerify    bool   `json:"skipTlsVerify"`    // 跳过 TLS 校验
+	ProxyEnabled     bool   `json:"proxyEnabled"`     // 启用代理
+	ProxyType        string `json:"proxyType"`        // 代理类型: "http" | "socks5"
+	ProxyHost        string `json:"proxyHost"`        // 代理地址
+	ProxyPort        string `json:"proxyPort"`        // 代理端口
 
 	// 监控与告警
 	LagAlertThreshold int `json:"lagAlertThreshold"` // 消费积压告警阈值(0=关闭)
@@ -36,7 +36,7 @@ type AppSettings struct {
 // DefaultSettings 返回默认设置
 func DefaultSettings() *AppSettings {
 	return &AppSettings{
-		Theme:                "system",
+		Theme:                 "system",
 		Language:              "zh",
 		FontSize:              14,
 		UIFont:                "system",

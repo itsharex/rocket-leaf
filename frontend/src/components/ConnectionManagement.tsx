@@ -1,6 +1,20 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Play, Check, Loader2, Link2, Link2Off, RefreshCw, Shield, Timer, Circle, CircleDot } from 'lucide-react'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Play,
+  Check,
+  Loader2,
+  Link2,
+  Link2Off,
+  RefreshCw,
+  Shield,
+  Timer,
+  Circle,
+  CircleDot,
+} from 'lucide-react'
 import { cn, formatErrorMessage } from '@/lib/utils'
 import type { Connection } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { ConnectionStatus } from '../../bindings/rocket-leaf/internal/model/models.js'
@@ -46,7 +60,17 @@ type Props = {
 
 const MIN_REFRESH_SPIN_MS = 400
 
-export function ConnectionManagement({ list, loading, error, onRefresh, onConnect, onDisconnect, onSelectConnection, connectingId, disconnectingId }: Props) {
+export function ConnectionManagement({
+  list,
+  loading,
+  error,
+  onRefresh,
+  onConnect,
+  onDisconnect,
+  onSelectConnection,
+  connectingId,
+  disconnectingId,
+}: Props) {
   const { settings } = useSettings()
   const [form, setForm] = useState<FormState>(emptyForm)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -123,7 +147,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
           form.enableACL,
           form.accessKey,
           form.secretKey,
-          form.remark.trim()
+          form.remark.trim(),
         )
       } else {
         await connectionApi.addConnection(
@@ -134,7 +158,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
           form.enableACL,
           form.accessKey,
           form.secretKey,
-          form.remark.trim()
+          form.remark.trim(),
         )
       }
       onRefresh()
@@ -182,8 +206,7 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
     setActionError(null)
     try {
       const msg = (await connectionApi.testConnection(id))?.trim() || ''
-      const successText =
-        !msg || /^online$/i.test(msg) ? '连接成功' : msg
+      const successText = !msg || /^online$/i.test(msg) ? '连接成功' : msg
       toast.success(successText)
     } catch (e) {
       toast.error(formatErrorMessage(e))
@@ -216,14 +239,16 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
           </button>
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto scroll-thin p-4">
+      <div className="scroll-thin flex-1 overflow-y-auto p-4">
         {actionError && !dialogOpen && (
           <div className="mb-3 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
             {actionError}
           </div>
         )}
         {loading ? (
-          <div className="flex items-center justify-center py-12 text-muted-foreground">加载中…</div>
+          <div className="flex items-center justify-center py-12 text-muted-foreground">
+            加载中…
+          </div>
         ) : error ? (
           <div className="rounded-md border border-border/50 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
             {error}
@@ -235,155 +260,169 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
             {list.map((c, index) => {
               const isOnlyDefault = c.isDefault && list.findIndex((x) => x.isDefault) === index
               return (
-              <article
-                key={c.id}
-                onClick={async () => {
-                  if (connectingId !== null || testingId !== null) return
-                  if (c.status === ConnectionStatus.StatusOnline) {
-                    onSelectConnection?.(c.id)
-                  } else {
-                    // 先测试连通性，成功后再连接
-                    setTestingId(c.id)
-                    try {
-                      await connectionApi.testConnection(c.id)
-                      onConnect(c.id)
-                    } catch (e) {
-                      toast.error(`连接失败: ${formatErrorMessage(e)}`)
-                      onRefresh()
-                    } finally {
-                      setTestingId(null)
+                <article
+                  key={c.id}
+                  onClick={async () => {
+                    if (connectingId !== null || testingId !== null) return
+                    if (c.status === ConnectionStatus.StatusOnline) {
+                      onSelectConnection?.(c.id)
+                    } else {
+                      // 先测试连通性，成功后再连接
+                      setTestingId(c.id)
+                      try {
+                        await connectionApi.testConnection(c.id)
+                        onConnect(c.id)
+                      } catch (e) {
+                        toast.error(`连接失败: ${formatErrorMessage(e)}`)
+                        onRefresh()
+                      } finally {
+                        setTestingId(null)
+                      }
                     }
-                  }
-                }}
-                className={cn(
-                  'group flex cursor-pointer flex-col rounded-md border border-border/40 bg-card transition-colors hover:border-primary/50',
-                  c.isDefault && 'ring-1 ring-primary/30'
-                )}
-              >
-                {/* Header */}
-                <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/30 px-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-foreground truncate">{c.name}</span>
-                      {isOnlyDefault && (
-                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
-                          默认
-                        </span>
-                      )}
-                      {c.env != null && String(c.env).trim() !== '' && (
-                        <span className="shrink-0 rounded bg-muted/80 px-1.5 py-0.5 text-xs text-muted-foreground">
-                          {c.env}
-                        </span>
-                      )}
-                      <span
-                        className={cn(
-                          'flex shrink-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-xs',
-                          c.status === ConnectionStatus.StatusOnline
-                            ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
-                            : 'bg-muted/80 text-muted-foreground'
+                  }}
+                  className={cn(
+                    'group flex cursor-pointer flex-col rounded-md border border-border/40 bg-card transition-colors hover:border-primary/50',
+                    c.isDefault && 'ring-1 ring-primary/30',
+                  )}
+                >
+                  {/* Header */}
+                  <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/30 px-3 py-2.5">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="truncate font-semibold text-foreground">{c.name}</span>
+                        {isOnlyDefault && (
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                            默认
+                          </span>
                         )}
+                        {c.env != null && String(c.env).trim() !== '' && (
+                          <span className="shrink-0 rounded bg-muted/80 px-1.5 py-0.5 text-xs text-muted-foreground">
+                            {c.env}
+                          </span>
+                        )}
+                        <span
+                          className={cn(
+                            'flex shrink-0 items-center gap-1.5 rounded px-1.5 py-0.5 text-xs',
+                            c.status === ConnectionStatus.StatusOnline
+                              ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                              : 'bg-muted/80 text-muted-foreground',
+                          )}
+                        >
+                          {c.status === ConnectionStatus.StatusOnline ? (
+                            <CircleDot className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          ) : (
+                            <Circle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          )}
+                          <span>
+                            {c.status === ConnectionStatus.StatusOnline ? '已连接' : '未连接'}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className="flex shrink-0 items-center gap-0.5 opacity-60 transition-opacity group-hover:opacity-100"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {c.status === ConnectionStatus.StatusOnline ? (
+                        <button
+                          type="button"
+                          onClick={() => onDisconnect(c.id)}
+                          disabled={disconnectingId !== null}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                          title="断开连接"
+                        >
+                          {disconnectingId === c.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Link2Off className="h-4 w-4" />
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => onConnect(c.id)}
+                          disabled={connectingId !== null}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                          title="连接"
+                        >
+                          {connectingId === c.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Link2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleTest(c.id)}
+                        disabled={testingId === c.id}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
+                        title="测试连接"
                       >
-                        {c.status === ConnectionStatus.StatusOnline ? (
-                          <CircleDot className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {testingId === c.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Circle className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          <Play className="h-4 w-4" />
                         )}
-                        <span>{c.status === ConnectionStatus.StatusOnline ? '已连接' : '未连接'}</span>
-                      </span>
+                      </button>
+                      {!c.isDefault && (
+                        <button
+                          type="button"
+                          onClick={() => handleSetDefault(c.id)}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                          title="设为默认"
+                        >
+                          <Check className="h-4 w-4" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => openEdit(c)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                        title="编辑"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openDeleteConfirm(c.id)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                        title="删除"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                  <div
-                    className="flex shrink-0 items-center gap-0.5 opacity-60 transition-opacity group-hover:opacity-100"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {c.status === ConnectionStatus.StatusOnline ? (
-                      <button
-                        type="button"
-                        onClick={() => onDisconnect(c.id)}
-                        disabled={disconnectingId !== null}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-                        title="断开连接"
-                      >
-                        {disconnectingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2Off className="h-4 w-4" />}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onConnect(c.id)}
-                        disabled={connectingId !== null}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-                        title="连接"
-                      >
-                        {connectingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => handleTest(c.id)}
-                      disabled={testingId === c.id}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50"
-                      title="测试连接"
-                    >
-                      {testingId === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                    </button>
-                    {!c.isDefault && (
-                      <button
-                        type="button"
-                        onClick={() => handleSetDefault(c.id)}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                        title="设为默认"
-                      >
-                        <Check className="h-4 w-4" />
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => openEdit(c)}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                      title="编辑"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openDeleteConfirm(c.id)}
-                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
-                      title="删除"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                {/* Body */}
-                <div className="min-w-0 flex-1 px-3 py-2">
-                  <p className="font-mono text-sm text-foreground truncate" title={c.nameServer}>
-                    {c.nameServer}
-                  </p>
-                  {c.remark != null && c.remark.trim() !== '' && (
-                    <p className="mt-1 truncate text-sm text-muted-foreground" title={c.remark}>
-                      {c.remark}
+                  {/* Body */}
+                  <div className="min-w-0 flex-1 px-3 py-2">
+                    <p className="truncate font-mono text-sm text-foreground" title={c.nameServer}>
+                      {c.nameServer}
                     </p>
-                  )}
-                </div>
-                {/* Footer */}
-                <div className="flex shrink-0 items-center justify-between border-t border-border/30 px-3 py-2">
-                  <span
-                    className="flex items-center gap-1 text-xs text-muted-foreground"
-                    title={c.enableACL ? '已开启 ACL 鉴权' : '未开启 ACL'}
-                  >
-                    <Shield className={cn('h-3.5 w-3.5', c.enableACL && 'text-foreground/70')} />
-                    {c.enableACL ? 'ACL' : '未开启'}
-                  </span>
-                  <span
-                    className="flex items-center gap-1 text-xs text-muted-foreground"
-                    title="连接超时"
-                  >
-                    <Timer className="h-3.5 w-3.5" />
-                    超时时间 {c.timeoutSec ?? 10}s
-                  </span>
-                </div>
-              </article>
-            );
+                    {c.remark != null && c.remark.trim() !== '' && (
+                      <p className="mt-1 truncate text-sm text-muted-foreground" title={c.remark}>
+                        {c.remark}
+                      </p>
+                    )}
+                  </div>
+                  {/* Footer */}
+                  <div className="flex shrink-0 items-center justify-between border-t border-border/30 px-3 py-2">
+                    <span
+                      className="flex items-center gap-1 text-xs text-muted-foreground"
+                      title={c.enableACL ? '已开启 ACL 鉴权' : '未开启 ACL'}
+                    >
+                      <Shield className={cn('h-3.5 w-3.5', c.enableACL && 'text-foreground/70')} />
+                      {c.enableACL ? 'ACL' : '未开启'}
+                    </span>
+                    <span
+                      className="flex items-center gap-1 text-xs text-muted-foreground"
+                      title="连接超时"
+                    >
+                      <Timer className="h-3.5 w-3.5" />
+                      超时时间 {c.timeoutSec ?? 10}s
+                    </span>
+                  </div>
+                </article>
+              )
             })}
           </div>
         )}
@@ -392,7 +431,9 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-md border border-border/50 bg-card p-4 shadow-sm">
-            <h2 className="text-sm font-medium text-card-foreground">{form.id == null ? '添加连接' : '编辑连接'}</h2>
+            <h2 className="text-sm font-medium text-card-foreground">
+              {form.id == null ? '添加连接' : '编辑连接'}
+            </h2>
             {actionError && (
               <div className="mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {actionError}
@@ -400,7 +441,9 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
             )}
             <div className="mt-4 space-y-3">
               <div>
-                <label id="conn-name-label" className="mb-1 block text-xs text-muted-foreground">名称</label>
+                <label id="conn-name-label" className="mb-1 block text-xs text-muted-foreground">
+                  名称
+                </label>
                 <input
                   id="conn-name"
                   aria-labelledby="conn-name-label"
@@ -411,7 +454,9 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
                 />
               </div>
               <div>
-                <label id="conn-env-label" className="mb-1 block text-xs text-muted-foreground">环境</label>
+                <label id="conn-env-label" className="mb-1 block text-xs text-muted-foreground">
+                  环境
+                </label>
                 <select
                   id="conn-env"
                   aria-labelledby="conn-env-label"
@@ -425,7 +470,12 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
                 </select>
               </div>
               <div>
-                <label id="conn-nameserver-label" className="mb-1 block text-xs text-muted-foreground">NameServer 地址</label>
+                <label
+                  id="conn-nameserver-label"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  NameServer 地址
+                </label>
                 <input
                   id="conn-nameserver"
                   aria-labelledby="conn-nameserver-label"
@@ -436,14 +486,18 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
                 />
               </div>
               <div>
-                <label id="conn-timeout-label" className="mb-1 block text-xs text-muted-foreground">超时(秒)</label>
+                <label id="conn-timeout-label" className="mb-1 block text-xs text-muted-foreground">
+                  超时(秒)
+                </label>
                 <input
                   id="conn-timeout"
                   aria-labelledby="conn-timeout-label"
                   type="number"
                   min={1}
                   value={form.timeoutSec}
-                  onChange={(e) => setForm((f) => ({ ...f, timeoutSec: Number(e.target.value) || 10 }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, timeoutSec: Number(e.target.value) || 10 }))
+                  }
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   placeholder="10"
                 />
@@ -460,7 +514,12 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
               {form.enableACL && (
                 <>
                   <div>
-                    <label id="conn-accesskey-label" className="mb-1 block text-xs text-muted-foreground">访问密钥（AccessKey）</label>
+                    <label
+                      id="conn-accesskey-label"
+                      className="mb-1 block text-xs text-muted-foreground"
+                    >
+                      访问密钥（AccessKey）
+                    </label>
                     <input
                       id="conn-accesskey"
                       aria-labelledby="conn-accesskey-label"
@@ -471,7 +530,12 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
                     />
                   </div>
                   <div>
-                    <label id="conn-secretkey-label" className="mb-1 block text-xs text-muted-foreground">密钥（SecretKey）</label>
+                    <label
+                      id="conn-secretkey-label"
+                      className="mb-1 block text-xs text-muted-foreground"
+                    >
+                      密钥（SecretKey）
+                    </label>
                     <input
                       id="conn-secretkey"
                       aria-labelledby="conn-secretkey-label"
@@ -485,7 +549,9 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
                 </>
               )}
               <div>
-                <label id="conn-remark-label" className="mb-1 block text-xs text-muted-foreground">备注</label>
+                <label id="conn-remark-label" className="mb-1 block text-xs text-muted-foreground">
+                  备注
+                </label>
                 <input
                   id="conn-remark"
                   aria-labelledby="conn-remark-label"
@@ -517,39 +583,45 @@ export function ConnectionManagement({ list, loading, error, onRefresh, onConnec
         </div>
       )}
 
-      {deleteConfirmId != null && (() => {
-        const conn = list.find((c) => c.id === deleteConfirmId)
-        const name = conn?.name ?? ''
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={closeDeleteConfirm}>
+      {deleteConfirmId != null &&
+        (() => {
+          const conn = list.find((c) => c.id === deleteConfirmId)
+          const name = conn?.name ?? ''
+          return (
             <div
-              className="w-full max-w-sm rounded-md border border-border/50 bg-card p-4 shadow-sm"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+              onClick={closeDeleteConfirm}
             >
-              <h2 className="text-sm font-medium text-card-foreground">删除连接</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {name ? `确定删除连接「${name}」？此操作不可恢复。` : '确定删除该连接？此操作不可恢复。'}
-              </p>
-              <div className="mt-4 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={closeDeleteConfirm}
-                  className="rounded-md border border-border/50 px-3 py-1.5 text-sm hover:bg-accent"
-                >
-                  取消
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDeleteConfirm}
-                  className="rounded-md bg-destructive px-3 py-1.5 text-sm text-destructive-foreground hover:opacity-90"
-                >
-                  确定删除
-                </button>
+              <div
+                className="w-full max-w-sm rounded-md border border-border/50 bg-card p-4 shadow-sm"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h2 className="text-sm font-medium text-card-foreground">删除连接</h2>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {name
+                    ? `确定删除连接「${name}」？此操作不可恢复。`
+                    : '确定删除该连接？此操作不可恢复。'}
+                </p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={closeDeleteConfirm}
+                    className="rounded-md border border-border/50 px-3 py-1.5 text-sm hover:bg-accent"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteConfirm}
+                    className="rounded-md bg-destructive px-3 py-1.5 text-sm text-destructive-foreground hover:opacity-90"
+                  >
+                    确定删除
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )
-      })()}
+          )
+        })()}
     </div>
   )
 }

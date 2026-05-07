@@ -1,13 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type AccentKey =
-  | 'default'
-  | 'blue'
-  | 'green'
-  | 'orange'
-  | 'red'
-  | 'purple'
-  | 'cyan'
+export type AccentKey = 'default' | 'blue' | 'green' | 'orange' | 'red' | 'purple' | 'cyan'
 
 export interface UIPrefs {
   accent: AccentKey
@@ -27,12 +20,12 @@ const DEFAULTS: UIPrefs = {
 
 // HSL values for each accent (used as `--primary` / `--ring`)
 const ACCENT_HSL: Record<Exclude<AccentKey, 'default'>, { primary: string; primaryFg: string }> = {
-  blue:   { primary: '217 91% 60%', primaryFg: '0 0% 100%' },
-  green:  { primary: '142 71% 38%', primaryFg: '0 0% 100%' },
-  orange: { primary: '21 90% 48%',  primaryFg: '0 0% 100%' },
-  red:    { primary: '0 72% 51%',   primaryFg: '0 0% 100%' },
+  blue: { primary: '217 91% 60%', primaryFg: '0 0% 100%' },
+  green: { primary: '142 71% 38%', primaryFg: '0 0% 100%' },
+  orange: { primary: '21 90% 48%', primaryFg: '0 0% 100%' },
+  red: { primary: '0 72% 51%', primaryFg: '0 0% 100%' },
   purple: { primary: '271 81% 56%', primaryFg: '0 0% 100%' },
-  cyan:   { primary: '188 91% 37%', primaryFg: '0 0% 100%' },
+  cyan: { primary: '188 91% 37%', primaryFg: '0 0% 100%' },
 }
 
 function loadPrefs(): UIPrefs {
@@ -45,8 +38,11 @@ function loadPrefs(): UIPrefs {
       accent: (parsed.accent as AccentKey) || DEFAULTS.accent,
       animations: typeof parsed.animations === 'boolean' ? parsed.animations : DEFAULTS.animations,
       reduceTransparency:
-        typeof parsed.reduceTransparency === 'boolean' ? parsed.reduceTransparency : DEFAULTS.reduceTransparency,
-      highContrast: typeof parsed.highContrast === 'boolean' ? parsed.highContrast : DEFAULTS.highContrast,
+        typeof parsed.reduceTransparency === 'boolean'
+          ? parsed.reduceTransparency
+          : DEFAULTS.reduceTransparency,
+      highContrast:
+        typeof parsed.highContrast === 'boolean' ? parsed.highContrast : DEFAULTS.highContrast,
     }
   } catch {
     return { ...DEFAULTS }

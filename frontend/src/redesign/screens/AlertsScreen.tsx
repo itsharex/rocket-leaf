@@ -1,12 +1,5 @@
 import { useMemo, useState } from 'react'
-import {
-  AlertCircle,
-  AlertTriangle,
-  Info,
-  PlugZap,
-  Settings,
-  RefreshCw,
-} from 'lucide-react'
+import { AlertCircle, AlertTriangle, Info, PlugZap, Settings, RefreshCw } from 'lucide-react'
 import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -92,7 +85,9 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
     }
     // Disk usage warnings
     for (const b of data.brokers) {
-      const usage = Number((b as unknown as { commitLogDiskUsage?: number }).commitLogDiskUsage ?? 0)
+      const usage = Number(
+        (b as unknown as { commitLogDiskUsage?: number }).commitLogDiskUsage ?? 0,
+      )
       if (usage >= DISK_THRESHOLD) {
         out.push({
           key: `disk-${b.brokerName}-${b.brokerId}`,
@@ -127,9 +122,7 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
         subtitle={subtitle}
         tabs={[t('alerts.tabs.active'), t('alerts.tabs.rules')]}
         activeTab={tab === 'active' ? t('alerts.tabs.active') : t('alerts.tabs.rules')}
-        onTabChange={(label) =>
-          setTab(label === t('alerts.tabs.active') ? 'active' : 'rules')
-        }
+        onTabChange={(label) => setTab(label === t('alerts.tabs.active') ? 'active' : 'rules')}
       >
         <button
           className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm"
@@ -153,10 +146,7 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
         ) : tab === 'active' ? (
           <ActiveAlerts alerts={alerts} loading={loading} />
         ) : (
-          <RulesPanel
-            lagThreshold={lagThreshold}
-            onOpenSettings={() => onNavigate?.('settings')}
-          />
+          <RulesPanel lagThreshold={lagThreshold} onOpenSettings={() => onNavigate?.('settings')} />
         )}
       </div>
     </div>
@@ -177,10 +167,7 @@ function ActiveAlerts({ alerts, loading }: { alerts: AlertEntry[]; loading: bool
   const { t } = useTranslation()
   if (loading && alerts.length === 0) {
     return (
-      <div
-        className="flex items-center justify-center rl-muted"
-        style={{ padding: 60, gap: 8 }}
-      >
+      <div className="rl-muted flex items-center justify-center" style={{ padding: 60, gap: 8 }}>
         <Spinner size={14} />
         <span className="text-[12px]">{t('common.loading')}</span>
       </div>
@@ -189,7 +176,7 @@ function ActiveAlerts({ alerts, loading }: { alerts: AlertEntry[]; loading: bool
   if (alerts.length === 0) {
     return (
       <div
-        className="rl-card rl-muted text-[12px] text-center"
+        className="rl-card rl-muted text-center text-[12px]"
         style={{ padding: 32, maxWidth: 760 }}
       >
         {t('alerts.active.empty')}
@@ -219,10 +206,7 @@ function ActiveAlerts({ alerts, loading }: { alerts: AlertEntry[]; loading: bool
               </span>
             )}
           </div>
-          <div
-            className="rl-muted mt-1 text-[12px] font-mono-design"
-            style={{ lineHeight: 1.5 }}
-          >
+          <div className="rl-muted font-mono-design mt-1 text-[12px]" style={{ lineHeight: 1.5 }}>
             {a.desc}
           </div>
         </div>
@@ -246,10 +230,7 @@ function RulesPanel({
         {t('alerts.rules.desc')}
       </div>
 
-      <div
-        className="mt-4 grid gap-3"
-        style={{ gridTemplateColumns: '1fr 1fr' }}
-      >
+      <div className="mt-4 grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <div
           style={{
             padding: 12,
@@ -297,7 +278,7 @@ function RulesPanel({
                     ? 'warn'
                     : 'info',
               )}
-              <span className="text-[13px] flex-1">{t(`alerts.rule.${k}`)}</span>
+              <span className="flex-1 text-[13px]">{t(`alerts.rule.${k}`)}</span>
             </div>
           ),
         )}
@@ -307,10 +288,7 @@ function RulesPanel({
         className="mt-4 flex justify-end"
         style={{ paddingTop: 12, borderTop: '1px solid hsl(var(--border))' }}
       >
-        <button
-          className="rl-btn rl-btn-outline rl-btn-sm"
-          onClick={onOpenSettings}
-        >
+        <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onOpenSettings}>
           <Settings size={13} />
           {t('alerts.rules.openSettings')}
         </button>

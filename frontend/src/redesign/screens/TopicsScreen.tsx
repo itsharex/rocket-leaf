@@ -93,7 +93,9 @@ export function TopicsScreen() {
   const [panelDismissed, setPanelDismissed] = useState(false)
   const [detail, setDetail] = useState<TopicItem | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
-  const [editorOpen, setEditorOpen] = useState<{ mode: 'create' } | { mode: 'edit'; topic: TopicItem } | null>(null)
+  const [editorOpen, setEditorOpen] = useState<
+    { mode: 'create' } | { mode: 'edit'; topic: TopicItem } | null
+  >(null)
   const [confirmDelete, setConfirmDelete] = useState<TopicItem | null>(null)
   const [deleting, setDeleting] = useState(false)
 
@@ -106,7 +108,9 @@ export function TopicsScreen() {
     const q = search.trim().toLowerCase()
     return derived.filter((d) => {
       if (typeFilter !== 'all' && d.kind !== typeFilter) return false
-      if (q && !d.raw.topic.toLowerCase().includes(q) &&
+      if (
+        q &&
+        !d.raw.topic.toLowerCase().includes(q) &&
         !(d.raw.description || '').toLowerCase().includes(q)
       ) {
         return false
@@ -249,14 +253,16 @@ export function TopicsScreen() {
             background: 'hsl(var(--background))',
           }}
         >
-          {([
-            ['all', 'topics.filterAll'],
-            ['normal', 'topics.filterNormal'],
-            ['fifo', 'topics.filterFifo'],
-            ['delay', 'topics.filterDelay'],
-            ['retry', 'topics.filterRetry'],
-            ['dlq', 'topics.filterDlq'],
-          ] as const).map(([k, key]) => (
+          {(
+            [
+              ['all', 'topics.filterAll'],
+              ['normal', 'topics.filterNormal'],
+              ['fifo', 'topics.filterFifo'],
+              ['delay', 'topics.filterDelay'],
+              ['retry', 'topics.filterRetry'],
+              ['dlq', 'topics.filterDlq'],
+            ] as const
+          ).map(([k, key]) => (
             <button
               key={k}
               type="button"
@@ -274,7 +280,7 @@ export function TopicsScreen() {
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <div
-          className="min-w-0 flex-1 overflow-auto scroll-thin"
+          className="scroll-thin min-w-0 flex-1 overflow-auto"
           onClick={handleListBackgroundClick}
         >
           {!hasOnline ? (
@@ -287,7 +293,7 @@ export function TopicsScreen() {
             </div>
           ) : loading && topics.length === 0 ? (
             <div
-              className="flex items-center justify-center rl-muted"
+              className="rl-muted flex items-center justify-center"
               style={{ padding: 60, gap: 8 }}
             >
               <Spinner size={14} />
@@ -312,10 +318,7 @@ export function TopicsScreen() {
                 </div>
               )}
               {filtered.length === 0 ? (
-                <div
-                  className="rl-muted text-center"
-                  style={{ padding: 40, fontSize: 12 }}
-                >
+                <div className="rl-muted text-center" style={{ padding: 40, fontSize: 12 }}>
                   {t('topics.empty')}
                 </div>
               ) : (
@@ -354,23 +357,22 @@ export function TopicsScreen() {
                         <td>
                           <div className="font-mono-design">{raw.topic}</div>
                           {raw.description && (
-                            <div className="rl-muted text-[11px] mt-0.5 truncate" style={{ maxWidth: 320 }}>
+                            <div
+                              className="rl-muted mt-0.5 truncate text-[11px]"
+                              style={{ maxWidth: 320 }}
+                            >
                               {raw.description}
                             </div>
                           )}
                         </td>
                         <td>
-                          <span className={typeBadgeClass(kind)}>
-                            {t(`topics.type.${kind}`)}
-                          </span>
+                          <span className={typeBadgeClass(kind)}>{t(`topics.type.${kind}`)}</span>
                         </td>
                         <td className="rl-tabular">
                           {raw.readQueue} / {raw.writeQueue}
                         </td>
                         <td>
-                          <span className="rl-muted text-[12px]">
-                            {permLabel(raw.perm, t)}
-                          </span>
+                          <span className="rl-muted text-[12px]">{permLabel(raw.perm, t)}</span>
                         </td>
                         <td className="rl-tabular">{raw.consumerGroups || 0}</td>
                         <td className="rl-tabular rl-muted">{formatTps(raw.tpsIn)}</td>
@@ -457,10 +459,7 @@ function TopicDetailPanel({
           background: 'hsl(var(--background))',
         }}
       >
-        <div
-          className="flex items-center justify-center rl-muted"
-          style={{ padding: 60, gap: 8 }}
-        >
+        <div className="rl-muted flex items-center justify-center" style={{ padding: 60, gap: 8 }}>
           <Spinner size={14} />
           <span className="text-[12px]">{t('common.loading')}</span>
         </div>
@@ -485,15 +484,12 @@ function TopicDetailPanel({
     >
       <div style={{ padding: 20 }}>
         <div className="flex items-center justify-between gap-2">
-          <div className="font-mono-design font-semibold truncate">{topic.topic}</div>
-          <button
-            className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm shrink-0"
-            onClick={onClose}
-          >
+          <div className="font-mono-design truncate font-semibold">{topic.topic}</div>
+          <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm shrink-0" onClick={onClose}>
             <X size={14} />
           </button>
         </div>
-        <div className="mt-2 flex gap-2 flex-wrap">
+        <div className="mt-2 flex flex-wrap gap-2">
           <span className={typeBadgeClass(kind)}>{t(`topics.type.${kind}`)}</span>
           <span className="rl-badge rl-badge-outline">{permLabel(topic.perm, t)}</span>
           {topic.tpsIn > 0 && <span className="rl-badge rl-badge-success">活跃</span>}
@@ -610,9 +606,9 @@ function TopicDetailPanel({
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-2">
                       <Server size={13} className="rl-muted" />
-                      <span className="font-mono-design text-[12px] truncate">{r.broker}</span>
+                      <span className="font-mono-design truncate text-[12px]">{r.broker}</span>
                     </div>
-                    <div className="flex gap-1 shrink-0">
+                    <div className="flex shrink-0 gap-1">
                       <span
                         className="rl-badge rl-badge-outline"
                         style={{ height: 18, fontSize: 10 }}
@@ -639,12 +635,12 @@ function TopicDetailPanel({
               <div className="rl-muted text-[12px]">
                 {t('topics.detail.groupsTitle')} · {topic.consumerGroups}
               </div>
-              <div className="rl-muted text-[11px] mt-1">{t('topics.detail.groupsEmpty')}</div>
+              <div className="rl-muted mt-1 text-[11px]">{t('topics.detail.groupsEmpty')}</div>
             </div>
           </div>
         )}
 
-        <div className="mt-5 flex gap-2 flex-wrap">
+        <div className="mt-5 flex flex-wrap gap-2">
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={() => onEdit(topic)}>
             <Edit size={13} />
             {t('topics.detail.actions.edit')}
@@ -751,7 +747,8 @@ function TopicEditor({
           </div>
           <div>
             <div className="rl-muted mb-2 text-[12px]">
-              {t('topics.create.broker')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+              {t('topics.create.broker')}{' '}
+              <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
             </div>
             {masterBrokers.length === 0 ? (
               <div className="rl-muted text-[12px]" style={{ padding: 8 }}>

@@ -68,7 +68,7 @@ tasks:
       - task: generate:dotdesktop
     preconditions:
       - sh: docker info > /dev/null 2>&1
-        msg: "Docker is required for cross-compilation to Linux. Please install Docker."
+        msg: 'Docker is required for cross-compilation to Linux. Please install Docker.'
       - sh: docker image inspect {{.CROSS_IMAGE}} > /dev/null 2>&1
         msg: |
           Docker image '{{.CROSS_IMAGE}}' not found.
@@ -195,7 +195,7 @@ tasks:
       - wails3 tool sign --input "{{.BIN_DIR}}/{{.APP_NAME}}*.deb" --pgp-key {{.PGP_KEY}} {{if .SIGN_ROLE}}--role {{.SIGN_ROLE}}{{end}}
     preconditions:
       - sh: '[ -n "{{.PGP_KEY}}" ]'
-        msg: "PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml"
+        msg: 'PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml'
 
   sign:rpm:
     summary: Signs the RPM package
@@ -209,7 +209,7 @@ tasks:
       - wails3 tool sign --input "{{.BIN_DIR}}/{{.APP_NAME}}*.rpm" --pgp-key {{.PGP_KEY}}
     preconditions:
       - sh: '[ -n "{{.PGP_KEY}}" ]'
-        msg: "PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml"
+        msg: 'PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml'
 
   sign:packages:
     summary: Signs all Linux packages (DEB and RPM)
@@ -222,4 +222,4 @@ tasks:
       - task: sign:rpm
     preconditions:
       - sh: '[ -n "{{.PGP_KEY}}" ]'
-        msg: "PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml"
+        msg: 'PGP_KEY is required. Set it in the vars section at the top of build/linux/Taskfile.yml'

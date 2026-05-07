@@ -15,12 +15,7 @@ interface SpinnerProps {
  * with a rounded head dot. Inherits `currentColor` so it sits naturally
  * on any button surface.
  */
-export function Spinner({
-  size = 14,
-  thickness,
-  className = '',
-  style,
-}: SpinnerProps) {
+export function Spinner({ size = 14, thickness, className = '', style }: SpinnerProps) {
   const t = thickness ?? Math.max(1.5, size / 8)
   return (
     <span

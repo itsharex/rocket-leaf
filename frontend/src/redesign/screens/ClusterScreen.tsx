@@ -18,7 +18,10 @@ import { useCluster } from '@/hooks/useCluster'
 
 const HISTORY_LEN = 60
 
-function aggregateHistory(brokers: BrokerNode[], field: 'tpsInHistory' | 'tpsOutHistory'): number[] {
+function aggregateHistory(
+  brokers: BrokerNode[],
+  field: 'tpsInHistory' | 'tpsOutHistory',
+): number[] {
   const histories = brokers
     .map((b) => (b[field] ?? []) as number[])
     .filter((h) => Array.isArray(h) && h.length > 0)
@@ -116,11 +119,7 @@ export function ClusterScreen() {
       <PageHeader
         title={t('cluster.title')}
         subtitle={subtitle}
-        tabs={[
-          t('cluster.tabs.overview'),
-          t('cluster.tabs.broker'),
-          t('cluster.tabs.nameserver'),
-        ]}
+        tabs={[t('cluster.tabs.overview'), t('cluster.tabs.broker'), t('cluster.tabs.nameserver')]}
         activeTab={
           activeTab === 'overview'
             ? t('cluster.tabs.overview')
@@ -172,7 +171,7 @@ export function ClusterScreen() {
 
             {loading && brokers.length === 0 ? (
               <div
-                className="flex items-center justify-center rl-muted"
+                className="rl-muted flex items-center justify-center"
                 style={{ padding: 60, gap: 8 }}
               >
                 <Spinner size={14} />
@@ -371,16 +370,12 @@ function BrokerTable({ brokers }: { brokers: BrokerNode[] }) {
                   </div>
                 </td>
                 <td>
-                  <span
-                    className={'rl-badge ' + (isMaster ? 'rl-badge-info' : 'rl-badge-outline')}
-                  >
+                  <span className={'rl-badge ' + (isMaster ? 'rl-badge-info' : 'rl-badge-outline')}>
                     {role || '—'}
                   </span>
                 </td>
                 <td>
-                  <span className="font-mono-design rl-muted text-[12px]">
-                    {b.address || '—'}
-                  </span>
+                  <span className="font-mono-design rl-muted text-[12px]">{b.address || '—'}</span>
                 </td>
                 <td>
                   <span className="rl-muted text-[12px]">{b.version || '—'}</span>
@@ -397,7 +392,9 @@ function BrokerTable({ brokers }: { brokers: BrokerNode[] }) {
                   </div>
                 </td>
                 <td>
-                  <span className={'rl-badge ' + (isOnline ? 'rl-badge-success' : 'rl-badge-outline')}>
+                  <span
+                    className={'rl-badge ' + (isOnline ? 'rl-badge-success' : 'rl-badge-outline')}
+                  >
                     {isOnline ? t('common.online') : t('common.offline')}
                   </span>
                 </td>
@@ -431,7 +428,7 @@ function NameServerList({ servers }: { servers: string[] }) {
           }}
         >
           <Server size={14} className="rl-muted" />
-          <span className="font-mono-design text-[12px] flex-1">{s}</span>
+          <span className="font-mono-design flex-1 text-[12px]">{s}</span>
           <span className="rl-badge rl-badge-success">{t('common.online')}</span>
         </div>
       ))}

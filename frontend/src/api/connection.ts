@@ -18,10 +18,19 @@ export async function addConnection(
   enableACL: boolean,
   accessKey: string,
   secretKey: string,
-  remark: string
+  remark: string,
 ): Promise<Connection | null> {
   try {
-    return await ConnectionService.AddConnection(name, env, nameServer, timeoutSec, enableACL, accessKey, secretKey, remark)
+    return await ConnectionService.AddConnection(
+      name,
+      env,
+      nameServer,
+      timeoutSec,
+      enableACL,
+      accessKey,
+      secretKey,
+      remark,
+    )
   } catch (e) {
     console.error('AddConnection', e)
     throw e
@@ -37,10 +46,20 @@ export async function updateConnection(
   enableACL: boolean,
   accessKey: string,
   secretKey: string,
-  remark: string
+  remark: string,
 ): Promise<Connection | null> {
   try {
-    return await ConnectionService.UpdateConnection(id, name, env, nameServer, timeoutSec, enableACL, accessKey, secretKey, remark)
+    return await ConnectionService.UpdateConnection(
+      id,
+      name,
+      env,
+      nameServer,
+      timeoutSec,
+      enableACL,
+      accessKey,
+      secretKey,
+      remark,
+    )
   } catch (e) {
     console.error('UpdateConnection', e)
     throw e

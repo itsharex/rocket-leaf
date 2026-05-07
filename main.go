@@ -74,7 +74,7 @@ func main() {
 			application.NewService(consumerService),   // 消费者组服务
 			application.NewService(messageService),    // 消息查询服务
 			application.NewService(settingsService),   // 设置管理服务
-			application.NewService(aclService),       // ACL 管理服务
+			application.NewService(aclService),        // ACL 管理服务
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

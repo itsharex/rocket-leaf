@@ -58,7 +58,15 @@ const UI_FONT_OPTIONS = [
   { value: 'Helvetica Neue', label: 'Helvetica Neue' },
 ]
 
-const MONOSPACE_FONTS = ['JetBrains Mono', 'Fira Code', 'Source Code Pro', 'Cascadia Code', 'Consolas', 'Monaco', 'Menlo']
+const MONOSPACE_FONTS = [
+  'JetBrains Mono',
+  'Fira Code',
+  'Source Code Pro',
+  'Cascadia Code',
+  'Consolas',
+  'Monaco',
+  'Menlo',
+]
 
 function AppleIcon({ className }: { className?: string }) {
   return (
@@ -71,7 +79,11 @@ function AppleIcon({ className }: { className?: string }) {
 function LinuxIcon({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 128 128" fill="currentColor" className={className}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M113.823 104.595c-1.795-1.478-3.629-2.921-5.308-4.525c-1.87-1.785-3.045-3.944-2.789-6.678c.147-1.573-.216-2.926-2.113-3.452c.446-1.154.864-1.928 1.033-2.753c.188-.92.178-1.887.204-2.834c.264-9.96-3.334-18.691-8.663-26.835c-2.454-3.748-5.017-7.429-7.633-11.066c-4.092-5.688-5.559-12.078-5.633-18.981a47.6 47.6 0 0 0-1.081-9.475C80.527 11.956 77.291 7.233 71.422 4.7c-4.497-1.942-9.152-2.327-13.901-1.084c-6.901 1.805-11.074 6.934-10.996 14.088c.074 6.885.417 13.779.922 20.648c.288 3.893-.312 7.252-2.895 10.34c-2.484 2.969-4.706 6.172-6.858 9.397c-1.229 1.844-2.317 3.853-3.077 5.931c-2.07 5.663-3.973 11.373-7.276 16.5c-1.224 1.9-1.363 4.026-.494 6.199c.225.563.363 1.429.089 1.882c-2.354 3.907-5.011 7.345-10.066 8.095c-3.976.591-4.172 1.314-4.051 5.413c.1 3.337.061 6.705-.28 10.021c-.363 3.555.008 4.521 3.442 5.373c7.924 1.968 15.913 3.647 23.492 6.854c3.227 1.365 6.465.891 9.064-1.763c2.713-2.771 6.141-3.855 9.844-3.859c6.285-.005 12.572.298 18.86.369c1.702.02 2.679.653 3.364 2.199c.84 1.893 2.26 3.284 4.445 3.526c4.193.462 8.013-.16 11.19-3.359c3.918-3.948 8.436-7.066 13.615-9.227c1.482-.619 2.878-1.592 4.103-2.648c2.231-1.922 2.113-3.146-.135-5M62.426 24.12c.758-2.601 2.537-4.289 5.243-4.801c2.276-.43 4.203.688 5.639 3.246c1.546 2.758 2.054 5.64.734 8.658c-1.083 2.474-1.591 2.707-4.123 1.868c-.474-.157-.937-.343-1.777-.652c.708-.594 1.154-1.035 1.664-1.382c1.134-.772 1.452-1.858 1.346-3.148c-.139-1.694-1.471-3.194-2.837-3.175c-1.225.017-2.262 1.167-2.4 2.915c-.086 1.089.095 2.199.173 3.589c-3.446-1.023-4.711-3.525-3.662-7.118m-12.75-2.251c1.274-1.928 3.197-2.314 5.101-1.024c2.029 1.376 3.547 5.256 2.763 7.576c-.285.844-1.127 1.5-1.716 2.241l-.604-.374c-.23-1.253-.276-2.585-.757-3.733c-.304-.728-1.257-1.184-1.919-1.762c-.622.739-1.693 1.443-1.757 2.228c-.088 1.084.477 2.28.969 3.331c.311.661 1.001 1.145 1.713 1.916l-1.922 1.51c-3.018-2.7-3.915-8.82-1.871-11.909M87.34 86.075c-.203 2.604-.5 2.713-3.118 3.098c-1.859.272-2.359.756-2.453 2.964a102 102 0 0 0-.012 7.753c.061 1.77-.537 3.158-1.755 4.393c-6.764 6.856-14.845 10.105-24.512 8.926c-4.17-.509-6.896-3.047-9.097-6.639c.98-.363 1.705-.607 2.412-.894c3.122-1.27 3.706-3.955 1.213-6.277c-1.884-1.757-3.986-3.283-6.007-4.892c-1.954-1.555-3.934-3.078-5.891-4.629c-1.668-1.323-2.305-3.028-2.345-5.188c-.094-5.182.972-10.03 3.138-14.747c1.932-4.209 3.429-8.617 5.239-12.885c.935-2.202 1.906-4.455 3.278-6.388c1.319-1.854 2.134-3.669 1.988-5.94c-.084-1.276-.016-2.562-.016-3.843l.707-.352c1.141.985 2.302 1.949 3.423 2.959c4.045 3.646 7.892 3.813 12.319.67c1.888-1.341 3.93-2.47 5.927-3.652c.497-.294 1.092-.423 1.934-.738c2.151 5.066 4.262 10.033 6.375 15c1.072 2.524 1.932 5.167 3.264 7.547c2.671 4.775 4.092 9.813 4.07 15.272c-.012 2.83.137 5.67-.081 8.482" />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M113.823 104.595c-1.795-1.478-3.629-2.921-5.308-4.525c-1.87-1.785-3.045-3.944-2.789-6.678c.147-1.573-.216-2.926-2.113-3.452c.446-1.154.864-1.928 1.033-2.753c.188-.92.178-1.887.204-2.834c.264-9.96-3.334-18.691-8.663-26.835c-2.454-3.748-5.017-7.429-7.633-11.066c-4.092-5.688-5.559-12.078-5.633-18.981a47.6 47.6 0 0 0-1.081-9.475C80.527 11.956 77.291 7.233 71.422 4.7c-4.497-1.942-9.152-2.327-13.901-1.084c-6.901 1.805-11.074 6.934-10.996 14.088c.074 6.885.417 13.779.922 20.648c.288 3.893-.312 7.252-2.895 10.34c-2.484 2.969-4.706 6.172-6.858 9.397c-1.229 1.844-2.317 3.853-3.077 5.931c-2.07 5.663-3.973 11.373-7.276 16.5c-1.224 1.9-1.363 4.026-.494 6.199c.225.563.363 1.429.089 1.882c-2.354 3.907-5.011 7.345-10.066 8.095c-3.976.591-4.172 1.314-4.051 5.413c.1 3.337.061 6.705-.28 10.021c-.363 3.555.008 4.521 3.442 5.373c7.924 1.968 15.913 3.647 23.492 6.854c3.227 1.365 6.465.891 9.064-1.763c2.713-2.771 6.141-3.855 9.844-3.859c6.285-.005 12.572.298 18.86.369c1.702.02 2.679.653 3.364 2.199c.84 1.893 2.26 3.284 4.445 3.526c4.193.462 8.013-.16 11.19-3.359c3.918-3.948 8.436-7.066 13.615-9.227c1.482-.619 2.878-1.592 4.103-2.648c2.231-1.922 2.113-3.146-.135-5M62.426 24.12c.758-2.601 2.537-4.289 5.243-4.801c2.276-.43 4.203.688 5.639 3.246c1.546 2.758 2.054 5.64.734 8.658c-1.083 2.474-1.591 2.707-4.123 1.868c-.474-.157-.937-.343-1.777-.652c.708-.594 1.154-1.035 1.664-1.382c1.134-.772 1.452-1.858 1.346-3.148c-.139-1.694-1.471-3.194-2.837-3.175c-1.225.017-2.262 1.167-2.4 2.915c-.086 1.089.095 2.199.173 3.589c-3.446-1.023-4.711-3.525-3.662-7.118m-12.75-2.251c1.274-1.928 3.197-2.314 5.101-1.024c2.029 1.376 3.547 5.256 2.763 7.576c-.285.844-1.127 1.5-1.716 2.241l-.604-.374c-.23-1.253-.276-2.585-.757-3.733c-.304-.728-1.257-1.184-1.919-1.762c-.622.739-1.693 1.443-1.757 2.228c-.088 1.084.477 2.28.969 3.331c.311.661 1.001 1.145 1.713 1.916l-1.922 1.51c-3.018-2.7-3.915-8.82-1.871-11.909M87.34 86.075c-.203 2.604-.5 2.713-3.118 3.098c-1.859.272-2.359.756-2.453 2.964a102 102 0 0 0-.012 7.753c.061 1.77-.537 3.158-1.755 4.393c-6.764 6.856-14.845 10.105-24.512 8.926c-4.17-.509-6.896-3.047-9.097-6.639c.98-.363 1.705-.607 2.412-.894c3.122-1.27 3.706-3.955 1.213-6.277c-1.884-1.757-3.986-3.283-6.007-4.892c-1.954-1.555-3.934-3.078-5.891-4.629c-1.668-1.323-2.305-3.028-2.345-5.188c-.094-5.182.972-10.03 3.138-14.747c1.932-4.209 3.429-8.617 5.239-12.885c.935-2.202 1.906-4.455 3.278-6.388c1.319-1.854 2.134-3.669 1.988-5.94c-.084-1.276-.016-2.562-.016-3.843l.707-.352c1.141.985 2.302 1.949 3.423 2.959c4.045 3.646 7.892 3.813 12.319.67c1.888-1.341 3.93-2.47 5.927-3.652c.497-.294 1.092-.423 1.934-.738c2.151 5.066 4.262 10.033 6.375 15c1.072 2.524 1.932 5.167 3.264 7.547c2.671 4.775 4.092 9.813 4.07 15.272c-.012 2.83.137 5.67-.081 8.482"
+      />
     </svg>
   )
 }
@@ -115,7 +127,15 @@ const SETTINGS_NAV: { id: SettingsTabId; label: string; icon: React.ElementType 
   { id: 'about', label: '关于与数据', icon: Info },
 ]
 
-function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+function Row({
+  label,
+  hint,
+  children,
+}: {
+  label: string
+  hint?: string
+  children: React.ReactNode
+}) {
   return (
     <div className="flex items-center gap-6 py-2.5">
       <div className="w-44 shrink-0">
@@ -148,7 +168,7 @@ function Select<T extends string>({
       aria-label={title}
       className={cn(
         'h-10 rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border',
-        className
+        className,
       )}
     >
       {options.map((o) => (
@@ -178,13 +198,13 @@ function Toggle({
       onClick={() => onChange(!checked)}
       className={cn(
         'relative inline-flex h-[30px] w-[52px] shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200',
-        checked ? 'bg-success' : 'bg-muted-foreground/30'
+        checked ? 'bg-success' : 'bg-muted-foreground/30',
       )}
     >
       <span
         className={cn(
           'pointer-events-none block h-[24px] w-[24px] rounded-full bg-white shadow-sm transition-transform duration-200',
-          checked ? 'translate-x-[25px]' : 'translate-x-[3px]'
+          checked ? 'translate-x-[25px]' : 'translate-x-[3px]',
         )}
       />
     </button>
@@ -256,7 +276,10 @@ export function SettingsView() {
     setConfirmAction({
       title: '清理缓存',
       description: '确定要清理所有缓存数据吗？此操作不可撤销。',
-      onConfirm: () => { setConfirmAction(null); doClearCache() },
+      onConfirm: () => {
+        setConfirmAction(null)
+        doClearCache()
+      },
     })
   }, [doClearCache])
 
@@ -272,12 +295,16 @@ export function SettingsView() {
     setConfirmAction({
       title: '恢复默认设置',
       description: '确定要将所有设置恢复为默认值吗？当前的自定义设置将全部丢失。',
-      onConfirm: () => { setConfirmAction(null); doResetSettings() },
+      onConfirm: () => {
+        setConfirmAction(null)
+        doResetSettings()
+      },
     })
   }, [doResetSettings])
   const handleCheckUpdate = useCallback(() => {
-    Browser.OpenURL(GITHUB_RELEASES_URL)
-      .catch(() => window.open(GITHUB_RELEASES_URL, '_blank', 'noopener,noreferrer'))
+    Browser.OpenURL(GITHUB_RELEASES_URL).catch(() =>
+      window.open(GITHUB_RELEASES_URL, '_blank', 'noopener,noreferrer'),
+    )
   }, [])
 
   return (
@@ -296,7 +323,7 @@ export function SettingsView() {
                 'flex w-full items-center gap-2.5 px-4 py-2.5 text-left text-[0.9375rem] transition-colors',
                 activeTab === id
                   ? 'border-l-2 border-foreground/80 bg-accent/50 text-foreground'
-                  : 'border-l-2 border-transparent text-muted-foreground hover:bg-accent/30 hover:text-foreground'
+                  : 'border-l-2 border-transparent text-muted-foreground hover:bg-accent/30 hover:text-foreground',
               )}
             >
               <Icon className="h-[18px] w-[18px] shrink-0" />
@@ -313,413 +340,452 @@ export function SettingsView() {
             {loading && (
               <p className="mb-3 text-xs text-muted-foreground">设置加载中，暂时禁用编辑…</p>
             )}
-          {activeTab === 'general' && (
-            <div>
-          <Row label="外观主题">
-            <div className="flex h-10 rounded-md border border-border/40 bg-background p-0.5">
-              {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setSetting('theme', value)}
-                  className={cn(
-                    'flex items-center gap-1.5 px-3 text-[0.9375rem] transition-colors first:rounded-l-[5px] last:rounded-r-[5px]',
-                    settings.theme === value ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/50'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                </button>
-              ))}
-            </div>
-          </Row>
-          <Row label="多语言">
-            <Select
-              value={settings.language}
-              options={LANGUAGE_OPTIONS}
-              onChange={(v) => setSetting('language', v)}
-              className="min-w-[260px]"
-              title="多语言"
-            />
-          </Row>
-          <Row label="界面字体大小">
-            <select
-              value={settings.fontSize}
-              onChange={(e) => setSetting('fontSize', Number(e.target.value))}
-              title="界面字体大小"
-              className="h-10 rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border min-w-[260px]"
-            >
-              {FONT_SIZE_OPTIONS.map((s) => (
-                <option key={s} value={s}>{s}px</option>
-              ))}
-            </select>
-          </Row>
-          <Row label="界面字体">
-            <div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={UI_FONT_OPTIONS.some((o) => o.value === settings.uiFont) ? settings.uiFont : '__custom__'}
-                  onChange={(e) => {
-                    if (e.target.value !== '__custom__') setSetting('uiFont', e.target.value)
-                  }}
-                  title="界面字体"
-                  className="h-10 rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border min-w-[260px]"
-                >
-                  {UI_FONT_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                  {!UI_FONT_OPTIONS.some((o) => o.value === settings.uiFont) && (
-                    <option value="__custom__">自定义</option>
-                  )}
-                </select>
-                {!UI_FONT_OPTIONS.some((o) => o.value === settings.uiFont) && (
-                  <input
-                    value={settings.uiFont}
-                    onChange={(e) => setSetting('uiFont', e.target.value)}
-                    placeholder="输入字体名称"
-                    className="h-10 rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border w-[160px]"
+            {activeTab === 'general' && (
+              <div>
+                <Row label="外观主题">
+                  <div className="flex h-10 rounded-md border border-border/40 bg-background p-0.5">
+                    {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setSetting('theme', value)}
+                        className={cn(
+                          'flex items-center gap-1.5 px-3 text-[0.9375rem] transition-colors first:rounded-l-[5px] last:rounded-r-[5px]',
+                          settings.theme === value
+                            ? 'bg-accent text-accent-foreground'
+                            : 'hover:bg-accent/50',
+                        )}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </Row>
+                <Row label="多语言">
+                  <Select
+                    value={settings.language}
+                    options={LANGUAGE_OPTIONS}
+                    onChange={(v) => setSetting('language', v)}
+                    className="min-w-[260px]"
+                    title="多语言"
                   />
-                )}
-              </div>
-              <p
-                className="mt-1.5 text-xs text-muted-foreground"
-                style={{ fontFamily: settings.uiFont === 'system' ? undefined : `"${settings.uiFont}"` }}
-              >
-                预览：Rocket-Leaf 轻量级管理客户端 ABCDabcd 1234
-              </p>
-            </div>
-          </Row>
-          <Row label="代码字体 (Monospace)" hint="消息内容、JSON 等使用的等宽字体">
-            <div>
-              <div className="flex items-center gap-2">
-                <select
-                  value={MONOSPACE_FONTS.includes(settings.monospaceFont) ? settings.monospaceFont : '__custom__'}
-                  onChange={(e) => {
-                    if (e.target.value === '__custom__') setSetting('monospaceFont', '')
-                    else setSetting('monospaceFont', e.target.value)
-                  }}
-                  title="代码字体"
-                  className="h-10 rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border min-w-[260px]"
-                >
-                  {MONOSPACE_FONTS.map((f) => (
-                    <option key={f} value={f}>{f}</option>
-                  ))}
-                  <option value="__custom__">自定义</option>
-                </select>
-                {!MONOSPACE_FONTS.includes(settings.monospaceFont) && (
-                  <input
-                    value={settings.monospaceFont}
-                    onChange={(e) => setSetting('monospaceFont', e.target.value)}
-                    placeholder="输入字体名称"
-                    className="h-10 rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border w-[160px]"
+                </Row>
+                <Row label="界面字体大小">
+                  <select
+                    value={settings.fontSize}
+                    onChange={(e) => setSetting('fontSize', Number(e.target.value))}
+                    title="界面字体大小"
+                    className="h-10 min-w-[260px] rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  >
+                    {FONT_SIZE_OPTIONS.map((s) => (
+                      <option key={s} value={s}>
+                        {s}px
+                      </option>
+                    ))}
+                  </select>
+                </Row>
+                <Row label="界面字体">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={
+                          UI_FONT_OPTIONS.some((o) => o.value === settings.uiFont)
+                            ? settings.uiFont
+                            : '__custom__'
+                        }
+                        onChange={(e) => {
+                          if (e.target.value !== '__custom__') setSetting('uiFont', e.target.value)
+                        }}
+                        title="界面字体"
+                        className="h-10 min-w-[260px] rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                      >
+                        {UI_FONT_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                        {!UI_FONT_OPTIONS.some((o) => o.value === settings.uiFont) && (
+                          <option value="__custom__">自定义</option>
+                        )}
+                      </select>
+                      {!UI_FONT_OPTIONS.some((o) => o.value === settings.uiFont) && (
+                        <input
+                          value={settings.uiFont}
+                          onChange={(e) => setSetting('uiFont', e.target.value)}
+                          placeholder="输入字体名称"
+                          className="h-10 w-[160px] rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                        />
+                      )}
+                    </div>
+                    <p
+                      className="mt-1.5 text-xs text-muted-foreground"
+                      style={{
+                        fontFamily:
+                          settings.uiFont === 'system' ? undefined : `"${settings.uiFont}"`,
+                      }}
+                    >
+                      预览：Rocket-Leaf 轻量级管理客户端 ABCDabcd 1234
+                    </p>
+                  </div>
+                </Row>
+                <Row label="代码字体 (Monospace)" hint="消息内容、JSON 等使用的等宽字体">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={
+                          MONOSPACE_FONTS.includes(settings.monospaceFont)
+                            ? settings.monospaceFont
+                            : '__custom__'
+                        }
+                        onChange={(e) => {
+                          if (e.target.value === '__custom__') setSetting('monospaceFont', '')
+                          else setSetting('monospaceFont', e.target.value)
+                        }}
+                        title="代码字体"
+                        className="h-10 min-w-[260px] rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                      >
+                        {MONOSPACE_FONTS.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                        <option value="__custom__">自定义</option>
+                      </select>
+                      {!MONOSPACE_FONTS.includes(settings.monospaceFont) && (
+                        <input
+                          value={settings.monospaceFont}
+                          onChange={(e) => setSetting('monospaceFont', e.target.value)}
+                          placeholder="输入字体名称"
+                          className="h-10 w-[160px] rounded-md border border-border/50 bg-background px-3 text-[0.9375rem] text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                        />
+                      )}
+                    </div>
+                    <p
+                      className="mt-1.5 text-xs text-muted-foreground"
+                      style={{ fontFamily: `"${settings.monospaceFont}", monospace` }}
+                    >
+                      {'预览：{"topic":"test","msgId":"0A0104"}'}
+                    </p>
+                  </div>
+                </Row>
+                <Row label="启动时自动连接上次集群" hint="启动应用后自动连接上次使用的集群">
+                  <Toggle
+                    checked={settings.autoConnectLast}
+                    onChange={(v) => setSetting('autoConnectLast', v)}
                   />
-                )}
+                </Row>
               </div>
-              <p
-                className="mt-1.5 text-xs text-muted-foreground"
-                style={{ fontFamily: `"${settings.monospaceFont}", monospace` }}
-              >
-                {'预览：{"topic":"test","msgId":"0A0104"}'}
-              </p>
-            </div>
-          </Row>
-          <Row label="启动时自动连接上次集群" hint="启动应用后自动连接上次使用的集群">
-            <Toggle
-              checked={settings.autoConnectLast}
-              onChange={(v) => setSetting('autoConnectLast', v)}
-            />
-          </Row>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'connection' && (
-            <div>
-          <Row label="连接超时 (ms)" hint="建立 NameServer 连接的最大等待时间">
-            <input
-              type="number"
-              min={1000}
-              max={30000}
-              step={1000}
-              value={settings.connectTimeoutMs}
-              onChange={(e) => setSetting('connectTimeoutMs', Number(e.target.value) || 3000)}
-              onBlur={() => setSetting('connectTimeoutMs', Math.max(1000, Math.min(30000, settings.connectTimeoutMs)))}
-              title="连接超时"
-              aria-label="连接超时毫秒"
-              className="w-20 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
-            />
-          </Row>
-          <Row label="请求超时 (ms)" hint="查询 Topic、消费组等操作的超时时间">
-            <input
-              type="number"
-              min={1000}
-              max={60000}
-              step={1000}
-              value={settings.requestTimeoutMs}
-              onChange={(e) => setSetting('requestTimeoutMs', Number(e.target.value) || 5000)}
-              onBlur={() => setSetting('requestTimeoutMs', Math.max(1000, Math.min(60000, settings.requestTimeoutMs)))}
-              title="请求超时"
-              aria-label="请求超时毫秒"
-              className="w-20 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
-            />
-          </Row>
-          <Row label="默认 AccessKey" hint="新建连接时自动填充，加密存储">
-            <input
-              type="text"
-              value={settings.globalAccessKey}
-              onChange={(e) => setSetting('globalAccessKey', e.target.value)}
-              placeholder="新建连接时自动填充"
-              className="w-48 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
-            />
-          </Row>
-          <Row label="默认 SecretKey" hint="新建连接时自动填充，加密存储">
-            <input
-              type="password"
-              value={settings.globalSecretKey}
-              onChange={(e) => setSetting('globalSecretKey', e.target.value)}
-              placeholder="新建连接时自动填充"
-              className="w-48 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
-            />
-          </Row>
-          <Row label="跳过 TLS 校验" hint="跳过服务端证书验证，仅限测试环境">
-            <Toggle
-              checked={settings.skipTlsVerify}
-              onChange={(v) => setSetting('skipTlsVerify', v)}
-            />
-          </Row>
-          <Row label="启用代理">
-            <Toggle
-              checked={settings.proxyEnabled}
-              onChange={(v) => setSetting('proxyEnabled', v)}
-            />
-          </Row>
-          {settings.proxyEnabled && (
-            <>
-              <Row label="代理类型">
-                <Select
-                  value={settings.proxyType}
-                  options={PROXY_TYPE_OPTIONS}
-                  onChange={(v) => setSetting('proxyType', v)}
-                  title="代理类型"
-                />
-              </Row>
-              <Row label="代理地址">
-                <input
-                  type="text"
-                  value={settings.proxyHost}
-                  onChange={(e) => setSetting('proxyHost', e.target.value)}
-                  placeholder="host"
-                  className="w-36 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
-                />
-              </Row>
-              <Row label="代理端口">
-                <input
-                  type="text"
-                  value={settings.proxyPort}
-                  onChange={(e) => setSetting('proxyPort', e.target.value.replace(/\D/g, ''))}
-                  onBlur={() => {
-                    const port = Number(settings.proxyPort)
-                    if (settings.proxyPort && (port < 1 || port > 65535)) {
-                      setSetting('proxyPort', '')
-                      toast.error('端口范围 1-65535')
+            {activeTab === 'connection' && (
+              <div>
+                <Row label="连接超时 (ms)" hint="建立 NameServer 连接的最大等待时间">
+                  <input
+                    type="number"
+                    min={1000}
+                    max={30000}
+                    step={1000}
+                    value={settings.connectTimeoutMs}
+                    onChange={(e) => setSetting('connectTimeoutMs', Number(e.target.value) || 3000)}
+                    onBlur={() =>
+                      setSetting(
+                        'connectTimeoutMs',
+                        Math.max(1000, Math.min(30000, settings.connectTimeoutMs)),
+                      )
                     }
-                  }}
-                  placeholder="port"
-                  className="w-20 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
-                />
-              </Row>
-            </>
-          )}
-            </div>
-          )}
-
-          {activeTab === 'message' && (
-            <div>
-          <Row label="时区">
-            <Select
-              value={settings.timezone}
-              options={[
-                { value: 'local' as Timezone, label: '本地时间' },
-                { value: 'utc' as Timezone, label: 'UTC' },
-              ]}
-              onChange={(v) => setSetting('timezone', v)}
-              title="时区"
-            />
-          </Row>
-          <Row label="时间戳格式">
-            <Select
-              value={settings.timestampFormat}
-              options={TIMESTAMP_FORMAT_OPTIONS}
-              onChange={(v) => setSetting('timestampFormat', v)}
-              title="时间戳格式"
-            />
-          </Row>
-          <Row label="JSON 自动格式化" hint="查看消息时自动美化 JSON 内容">
-            <Toggle
-              checked={settings.autoFormatJson}
-              onChange={(v) => setSetting('autoFormatJson', v)}
-            />
-          </Row>
-          <Row label="消息截断阈值 (KB)" hint="超过此大小的消息内容将被截断显示">
-            <input
-              type="number"
-              min={64}
-              max={4096}
-              value={Math.round(settings.maxPayloadRenderBytes / 1024)}
-              onChange={(e) =>
-                setSetting('maxPayloadRenderBytes', (Number(e.target.value) || 500) * 1024)
-              }
-              onBlur={() => {
-                const kb = Math.round(settings.maxPayloadRenderBytes / 1024)
-                setSetting('maxPayloadRenderBytes', Math.max(64, Math.min(4096, kb)) * 1024)
-              }}
-              title="消息截断阈值"
-              aria-label="消息截断阈值 KB"
-              className="w-20 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
-            />
-          </Row>
-          <Row label="消费积压告警阈值" hint="当消费组堆积消息超过此值时显示告警，设为 0 关闭">
-            <input
-              type="number"
-              min={0}
-              step={1000}
-              value={settings.lagAlertThreshold ?? 0}
-              onChange={(e) => setSetting('lagAlertThreshold', Number(e.target.value) || 0)}
-              title="积压告警阈值"
-              aria-label="积压告警阈值"
-              className="w-24 h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
-            />
-          </Row>
-          <Row label="单页拉取数量" hint="每次查询 Topic、消费组的数量上限">
-            <select
-              value={settings.fetchLimit}
-              onChange={(e) => setSetting('fetchLimit', Number(e.target.value) as FetchLimit)}
-              title="单页拉取数量"
-              className="h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
-            >
-              {FETCH_LIMIT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </Row>
-            </div>
-          )}
-
-          {activeTab === 'about' && (
-            <div className="space-y-5">
-          {/* App Info Card */}
-          <div className="rounded-lg border border-border/40 bg-muted/10 p-5">
-            <div className="flex items-start gap-4">
-              <img src={logoUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-contain" aria-hidden />
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold text-foreground">Rocket-Leaf</h2>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  A lightweight, cross-platform RocketMQ client built with Go and Wails.
-                </p>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  一款基于 Wails 构建的轻量级、跨平台 RocketMQ 管理客户端。
-                </p>
-                <span className="mt-2 inline-block rounded-full bg-muted/60 px-2.5 py-0.5 text-xs text-muted-foreground">
-                  v{APP_VERSION}
-                </span>
+                    title="连接超时"
+                    aria-label="连接超时毫秒"
+                    className="h-10 w-20 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  />
+                </Row>
+                <Row label="请求超时 (ms)" hint="查询 Topic、消费组等操作的超时时间">
+                  <input
+                    type="number"
+                    min={1000}
+                    max={60000}
+                    step={1000}
+                    value={settings.requestTimeoutMs}
+                    onChange={(e) => setSetting('requestTimeoutMs', Number(e.target.value) || 5000)}
+                    onBlur={() =>
+                      setSetting(
+                        'requestTimeoutMs',
+                        Math.max(1000, Math.min(60000, settings.requestTimeoutMs)),
+                      )
+                    }
+                    title="请求超时"
+                    aria-label="请求超时毫秒"
+                    className="h-10 w-20 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  />
+                </Row>
+                <Row label="默认 AccessKey" hint="新建连接时自动填充，加密存储">
+                  <input
+                    type="text"
+                    value={settings.globalAccessKey}
+                    onChange={(e) => setSetting('globalAccessKey', e.target.value)}
+                    placeholder="新建连接时自动填充"
+                    className="h-10 w-48 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  />
+                </Row>
+                <Row label="默认 SecretKey" hint="新建连接时自动填充，加密存储">
+                  <input
+                    type="password"
+                    value={settings.globalSecretKey}
+                    onChange={(e) => setSetting('globalSecretKey', e.target.value)}
+                    placeholder="新建连接时自动填充"
+                    className="h-10 w-48 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  />
+                </Row>
+                <Row label="跳过 TLS 校验" hint="跳过服务端证书验证，仅限测试环境">
+                  <Toggle
+                    checked={settings.skipTlsVerify}
+                    onChange={(v) => setSetting('skipTlsVerify', v)}
+                  />
+                </Row>
+                <Row label="启用代理">
+                  <Toggle
+                    checked={settings.proxyEnabled}
+                    onChange={(v) => setSetting('proxyEnabled', v)}
+                  />
+                </Row>
+                {settings.proxyEnabled && (
+                  <>
+                    <Row label="代理类型">
+                      <Select
+                        value={settings.proxyType}
+                        options={PROXY_TYPE_OPTIONS}
+                        onChange={(v) => setSetting('proxyType', v)}
+                        title="代理类型"
+                      />
+                    </Row>
+                    <Row label="代理地址">
+                      <input
+                        type="text"
+                        value={settings.proxyHost}
+                        onChange={(e) => setSetting('proxyHost', e.target.value)}
+                        placeholder="host"
+                        className="h-10 w-36 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                      />
+                    </Row>
+                    <Row label="代理端口">
+                      <input
+                        type="text"
+                        value={settings.proxyPort}
+                        onChange={(e) => setSetting('proxyPort', e.target.value.replace(/\D/g, ''))}
+                        onBlur={() => {
+                          const port = Number(settings.proxyPort)
+                          if (settings.proxyPort && (port < 1 || port > 65535)) {
+                            setSetting('proxyPort', '')
+                            toast.error('端口范围 1-65535')
+                          }
+                        }}
+                        placeholder="port"
+                        className="h-10 w-20 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                      />
+                    </Row>
+                  </>
+                )}
               </div>
-            </div>
-          </div>
+            )}
 
-          {/* Quick Links */}
-          <div className="flex flex-wrap gap-2.5">
-            <button
-              type="button"
-              onClick={handleCheckUpdate}
-              className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground hover:bg-accent/50 transition-colors"
-            >
-              <RefreshCw className="h-4 w-4" />
-              检查更新
-            </button>
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground hover:bg-accent/50 transition-colors"
-            >
-              <Github className="h-4 w-4" />
-              GitHub
-            </a>
-            <a
-              href={GITHUB_ISSUES_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground hover:bg-accent/50 transition-colors"
-            >
-              <ExternalLink className="h-4 w-4" />
-              提交 Issue
-            </a>
-          </div>
-
-          {/* Data Paths */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">数据存储目录</h3>
-            <p className="mt-1 text-xs text-muted-foreground">点击复制对应平台的路径</p>
-            <div className="mt-3 rounded-lg border border-border/40 overflow-hidden divide-y divide-border/30">
-              {DATA_PATHS.map(({ platform, path, icon: Icon }) => (
-                <button
-                  key={platform}
-                  type="button"
-                  onClick={() => copyPath(path)}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent/30"
-                  title="点击复制路径"
+            {activeTab === 'message' && (
+              <div>
+                <Row label="时区">
+                  <Select
+                    value={settings.timezone}
+                    options={[
+                      { value: 'local' as Timezone, label: '本地时间' },
+                      { value: 'utc' as Timezone, label: 'UTC' },
+                    ]}
+                    onChange={(v) => setSetting('timezone', v)}
+                    title="时区"
+                  />
+                </Row>
+                <Row label="时间戳格式">
+                  <Select
+                    value={settings.timestampFormat}
+                    options={TIMESTAMP_FORMAT_OPTIONS}
+                    onChange={(v) => setSetting('timestampFormat', v)}
+                    title="时间戳格式"
+                  />
+                </Row>
+                <Row label="JSON 自动格式化" hint="查看消息时自动美化 JSON 内容">
+                  <Toggle
+                    checked={settings.autoFormatJson}
+                    onChange={(v) => setSetting('autoFormatJson', v)}
+                  />
+                </Row>
+                <Row label="消息截断阈值 (KB)" hint="超过此大小的消息内容将被截断显示">
+                  <input
+                    type="number"
+                    min={64}
+                    max={4096}
+                    value={Math.round(settings.maxPayloadRenderBytes / 1024)}
+                    onChange={(e) =>
+                      setSetting('maxPayloadRenderBytes', (Number(e.target.value) || 500) * 1024)
+                    }
+                    onBlur={() => {
+                      const kb = Math.round(settings.maxPayloadRenderBytes / 1024)
+                      setSetting('maxPayloadRenderBytes', Math.max(64, Math.min(4096, kb)) * 1024)
+                    }}
+                    title="消息截断阈值"
+                    aria-label="消息截断阈值 KB"
+                    className="h-10 w-20 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  />
+                </Row>
+                <Row
+                  label="消费积压告警阈值"
+                  hint="当消费组堆积消息超过此值时显示告警，设为 0 关闭"
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
-                  <span className="shrink-0 w-20 font-medium text-foreground">{platform}</span>
-                  <code className="min-w-0 flex-1 break-all font-mono text-xs text-muted-foreground">
-                    {path}
-                  </code>
-                </button>
-              ))}
-            </div>
-          </div>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={settings.lagAlertThreshold ?? 0}
+                    onChange={(e) => setSetting('lagAlertThreshold', Number(e.target.value) || 0)}
+                    title="积压告警阈值"
+                    aria-label="积压告警阈值"
+                    className="h-10 w-24 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  />
+                </Row>
+                <Row label="单页拉取数量" hint="每次查询 Topic、消费组的数量上限">
+                  <select
+                    value={settings.fetchLimit}
+                    onChange={(e) => setSetting('fetchLimit', Number(e.target.value) as FetchLimit)}
+                    title="单页拉取数量"
+                    className="h-10 rounded-md border border-border/50 bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-border"
+                  >
+                    {FETCH_LIMIT_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </Row>
+              </div>
+            )}
 
-          {/* Data Management */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">数据管理</h3>
-            <div className="mt-3 flex flex-wrap gap-2.5">
-              <button
-                type="button"
-                onClick={handleExport}
-                className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground hover:bg-accent/50 transition-colors"
-              >
-                <Download className="h-4 w-4" />
-                导出配置
-              </button>
-              <button
-                type="button"
-                onClick={handleImport}
-                className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground hover:bg-accent/50 transition-colors"
-              >
-                <Upload className="h-4 w-4" />
-                导入配置
-              </button>
-              <button
-                type="button"
-                onClick={handleClearCache}
-                className="flex h-10 items-center gap-2 rounded-lg border border-destructive/50 bg-background px-4 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-                清理缓存
-              </button>
-              <button
-                type="button"
-                onClick={handleResetSettings}
-                className="flex h-10 items-center gap-2 rounded-lg border border-destructive/50 bg-background px-4 text-sm text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <RotateCcw className="h-4 w-4" />
-                恢复默认设置
-              </button>
-            </div>
-          </div>
-            </div>
-          )}
+            {activeTab === 'about' && (
+              <div className="space-y-5">
+                {/* App Info Card */}
+                <div className="rounded-lg border border-border/40 bg-muted/10 p-5">
+                  <div className="flex items-start gap-4">
+                    <img
+                      src={logoUrl}
+                      alt=""
+                      className="h-14 w-14 shrink-0 rounded-xl object-contain"
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-base font-semibold text-foreground">Rocket-Leaf</h2>
+                      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                        A lightweight, cross-platform RocketMQ client built with Go and Wails.
+                      </p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        一款基于 Wails 构建的轻量级、跨平台 RocketMQ 管理客户端。
+                      </p>
+                      <span className="mt-2 inline-block rounded-full bg-muted/60 px-2.5 py-0.5 text-xs text-muted-foreground">
+                        v{APP_VERSION}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Links */}
+                <div className="flex flex-wrap gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleCheckUpdate}
+                    className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground transition-colors hover:bg-accent/50"
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    检查更新
+                  </button>
+                  <a
+                    href={GITHUB_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground transition-colors hover:bg-accent/50"
+                  >
+                    <Github className="h-4 w-4" />
+                    GitHub
+                  </a>
+                  <a
+                    href={GITHUB_ISSUES_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground transition-colors hover:bg-accent/50"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    提交 Issue
+                  </a>
+                </div>
+
+                {/* Data Paths */}
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">数据存储目录</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">点击复制对应平台的路径</p>
+                  <div className="mt-3 divide-y divide-border/30 overflow-hidden rounded-lg border border-border/40">
+                    {DATA_PATHS.map(({ platform, path, icon: Icon }) => (
+                      <button
+                        key={platform}
+                        type="button"
+                        onClick={() => copyPath(path)}
+                        className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors hover:bg-accent/30"
+                        title="点击复制路径"
+                      >
+                        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="w-20 shrink-0 font-medium text-foreground">
+                          {platform}
+                        </span>
+                        <code className="min-w-0 flex-1 break-all font-mono text-xs text-muted-foreground">
+                          {path}
+                        </code>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Data Management */}
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">数据管理</h3>
+                  <div className="mt-3 flex flex-wrap gap-2.5">
+                    <button
+                      type="button"
+                      onClick={handleExport}
+                      className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground transition-colors hover:bg-accent/50"
+                    >
+                      <Download className="h-4 w-4" />
+                      导出配置
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleImport}
+                      className="flex h-10 items-center gap-2 rounded-lg border border-border/50 bg-background px-4 text-sm text-foreground transition-colors hover:bg-accent/50"
+                    >
+                      <Upload className="h-4 w-4" />
+                      导入配置
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearCache}
+                      className="flex h-10 items-center gap-2 rounded-lg border border-destructive/50 bg-background px-4 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      清理缓存
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResetSettings}
+                      className="flex h-10 items-center gap-2 rounded-lg border border-destructive/50 bg-background px-4 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                      恢复默认设置
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </fieldset>
         </main>
       </div>

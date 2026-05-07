@@ -106,10 +106,16 @@ export function AclView() {
     setSaving(true)
     try {
       const topicPerms = formTopicPerms.trim()
-        ? formTopicPerms.split('\n').map((s) => s.trim()).filter(Boolean)
+        ? formTopicPerms
+            .split('\n')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : []
       const groupPerms = formGroupPerms.trim()
-        ? formGroupPerms.split('\n').map((s) => s.trim()).filter(Boolean)
+        ? formGroupPerms
+            .split('\n')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : []
 
       await aclApi.createOrUpdateAccessConfig(
@@ -120,7 +126,7 @@ export function AclView() {
         formDefaultTopicPerm,
         formDefaultGroupPerm,
         topicPerms,
-        groupPerms
+        groupPerms,
       )
       toast.success('ACL 配置已保存')
       setShowForm(false)
@@ -132,9 +138,16 @@ export function AclView() {
       setSaving(false)
     }
   }, [
-    formAccessKey, formSecretKey, formWhiteAddr, formIsAdmin,
-    formDefaultTopicPerm, formDefaultGroupPerm, formTopicPerms, formGroupPerms,
-    resetForm, loadStatus,
+    formAccessKey,
+    formSecretKey,
+    formWhiteAddr,
+    formIsAdmin,
+    formDefaultTopicPerm,
+    formDefaultGroupPerm,
+    formTopicPerms,
+    formGroupPerms,
+    resetForm,
+    loadStatus,
   ])
 
   const handleDelete = useCallback(async () => {
@@ -197,7 +210,7 @@ export function AclView() {
           <div className="mx-auto max-w-2xl space-y-6">
             {/* ACL Status Card */}
             <div className="rounded-lg border border-border/60 p-5">
-              <div className="flex items-center gap-3 mb-4">
+              <div className="mb-4 flex items-center gap-3">
                 {aclEnabled ? (
                   <Shield className="h-5 w-5 text-emerald-500" />
                 ) : (
@@ -211,7 +224,7 @@ export function AclView() {
                     'inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium',
                     aclEnabled
                       ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                      : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                      : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400',
                   )}
                 >
                   {aclEnabled ? 'Enabled' : 'Disabled'}
@@ -242,7 +255,11 @@ export function AclView() {
                 <div className="mt-4 flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
                   <Info className="mt-0.5 h-4 w-4 shrink-0" />
                   <span>
-                    Broker 未启用 ACL。需在 broker.conf 中设置 <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">aclEnable=true</code> 并重启 Broker 后才能使用 ACL 功能。
+                    Broker 未启用 ACL。需在 broker.conf 中设置{' '}
+                    <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/40">
+                      aclEnable=true
+                    </code>{' '}
+                    并重启 Broker 后才能使用 ACL 功能。
                   </span>
                 </div>
               )}
@@ -275,8 +292,9 @@ export function AclView() {
               <div className="flex items-start gap-2 rounded-md border border-border/40 bg-muted/30 p-4 text-sm text-muted-foreground">
                 <Info className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  当前使用 RocketMQ 4.x 旧版 ACL（基于 plain_acl.yml）。该模式下 Broker 不提供列出所有访问配置的远程 API，
-                  只能通过创建/更新和删除操作管理 AccessKey。请确保您知道要操作的 AccessKey。
+                  当前使用 RocketMQ 4.x 旧版 ACL（基于 plain_acl.yml）。该模式下 Broker
+                  不提供列出所有访问配置的远程 API， 只能通过创建/更新和删除操作管理
+                  AccessKey。请确保您知道要操作的 AccessKey。
                 </span>
               </div>
             )}
@@ -287,7 +305,7 @@ export function AclView() {
       {/* Create/Update Dialog */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="w-[520px] max-h-[85vh] overflow-y-auto rounded-lg border border-border bg-card p-6 shadow-xl">
+          <div className="max-h-[85vh] w-[520px] overflow-y-auto rounded-lg border border-border bg-card p-6 shadow-xl">
             <h2 className="mb-4 text-base font-semibold">创建 / 更新访问配置</h2>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
@@ -332,31 +350,41 @@ export function AclView() {
                   onChange={(e) => setFormIsAdmin(e.target.checked)}
                   className="rounded"
                 />
-                <label htmlFor="isAdmin" className="text-sm">管理员权限</label>
+                <label htmlFor="isAdmin" className="text-sm">
+                  管理员权限
+                </label>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="mb-1 block text-sm text-muted-foreground">默认 Topic 权限</label>
+                  <label className="mb-1 block text-sm text-muted-foreground">
+                    默认 Topic 权限
+                  </label>
                   <select
                     value={formDefaultTopicPerm}
                     onChange={(e) => setFormDefaultTopicPerm(e.target.value)}
                     className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring"
                   >
                     {PERM_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm text-muted-foreground">默认 Group 权限</label>
+                  <label className="mb-1 block text-sm text-muted-foreground">
+                    默认 Group 权限
+                  </label>
                   <select
                     value={formDefaultGroupPerm}
                     onChange={(e) => setFormDefaultGroupPerm(e.target.value)}
                     className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-1 focus:ring-ring"
                   >
                     {PERM_OPTIONS.map((o) => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -392,7 +420,10 @@ export function AclView() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => { setShowForm(false); resetForm() }}
+                onClick={() => {
+                  setShowForm(false)
+                  resetForm()
+                }}
                 className="h-9 rounded-md border border-input px-4 text-sm hover:bg-accent"
               >
                 取消
@@ -429,7 +460,10 @@ export function AclView() {
             <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => { setShowDelete(false); setDeleteAccessKey('') }}
+                onClick={() => {
+                  setShowDelete(false)
+                  setDeleteAccessKey('')
+                }}
                 className="h-9 rounded-md border border-input px-4 text-sm hover:bg-accent"
               >
                 取消

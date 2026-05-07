@@ -1,5 +1,8 @@
 import * as MessageService from '../../bindings/rocket-leaf/internal/service/messageservice.js'
-import type { MessageItem, MessageTrackItem } from '../../bindings/rocket-leaf/internal/model/models.js'
+import type {
+  MessageItem,
+  MessageTrackItem,
+} from '../../bindings/rocket-leaf/internal/model/models.js'
 
 /**
  * 拉取指定 Topic 最新 N 条消息（用于选 Topic 后自动静默拉取）
@@ -28,7 +31,7 @@ export interface QueryCondition {
 export async function queryMessagesByCondition(
   topic: string,
   condition: QueryCondition,
-  maxResults = 32
+  maxResults = 32,
 ): Promise<MessageItem[]> {
   const { messageId, messageKey = '', messageTag = '', startTimeMs = 0, endTimeMs = 0 } = condition
   try {
@@ -36,7 +39,14 @@ export async function queryMessagesByCondition(
       const one = await MessageService.QueryMessageByID(topic, messageId.trim())
       return one ? [one] : []
     }
-    const raw = await MessageService.QueryMessages(topic, messageKey.trim(), messageTag.trim(), maxResults, startTimeMs, endTimeMs)
+    const raw = await MessageService.QueryMessages(
+      topic,
+      messageKey.trim(),
+      messageTag.trim(),
+      maxResults,
+      startTimeMs,
+      endTimeMs,
+    )
     return raw.filter((m): m is MessageItem => m != null)
   } catch (e) {
     console.error('queryMessagesByCondition', e)
@@ -44,10 +54,7 @@ export async function queryMessagesByCondition(
   }
 }
 
-export async function getMessageTrack(
-  topic: string,
-  msgID: string
-): Promise<MessageTrackItem[]> {
+export async function getMessageTrack(topic: string, msgID: string): Promise<MessageTrackItem[]> {
   try {
     const raw = await MessageService.GetMessageTrack(topic, msgID)
     return raw.filter((m): m is MessageTrackItem => m != null)
@@ -73,7 +80,10 @@ export async function queryDLQMessages(groupName: string, maxResults = 32): Prom
 /**
  * 查询消费者组的重试队列消息
  */
-export async function queryRetryMessages(groupName: string, maxResults = 32): Promise<MessageItem[]> {
+export async function queryRetryMessages(
+  groupName: string,
+  maxResults = 32,
+): Promise<MessageItem[]> {
   try {
     const raw = await MessageService.QueryRetryMessages(groupName, maxResults)
     return raw.filter((m): m is MessageItem => m != null)
@@ -90,7 +100,7 @@ export async function resendMessage(
   consumerGroup: string,
   clientID: string,
   topic: string,
-  msgID: string
+  msgID: string,
 ): Promise<string> {
   try {
     return await MessageService.ResendMessage(consumerGroup, clientID, topic, msgID)
@@ -105,7 +115,7 @@ export async function sendMessage(
   tags: string,
   keys: string,
   body: string,
-  delayLevel = 0
+  delayLevel = 0,
 ): Promise<string> {
   try {
     return await MessageService.SendMessage(topic, tags, keys, body, delayLevel)

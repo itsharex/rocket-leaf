@@ -27,12 +27,15 @@ interface HistoryEntry {
   error?: string
 }
 
-const DELAY_LEVELS: number[] = [
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-]
+const DELAY_LEVELS: number[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
 
 function formatTime(d: Date): string {
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  return d.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
 }
 
 export function ProducerScreen() {
@@ -200,7 +203,7 @@ export function ProducerScreen() {
                   </div>
                 </div>
 
-                <div className="mt-5 mb-2 flex items-center justify-between">
+                <div className="mb-2 mt-5 flex items-center justify-between">
                   <div className="rl-section-label" style={{ marginBottom: 0 }}>
                     {t('producer.body')}
                   </div>
@@ -243,11 +246,7 @@ export function ProducerScreen() {
                     {busy ? <Spinner size={13} /> : <Send size={13} />}
                     {busy ? t('producer.sending') : t('producer.send')}
                   </button>
-                  <button
-                    className="rl-btn rl-btn-ghost"
-                    onClick={handleReset}
-                    disabled={busy}
-                  >
+                  <button className="rl-btn rl-btn-ghost" onClick={handleReset} disabled={busy}>
                     <RotateCcw size={13} />
                     {t('producer.reset')}
                   </button>
@@ -273,10 +272,7 @@ export function ProducerScreen() {
                 <div className="rl-muted mt-1 text-[12px]">{t('producer.historyHint')}</div>
               </div>
               {history.length === 0 ? (
-                <div
-                  className="rl-muted text-[12px]"
-                  style={{ padding: 24, textAlign: 'center' }}
-                >
+                <div className="rl-muted text-[12px]" style={{ padding: 24, textAlign: 'center' }}>
                   {t('producer.historyEmpty')}
                 </div>
               ) : (
@@ -298,7 +294,7 @@ export function ProducerScreen() {
                         {h.time}
                       </span>
                       <span
-                        className="font-mono-design text-[12px] flex-1 truncate"
+                        className="font-mono-design flex-1 truncate text-[12px]"
                         title={h.topic}
                       >
                         {h.topic}
@@ -306,7 +302,7 @@ export function ProducerScreen() {
                     </div>
                     {h.ok ? (
                       <div
-                        className="font-mono-design rl-muted mt-1 text-[11px] truncate"
+                        className="font-mono-design rl-muted mt-1 truncate text-[11px]"
                         title={h.result}
                       >
                         {h.result}

@@ -26,24 +26,24 @@ Rocket-Leaf is a **local desktop app** for connecting to and managing RocketMQ c
 
 ## Features
 
-| Capability | Description |
-| ---------- | ----------- |
-| **Connection Management** | Add multiple clusters, switch quickly, and persist profiles locally |
-| **Topics** | Browse, search, inspect details, create, and delete topics |
-| **Consumer Groups** | View groups, inspect offsets, reset progress, and review subscriptions |
-| **Messages** | Query by Topic / Key / MessageId, inspect details, send test messages, and view traces |
-| **Monitoring** | Check cluster health, producer and consumer TPS, and backlog status |
+| Capability                | Description                                                                            |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| **Connection Management** | Add multiple clusters, switch quickly, and persist profiles locally                    |
+| **Topics**                | Browse, search, inspect details, create, and delete topics                             |
+| **Consumer Groups**       | View groups, inspect offsets, reset progress, and review subscriptions                 |
+| **Messages**              | Query by Topic / Key / MessageId, inspect details, send test messages, and view traces |
+| **Monitoring**            | Check cluster health, producer and consumer TPS, and backlog status                    |
 
 ## Screenshots
 
-| | |
-|---|---|
-| ![Connection Management](docs/images/screenshot-connections.png) | ![Topics](docs/images/screenshot-topics.png) |
-| Connection Management | Topics |
-| ![Consumer Groups](docs/images/screenshot-consumers.png) | ![Message Query](docs/images/screenshot-messages.png) |
-| Consumer Groups | Message Query |
-| ![Cluster Monitoring](docs/images/screenshot-cluster.png) | ![Settings](docs/images/screenshot-settings.png) |
-| Cluster Monitoring | Settings |
+|                                                                  |                                                       |
+| ---------------------------------------------------------------- | ----------------------------------------------------- |
+| ![Connection Management](docs/images/screenshot-connections.png) | ![Topics](docs/images/screenshot-topics.png)          |
+| Connection Management                                            | Topics                                                |
+| ![Consumer Groups](docs/images/screenshot-consumers.png)         | ![Message Query](docs/images/screenshot-messages.png) |
+| Consumer Groups                                                  | Message Query                                         |
+| ![Cluster Monitoring](docs/images/screenshot-cluster.png)        | ![Settings](docs/images/screenshot-settings.png)      |
+| Cluster Monitoring                                               | Settings                                              |
 
 ## Downloads
 

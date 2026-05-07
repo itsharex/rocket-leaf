@@ -109,7 +109,7 @@ tasks:
     deps:
       - task: build
         vars:
-          PRODUCTION: "true"
+          PRODUCTION: 'true'
     cmds:
       - task: assemble:apk
 
@@ -141,7 +141,7 @@ tasks:
     internal: true
     summary: Generates bindings for Android
     sources:
-      - "**/*.go"
+      - '**/*.go'
       - go.mod
       - go.sum
     generates:
@@ -193,9 +193,9 @@ tasks:
         exit 1
     preconditions:
       - sh: command -v adb
-        msg: "adb not found. Please install Android SDK and add platform-tools to PATH"
+        msg: 'adb not found. Please install Android SDK and add platform-tools to PATH'
       - sh: command -v emulator
-        msg: "emulator not found. Please install Android SDK and add emulator to PATH"
+        msg: 'emulator not found. Please install Android SDK and add emulator to PATH'
 
   deploy-emulator:
     summary: Deploy to Android Emulator

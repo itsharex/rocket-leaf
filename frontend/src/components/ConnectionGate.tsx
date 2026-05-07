@@ -9,7 +9,7 @@ type Props = {
 export function ConnectionGate({ onAddConnection, hasConnections }: Props) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-8 px-6 text-center">
-      <div className="flex h-18 w-18 items-center justify-center rounded-2xl border border-border/40 bg-muted/40 shadow-sm">
+      <div className="h-18 w-18 flex items-center justify-center rounded-2xl border border-border/40 bg-muted/40 shadow-sm">
         <WifiOff className="h-8 w-8 text-muted-foreground/70" />
       </div>
       <div className="space-y-2">
@@ -26,7 +26,7 @@ export function ConnectionGate({ onAddConnection, hasConnections }: Props) {
         type="button"
         onClick={onAddConnection}
         className={cn(
-          'inline-flex items-center gap-2 rounded-lg border border-border/50 bg-background px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent'
+          'inline-flex items-center gap-2 rounded-lg border border-border/50 bg-background px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent',
         )}
       >
         <Plus className="h-4 w-4" />

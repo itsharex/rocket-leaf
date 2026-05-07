@@ -1,6 +1,20 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { toast } from 'sonner'
-import { RefreshCw, Plus, Search, X, Trash2, Loader2, AlertTriangle, BarChart3, Pencil, ChevronDown, Filter, Eye, EyeOff } from 'lucide-react'
+import {
+  RefreshCw,
+  Plus,
+  Search,
+  X,
+  Trash2,
+  Loader2,
+  AlertTriangle,
+  BarChart3,
+  Pencil,
+  ChevronDown,
+  Filter,
+  Eye,
+  EyeOff,
+} from 'lucide-react'
 import { cn, formatErrorMessage } from '@/lib/utils'
 import type { TopicItem } from '../../bindings/rocket-leaf/internal/model/models.js'
 import { TopicPerm } from '../../bindings/rocket-leaf/internal/model/models.js'
@@ -100,10 +114,14 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
 
   // 切换系统 Topic 时加载
   useEffect(() => {
-    if (!showSystem) { setSystemTopics([]); return }
+    if (!showSystem) {
+      setSystemTopics([])
+      return
+    }
     let cancelled = false
     setSystemLoading(true)
-    topicApi.getAllTopics()
+    topicApi
+      .getAllTopics()
       .then((data) => {
         if (cancelled) return
         const all = data.filter((t): t is TopicItem => t != null)
@@ -111,17 +129,29 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
         const userTopicSet = new Set(list.map((t) => t.topic ?? ''))
         setSystemTopics(all.filter((t) => !userTopicSet.has(t.topic ?? '')))
       })
-      .catch(() => { if (!cancelled) setSystemTopics([]) })
-      .finally(() => { if (!cancelled) setSystemLoading(false) })
-    return () => { cancelled = true }
+      .catch(() => {
+        if (!cancelled) setSystemTopics([])
+      })
+      .finally(() => {
+        if (!cancelled) setSystemLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
   }, [showSystem, list])
 
   const combinedList = showSystem ? [...list, ...systemTopics] : list
-  const clusterNames = Array.from(new Set(combinedList.map((t) => t.cluster ?? '').filter(Boolean))).sort()
+  const clusterNames = Array.from(
+    new Set(combinedList.map((t) => t.cluster ?? '').filter(Boolean)),
+  ).sort()
 
   const filteredList = combinedList.filter((t) => {
     if (clusterFilter && (t.cluster ?? '') !== clusterFilter) return false
-    if (searchQuery.trim() && !(t.topic ?? '').toLowerCase().includes(searchQuery.trim().toLowerCase())) return false
+    if (
+      searchQuery.trim() &&
+      !(t.topic ?? '').toLowerCase().includes(searchQuery.trim().toLowerCase())
+    )
+      return false
     return true
   })
 
@@ -204,7 +234,8 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
     if (!createOpen) return
     let cancelled = false
     setBrokerOptionsLoading(true)
-    clusterApi.getBrokers()
+    clusterApi
+      .getBrokers()
       .then((brokers) => {
         if (cancelled) return
         const options = brokers
@@ -228,10 +259,15 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
       e.preventDefault()
       const form = e.currentTarget
       const topic = (form.querySelector('[name="topic"]') as HTMLInputElement)?.value?.trim()
-      const brokerAddr = (form.querySelector('[name="brokerAddr"]') as HTMLInputElement)?.value?.trim()
-      const readQueue = Number((form.querySelector('[name="readQueue"]') as HTMLInputElement)?.value) || 4
-      const writeQueue = Number((form.querySelector('[name="writeQueue"]') as HTMLInputElement)?.value) || 4
-      const perm = (form.querySelector('[name="perm"]') as HTMLSelectElement)?.value ?? TopicPerm.PermRW
+      const brokerAddr = (
+        form.querySelector('[name="brokerAddr"]') as HTMLInputElement
+      )?.value?.trim()
+      const readQueue =
+        Number((form.querySelector('[name="readQueue"]') as HTMLInputElement)?.value) || 4
+      const writeQueue =
+        Number((form.querySelector('[name="writeQueue"]') as HTMLInputElement)?.value) || 4
+      const perm =
+        (form.querySelector('[name="perm"]') as HTMLSelectElement)?.value ?? TopicPerm.PermRW
       if (!topic) {
         setCreateError('请输入 Topic 名称')
         return
@@ -253,7 +289,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
         setCreateSubmitting(false)
       }
     },
-    [onRefresh]
+    [onRefresh],
   )
 
   const handleOpenEdit = useCallback(() => {
@@ -308,7 +344,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
         setDeletingTopic(null)
       }
     },
-    [onRefresh, selectedTopic]
+    [onRefresh, selectedTopic],
   )
 
   return (
@@ -322,12 +358,20 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
               onClick={() => setShowSystem(!showSystem)}
               className={cn(
                 'flex h-8 w-8 items-center justify-center rounded-md transition-colors',
-                showSystem ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                showSystem
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground',
               )}
               aria-label={showSystem ? '隐藏系统 Topic' : '显示系统 Topic'}
               title={showSystem ? '隐藏系统 Topic' : '显示系统 Topic'}
             >
-              {systemLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : showSystem ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              {systemLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : showSystem ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <EyeOff className="h-4 w-4" />
+              )}
             </button>
             <button
               type="button"
@@ -348,7 +392,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                 onMouseEnter={onEnter}
                 onMouseLeave={onLeave}
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50'
+                  'flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-50',
                 )}
                 aria-label="刷新"
               >
@@ -367,7 +411,10 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <Search
+              className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
             <input
               type="text"
               value={searchQuery}
@@ -379,19 +426,24 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
           </div>
           {clusterNames.length > 1 && (
             <div className="relative shrink-0">
-              <Filter className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Filter
+                className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
               <select
                 value={clusterFilter}
                 onChange={(e) => setClusterFilter(e.target.value)}
                 className={cn(
                   'appearance-none rounded-md border border-border/40 bg-background py-1.5 pl-7 pr-6 text-xs transition-colors focus:outline-none focus:ring-1 focus:ring-primary/50',
-                  clusterFilter ? 'text-foreground' : 'text-muted-foreground'
+                  clusterFilter ? 'text-foreground' : 'text-muted-foreground',
                 )}
                 aria-label="按集群筛选"
               >
                 <option value="">全部集群</option>
                 {clusterNames.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
                 ))}
               </select>
             </div>
@@ -400,9 +452,11 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <div className="flex-1 overflow-y-auto scroll-thin p-4">
+        <div className="scroll-thin flex-1 overflow-y-auto p-4">
           {loading && list.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-muted-foreground">加载中…</div>
+            <div className="flex items-center justify-center py-12 text-muted-foreground">
+              加载中…
+            </div>
           ) : error ? (
             <div className="rounded-md border border-border/50 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
               {error}
@@ -419,14 +473,18 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                   onClick={() => setSelectedTopic(t.topic ?? null)}
                   className={cn(
                     'flex cursor-pointer items-center justify-between rounded-md border border-border/40 px-3 py-2 transition-colors hover:border-primary/50 hover:bg-accent/50',
-                    selectedTopic === (t.topic ?? '') && 'border-primary/50 bg-accent/50'
+                    selectedTopic === (t.topic ?? '') && 'border-primary/50 bg-accent/50',
                   )}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium text-foreground truncate">{t.topic}</span>
-                      {(t.description === '系统') && (
-                        <span className="shrink-0 rounded bg-amber-500/10 px-1 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">系统</span>
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {t.topic}
+                      </span>
+                      {t.description === '系统' && (
+                        <span className="shrink-0 rounded bg-amber-500/10 px-1 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400">
+                          系统
+                        </span>
                       )}
                     </div>
                     {(t.readQueue ?? -1) >= 0 && (t.writeQueue ?? -1) >= 0 ? (
@@ -434,9 +492,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                         读 {t.readQueue} / 写 {t.writeQueue}
                       </span>
                     ) : (
-                      <span className="ml-2 text-xs text-muted-foreground">
-                        队列信息见详情
-                      </span>
+                      <span className="ml-2 text-xs text-muted-foreground">队列信息见详情</span>
                     )}
                   </div>
                   <button
@@ -482,7 +538,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto scroll-thin p-3">
+            <div className="scroll-thin flex-1 overflow-y-auto p-3">
               {detailLoading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -504,7 +560,9 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                     )}
                     <p>
                       <span className="text-muted-foreground">读队列 / 写队列：</span>
-                      <span className="text-foreground">{detail.readQueue ?? 0} / {detail.writeQueue ?? 0}</span>
+                      <span className="text-foreground">
+                        {detail.readQueue ?? 0} / {detail.writeQueue ?? 0}
+                      </span>
                     </p>
                     {detail.perm != null && detail.perm !== '' && (
                       <p>
@@ -528,15 +586,21 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                         <div className="grid grid-cols-3 gap-2">
                           <div className="rounded-md border border-border/40 bg-card px-3 py-2">
                             <div className="text-[11px] text-muted-foreground">消息队列</div>
-                            <div className="mt-1 text-sm font-medium text-foreground">{stats.queueCount}</div>
+                            <div className="mt-1 text-sm font-medium text-foreground">
+                              {stats.queueCount}
+                            </div>
                           </div>
                           <div className="rounded-md border border-border/40 bg-card px-3 py-2">
                             <div className="text-[11px] text-muted-foreground">最大偏移</div>
-                            <div className="mt-1 text-sm font-medium text-foreground">{formatNumber(stats.totalMaxOffset)}</div>
+                            <div className="mt-1 text-sm font-medium text-foreground">
+                              {formatNumber(stats.totalMaxOffset)}
+                            </div>
                           </div>
                           <div className="rounded-md border border-border/40 bg-card px-3 py-2">
                             <div className="text-[11px] text-muted-foreground">消息总量</div>
-                            <div className="mt-1 text-sm font-medium text-foreground">{formatNumber(stats.totalMessages)}</div>
+                            <div className="mt-1 text-sm font-medium text-foreground">
+                              {formatNumber(stats.totalMessages)}
+                            </div>
                           </div>
                         </div>
                         {stats.queues.length > 0 && (
@@ -544,31 +608,59 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                             <button
                               type="button"
                               onClick={() => setQueueDetailExpanded(!queueDetailExpanded)}
-                              className="flex w-full items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                              className="flex w-full items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
                             >
                               <span>队列明细</span>
-                              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', queueDetailExpanded && 'rotate-180')} />
+                              <ChevronDown
+                                className={cn(
+                                  'h-3.5 w-3.5 transition-transform',
+                                  queueDetailExpanded && 'rotate-180',
+                                )}
+                              />
                             </button>
                             {queueDetailExpanded && (
                               <div className="mt-2 overflow-x-auto rounded-md border border-border/40">
                                 <table className="w-full min-w-[320px] text-xs">
                                   <thead>
                                     <tr className="border-b border-border/40 bg-muted/30">
-                                      <th className="px-2 py-1.5 text-left font-medium text-foreground">Broker</th>
-                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">QueueID</th>
-                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">Min</th>
-                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">Max</th>
-                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">消息量</th>
+                                      <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                        Broker
+                                      </th>
+                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">
+                                        QueueID
+                                      </th>
+                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">
+                                        Min
+                                      </th>
+                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">
+                                        Max
+                                      </th>
+                                      <th className="px-2 py-1.5 text-right font-medium text-foreground">
+                                        消息量
+                                      </th>
                                     </tr>
                                   </thead>
                                   <tbody>
                                     {stats.queues.map((q, i) => (
-                                      <tr key={i} className="border-b border-border/30 last:border-0">
-                                        <td className="px-2 py-1.5 font-mono text-foreground">{q.brokerName}</td>
-                                        <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">{q.queueId}</td>
-                                        <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">{formatNumber(q.minOffset)}</td>
-                                        <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">{formatNumber(q.maxOffset)}</td>
-                                        <td className="px-2 py-1.5 text-right font-mono text-foreground">{formatNumber(q.messages)}</td>
+                                      <tr
+                                        key={i}
+                                        className="border-b border-border/30 last:border-0"
+                                      >
+                                        <td className="px-2 py-1.5 font-mono text-foreground">
+                                          {q.brokerName}
+                                        </td>
+                                        <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">
+                                          {q.queueId}
+                                        </td>
+                                        <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">
+                                          {formatNumber(q.minOffset)}
+                                        </td>
+                                        <td className="px-2 py-1.5 text-right font-mono text-muted-foreground">
+                                          {formatNumber(q.maxOffset)}
+                                        </td>
+                                        <td className="px-2 py-1.5 text-right font-mono text-foreground">
+                                          {formatNumber(q.messages)}
+                                        </td>
                                       </tr>
                                     ))}
                                   </tbody>
@@ -589,23 +681,38 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                         <table className="w-full min-w-[280px] text-xs">
                           <thead>
                             <tr className="border-b border-border/40 bg-muted/30">
-                              <th className="px-2 py-1.5 text-left font-medium text-foreground">Broker</th>
-                              <th className="px-2 py-1.5 text-left font-medium text-foreground">地址</th>
-                              <th className="px-2 py-1.5 text-right font-medium text-foreground">读/写</th>
-                              <th className="px-2 py-1.5 text-left font-medium text-foreground">权限</th>
+                              <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                Broker
+                              </th>
+                              <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                地址
+                              </th>
+                              <th className="px-2 py-1.5 text-right font-medium text-foreground">
+                                读/写
+                              </th>
+                              <th className="px-2 py-1.5 text-left font-medium text-foreground">
+                                权限
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
                             {detail.routes.map((r, i) => (
                               <tr key={i} className="border-b border-border/30 last:border-0">
-                                <td className="px-2 py-1.5 font-mono text-foreground">{r.broker ?? '-'}</td>
-                                <td className="max-w-[120px] truncate px-2 py-1.5 font-mono text-muted-foreground" title={r.brokerAddr ?? ''}>
+                                <td className="px-2 py-1.5 font-mono text-foreground">
+                                  {r.broker ?? '-'}
+                                </td>
+                                <td
+                                  className="max-w-[120px] truncate px-2 py-1.5 font-mono text-muted-foreground"
+                                  title={r.brokerAddr ?? ''}
+                                >
                                   {r.brokerAddr ?? '-'}
                                 </td>
                                 <td className="px-2 py-1.5 text-right text-muted-foreground">
                                   {r.readQueue ?? 0} / {r.writeQueue ?? 0}
                                 </td>
-                                <td className="px-2 py-1.5 text-muted-foreground">{r.perm ?? '-'}</td>
+                                <td className="px-2 py-1.5 text-muted-foreground">
+                                  {r.perm ?? '-'}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -631,7 +738,12 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
             )}
             <form onSubmit={handleCreateSubmit} className="mt-4 space-y-3">
               <div>
-                <label id="create-topic-name-label" className="mb-1 block text-xs text-muted-foreground">Topic 名称</label>
+                <label
+                  id="create-topic-name-label"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  Topic 名称
+                </label>
                 <input
                   id="create-topic-name"
                   name="topic"
@@ -644,7 +756,11 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
               <div>
                 <label
                   id="create-topic-broker-label"
-                  htmlFor={brokerOptions.length > 0 ? 'create-topic-broker-select' : 'create-topic-broker-input'}
+                  htmlFor={
+                    brokerOptions.length > 0
+                      ? 'create-topic-broker-select'
+                      : 'create-topic-broker-input'
+                  }
                   className="mb-1 block text-xs text-muted-foreground"
                 >
                   Broker 地址
@@ -654,7 +770,7 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                     id="create-topic-broker-select"
                     name="brokerAddr"
                     aria-labelledby="create-topic-broker-label"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
                     defaultValue={brokerOptions[0]}
                   >
                     {brokerOptions.map((addr) => (
@@ -669,8 +785,10 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                     name="brokerAddr"
                     type="text"
                     aria-labelledby="create-topic-broker-label"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
-                    placeholder={brokerOptionsLoading ? '正在加载 Broker…' : '例如：192.168.1.1:10911'}
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
+                    placeholder={
+                      brokerOptionsLoading ? '正在加载 Broker…' : '例如：192.168.1.1:10911'
+                    }
                   />
                 )}
                 {brokerOptionsLoading && (
@@ -679,7 +797,12 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label id="create-topic-read-label" className="mb-1 block text-xs text-muted-foreground">读队列数</label>
+                  <label
+                    id="create-topic-read-label"
+                    className="mb-1 block text-xs text-muted-foreground"
+                  >
+                    读队列数
+                  </label>
                   <input
                     id="create-topic-read"
                     name="readQueue"
@@ -691,7 +814,12 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                   />
                 </div>
                 <div>
-                  <label id="create-topic-write-label" className="mb-1 block text-xs text-muted-foreground">写队列数</label>
+                  <label
+                    id="create-topic-write-label"
+                    className="mb-1 block text-xs text-muted-foreground"
+                  >
+                    写队列数
+                  </label>
                   <input
                     id="create-topic-write"
                     name="writeQueue"
@@ -704,7 +832,12 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                 </div>
               </div>
               <div>
-                <label id="create-topic-perm-label" className="mb-1 block text-xs text-muted-foreground">权限</label>
+                <label
+                  id="create-topic-perm-label"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  权限
+                </label>
                 <select
                   id="create-topic-perm"
                   name="perm"
@@ -756,7 +889,8 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
               编辑 Topic 配置
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              修改「<span className="font-mono text-foreground">{detail.topic}</span>」的队列数和权限
+              修改「<span className="font-mono text-foreground">{detail.topic}</span>
+              」的队列数和权限
             </p>
             {editError && (
               <div className="mt-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -766,7 +900,12 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
             <div className="mt-4 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label id="edit-topic-read-label" className="mb-1 block text-xs text-muted-foreground">读队列数</label>
+                  <label
+                    id="edit-topic-read-label"
+                    className="mb-1 block text-xs text-muted-foreground"
+                  >
+                    读队列数
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -777,7 +916,12 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                   />
                 </div>
                 <div>
-                  <label id="edit-topic-write-label" className="mb-1 block text-xs text-muted-foreground">写队列数</label>
+                  <label
+                    id="edit-topic-write-label"
+                    className="mb-1 block text-xs text-muted-foreground"
+                  >
+                    写队列数
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -789,7 +933,12 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                 </div>
               </div>
               <div>
-                <label id="edit-topic-perm-label" className="mb-1 block text-xs text-muted-foreground">权限</label>
+                <label
+                  id="edit-topic-perm-label"
+                  className="mb-1 block text-xs text-muted-foreground"
+                >
+                  权限
+                </label>
                 <select
                   value={editPerm}
                   onChange={(e) => setEditPerm(e.target.value)}
@@ -854,7 +1003,9 @@ export function TopicList({ list, loading, error, onRefresh }: Props) {
                   删除 Topic
                 </h2>
                 <p className="mt-1.5 text-sm text-muted-foreground">
-                  确定删除 Topic「<span className="font-mono text-foreground">{deleteConfirmTopic}</span>」？此操作不可恢复。
+                  确定删除 Topic「
+                  <span className="font-mono text-foreground">{deleteConfirmTopic}</span>
+                  」？此操作不可恢复。
                 </p>
               </div>
             </div>

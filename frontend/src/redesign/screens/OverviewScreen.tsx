@@ -49,10 +49,18 @@ function formatLag(n: number): string {
 
 function formatTime(d: Date | null): string {
   if (!d) return '—'
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
+  return d.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  })
 }
 
-function aggregateHistory(brokers: BrokerNode[], field: 'tpsInHistory' | 'tpsOutHistory'): number[] {
+function aggregateHistory(
+  brokers: BrokerNode[],
+  field: 'tpsInHistory' | 'tpsOutHistory',
+): number[] {
   // Use the longest history available; sum each index across brokers.
   const histories = brokers
     .map((b) => (b[field] ?? []) as number[])
@@ -107,7 +115,9 @@ function buildFindings(
       key: `group-off-${noInstance.group}`,
       severity: 'high',
       title: t('overview.ai.findings.offlineGroupTitle', { group: noInstance.group }),
-      desc: t('overview.ai.findings.offlineGroupDesc', { lag: Number(noInstance.lag).toLocaleString() }),
+      desc: t('overview.ai.findings.offlineGroupDesc', {
+        lag: Number(noInstance.lag).toLocaleString(),
+      }),
     })
   }
   const withInstance = sortedGroupsByLag.find(
@@ -124,7 +134,9 @@ function buildFindings(
         group: withInstance.group,
         lag: Number(withInstance.lag).toLocaleString(),
       }),
-      desc: t('overview.ai.findings.highLagDesc', { threshold: effectiveThreshold.toLocaleString() }),
+      desc: t('overview.ai.findings.highLagDesc', {
+        threshold: effectiveThreshold.toLocaleString(),
+      }),
     })
   }
 
@@ -217,7 +229,10 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
   const findings = useMemo(() => buildFindings(data, lagThreshold, t), [data, lagThreshold, t])
 
   const tpsInSeries = useMemo(() => aggregateHistory(data.brokers, 'tpsInHistory'), [data.brokers])
-  const tpsOutSeries = useMemo(() => aggregateHistory(data.brokers, 'tpsOutHistory'), [data.brokers])
+  const tpsOutSeries = useMemo(
+    () => aggregateHistory(data.brokers, 'tpsOutHistory'),
+    [data.brokers],
+  )
   const currentTpsIn = data.brokers.reduce((s, b) => s + (b.tpsIn ?? 0), 0)
   const currentTpsOut = data.brokers.reduce((s, b) => s + (b.tpsOut ?? 0), 0)
 
@@ -243,9 +258,10 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
     }
   }
 
-  const subtitle = isOnline && conn
-    ? t('overview.subtitleConnected', { cluster: conn.name, time: formatTime(data.lastUpdated) })
-    : t('overview.subtitleNoConn')
+  const subtitle =
+    isOnline && conn
+      ? t('overview.subtitleConnected', { cluster: conn.name, time: formatTime(data.lastUpdated) })
+      : t('overview.subtitleNoConn')
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -261,7 +277,8 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
         </button>
         {isOnline && conn && (
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={handleDisconnect}>
-            <Unlink size={13} />{t('common.disconnect')}
+            <Unlink size={13} />
+            {t('common.disconnect')}
           </button>
         )}
       </PageHeader>
@@ -308,7 +325,10 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
                 value={`${onlineBrokerCount} / ${totalBrokerCount || onlineBrokerCount}`}
                 sub={
                   onlineBrokerCount === totalBrokerCount && totalBrokerCount > 0
-                    ? t('overview.stat.brokerSummary_all', { master: masterCount, slave: slaveCount })
+                    ? t('overview.stat.brokerSummary_all', {
+                        master: masterCount,
+                        slave: slaveCount,
+                      })
                     : t('overview.stat.brokerSummary_partial', {
                         online: onlineBrokerCount,
                         total: totalBrokerCount,
@@ -382,7 +402,9 @@ function KpiStat({
         <span className="rl-muted text-[12px]">{label}</span>
         <Icon size={14} className="rl-muted" />
       </div>
-      <div className="value" style={{ fontSize: 24, marginTop: 6 }}>{value}</div>
+      <div className="value" style={{ fontSize: 24, marginTop: 6 }}>
+        {value}
+      </div>
       <div className="rl-muted mt-1 text-[12px]">{sub}</div>
     </div>
   )
@@ -416,30 +438,60 @@ function ThroughputCard({
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: 'hsl(142 50% 38%)' }} />
+            <span
+              style={{ width: 8, height: 8, borderRadius: 2, background: 'hsl(142 50% 38%)' }}
+            />
             <span className="rl-muted text-[12px]">{t('overview.throughput.produce')}</span>
-            <span className="font-mono-design rl-tabular text-[12px]">{formatTps(currentIn)}/s</span>
+            <span className="font-mono-design rl-tabular text-[12px]">
+              {formatTps(currentIn)}/s
+            </span>
           </div>
           <div className="flex items-center gap-2">
-            <span style={{ width: 8, height: 8, borderRadius: 2, background: 'hsl(217 80% 50%)' }} />
+            <span
+              style={{ width: 8, height: 8, borderRadius: 2, background: 'hsl(217 80% 50%)' }}
+            />
             <span className="rl-muted text-[12px]">{t('overview.throughput.consume')}</span>
-            <span className="font-mono-design rl-tabular text-[12px]">{formatTps(currentOut)}/s</span>
+            <span className="font-mono-design rl-tabular text-[12px]">
+              {formatTps(currentOut)}/s
+            </span>
           </div>
         </div>
       </div>
       {hasData ? (
-        <svg viewBox="0 0 800 200" preserveAspectRatio="none" style={{ width: '100%', height: 180 }}>
+        <svg
+          viewBox="0 0 800 200"
+          preserveAspectRatio="none"
+          style={{ width: '100%', height: 180 }}
+        >
           {[40, 80, 120, 160].map((yy) => (
-            <line key={yy} x1={0} y1={yy} x2={800} y2={yy} stroke="hsl(var(--border))" strokeDasharray="3 3" />
+            <line
+              key={yy}
+              x1={0}
+              y1={yy}
+              x2={800}
+              y2={yy}
+              stroke="hsl(var(--border))"
+              strokeDasharray="3 3"
+            />
           ))}
           {prod.length > 0 && (
             <>
               <polygon points={polyFor(prod)} fill="hsl(142 50% 38%)" opacity={0.06} />
-              <polyline points={lineFor(prod)} fill="none" stroke="hsl(142 50% 38%)" strokeWidth={1.5} />
+              <polyline
+                points={lineFor(prod)}
+                fill="none"
+                stroke="hsl(142 50% 38%)"
+                strokeWidth={1.5}
+              />
             </>
           )}
           {cons.length > 0 && (
-            <polyline points={lineFor(cons)} fill="none" stroke="hsl(217 80% 50%)" strokeWidth={1.5} />
+            <polyline
+              points={lineFor(cons)}
+              fill="none"
+              stroke="hsl(217 80% 50%)"
+              strokeWidth={1.5}
+            />
           )}
         </svg>
       ) : (
@@ -484,9 +536,12 @@ function ActiveTopicsCard({ topics, maxTps }: { topics: TopicItem[]; maxTps: num
                 }}
               >
                 <Tag size={12} className="rl-muted" />
-                <span className="font-mono-design text-[12px] flex-1 truncate">{topic.topic}</span>
+                <span className="font-mono-design flex-1 truncate text-[12px]">{topic.topic}</span>
                 <div className="rl-progress" style={{ width: 80 }}>
-                  <div className="bar" style={{ width: pct + '%', background: 'hsl(217 60% 55%)' }} />
+                  <div
+                    className="bar"
+                    style={{ width: pct + '%', background: 'hsl(217 60% 55%)' }}
+                  />
                 </div>
                 <span
                   className="font-mono-design rl-tabular rl-muted text-[12px]"
@@ -538,13 +593,16 @@ function LagAlertsCard({
               <div
                 key={g.group}
                 className="flex items-center gap-3"
-                style={{ padding: '10px 16px', borderTop: i ? '1px solid hsl(var(--border))' : undefined }}
+                style={{
+                  padding: '10px 16px',
+                  borderTop: i ? '1px solid hsl(var(--border))' : undefined,
+                }}
               >
                 <AlertCircle
                   size={13}
                   style={{ color: danger ? 'hsl(var(--destructive))' : 'hsl(28 80% 45%)' }}
                 />
-                <span className="font-mono-design text-[12px] flex-1 truncate">{g.group}</span>
+                <span className="font-mono-design flex-1 truncate text-[12px]">{g.group}</span>
                 <span className={'rl-badge ' + (danger ? 'rl-badge-danger' : 'rl-badge-warn')}>
                   +{lag.toLocaleString()}
                 </span>
@@ -554,7 +612,7 @@ function LagAlertsCard({
         )}
         {alerts.length > 0 && (
           <div
-            className="flex items-center gap-3 rl-muted"
+            className="rl-muted flex items-center gap-3"
             style={{ padding: '10px 16px', borderTop: '1px solid hsl(var(--border))' }}
           >
             <span className="text-[12px]">{t('overview.lag.rest', { count: others })}</span>
@@ -658,7 +716,10 @@ function BrokerStatusCard({ brokers }: { brokers: BrokerNode[] }) {
               <div
                 key={`${b.brokerName}-${b.brokerId}`}
                 className="flex items-center gap-2"
-                style={{ padding: '8px 16px', borderTop: i ? '1px solid hsl(var(--border))' : undefined }}
+                style={{
+                  padding: '8px 16px',
+                  borderTop: i ? '1px solid hsl(var(--border))' : undefined,
+                }}
               >
                 <span
                   style={{
@@ -669,7 +730,7 @@ function BrokerStatusCard({ brokers }: { brokers: BrokerNode[] }) {
                     flexShrink: 0,
                   }}
                 />
-                <span className="font-mono-design text-[12px] flex-1 truncate">{label}</span>
+                <span className="font-mono-design flex-1 truncate text-[12px]">{label}</span>
                 {role && (
                   <span className="rl-badge rl-badge-outline" style={{ height: 18, fontSize: 10 }}>
                     {role.startsWith('M') ? 'M' : 'S'}
@@ -710,7 +771,7 @@ function QuickActionsCard({ onNavigate }: { onNavigate?: (id: NavId) => void }) 
           <button
             key={a.label}
             type="button"
-            className="flex items-center gap-2 hover:bg-muted/40 w-full text-left bg-transparent border-0"
+            className="flex w-full items-center gap-2 border-0 bg-transparent text-left hover:bg-muted/40"
             style={{
               padding: '10px 16px',
               borderTop: i ? '1px solid hsl(var(--border))' : undefined,
@@ -719,7 +780,7 @@ function QuickActionsCard({ onNavigate }: { onNavigate?: (id: NavId) => void }) 
             onClick={() => onNavigate?.(a.nav)}
           >
             <a.icon size={13} className="rl-muted" />
-            <span className="text-[13px] flex-1">{a.label}</span>
+            <span className="flex-1 text-[13px]">{a.label}</span>
             <ChevronRight size={12} className="rl-muted" />
           </button>
         ))}
@@ -743,9 +804,13 @@ function AIDiagnoseCard({
       <div className="rl-ai-diag-head">
         <div
           style={{
-            width: 22, height: 22, borderRadius: 5,
+            width: 22,
+            height: 22,
+            borderRadius: 5,
             background: 'hsl(var(--muted))',
-            display: 'grid', placeItems: 'center', color: 'hsl(240 6% 25%)',
+            display: 'grid',
+            placeItems: 'center',
+            color: 'hsl(240 6% 25%)',
           }}
         >
           <Sparkles size={12} />
@@ -763,7 +828,8 @@ function AIDiagnoseCard({
           {t('overview.ai.reanalyze')}
         </button>
         <button className="rl-btn rl-btn-outline rl-btn-sm">
-          <Sparkles size={12} />{t('overview.ai.chat')}
+          <Sparkles size={12} />
+          {t('overview.ai.chat')}
         </button>
       </div>
 

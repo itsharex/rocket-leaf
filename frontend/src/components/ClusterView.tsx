@@ -40,11 +40,7 @@ function TpsChart({ data }: { data: TpsPoint[] }) {
       </p>
       <ResponsiveContainer width="100%" height={180}>
         <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -8 }}>
-          <CartesianGrid
-            strokeDasharray="3 3"
-            stroke="hsl(var(--border))"
-            opacity={0.6}
-          />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.6} />
           <XAxis
             dataKey="time"
             tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
@@ -161,11 +157,13 @@ export function ClusterView() {
         if (!cancelled) {
           setDetail(data ?? null)
           if (data) {
-            setTpsHistory([{
-              time: formatTime(new Date()),
-              tpsIn: data.tpsIn ?? 0,
-              tpsOut: data.tpsOut ?? 0,
-            }])
+            setTpsHistory([
+              {
+                time: formatTime(new Date()),
+                tpsIn: data.tpsIn ?? 0,
+                tpsOut: data.tpsOut ?? 0,
+              },
+            ])
           }
         }
       })
@@ -186,19 +184,25 @@ export function ClusterView() {
     const addr = selectedBroker?.address
     if (!addr) return
     tpsPollRef.current = setInterval(() => {
-      clusterApi.getBrokerDetail(addr).then((data) => {
-        if (data) {
-          setDetail(data)
-          setTpsHistory((prev) => {
-            const next = [...prev, {
-              time: formatTime(new Date()),
-              tpsIn: data.tpsIn ?? 0,
-              tpsOut: data.tpsOut ?? 0,
-            }]
-            return next.length > TPS_HISTORY_SIZE ? next.slice(-TPS_HISTORY_SIZE) : next
-          })
-        }
-      }).catch(() => {})
+      clusterApi
+        .getBrokerDetail(addr)
+        .then((data) => {
+          if (data) {
+            setDetail(data)
+            setTpsHistory((prev) => {
+              const next = [
+                ...prev,
+                {
+                  time: formatTime(new Date()),
+                  tpsIn: data.tpsIn ?? 0,
+                  tpsOut: data.tpsOut ?? 0,
+                },
+              ]
+              return next.length > TPS_HISTORY_SIZE ? next.slice(-TPS_HISTORY_SIZE) : next
+            })
+          }
+        })
+        .catch(() => {})
     }, TPS_POLL_INTERVAL)
     return () => {
       if (tpsPollRef.current) clearInterval(tpsPollRef.current)
@@ -229,9 +233,7 @@ export function ClusterView() {
     }
   }
 
-  const effectiveDetail = detail != null
-    ? { ...selectedBroker, ...detail }
-    : selectedBroker
+  const effectiveDetail = detail != null ? { ...selectedBroker, ...detail } : selectedBroker
 
   return (
     <div className="flex h-full flex-col">
@@ -248,7 +250,7 @@ export function ClusterView() {
         </button>
       </div>
       <div className="flex min-h-0 flex-1">
-        <div className="flex-1 overflow-y-auto scroll-thin p-4">
+        <div className="scroll-thin flex-1 overflow-y-auto p-4">
           {loading && !info ? (
             <div className="flex items-center justify-center py-12 text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin" />
@@ -279,19 +281,25 @@ export function ClusterView() {
                     {(info.totalTopics ?? 0) > 0 && (
                       <div>
                         <p className="text-xs text-muted-foreground">Topic</p>
-                        <p className="font-medium tabular-nums text-foreground">{info.totalTopics}</p>
+                        <p className="font-medium tabular-nums text-foreground">
+                          {info.totalTopics}
+                        </p>
                       </div>
                     )}
                     {(info.totalGroups ?? 0) > 0 && (
                       <div>
                         <p className="text-xs text-muted-foreground">消费者组</p>
-                        <p className="font-medium tabular-nums text-foreground">{info.totalGroups}</p>
+                        <p className="font-medium tabular-nums text-foreground">
+                          {info.totalGroups}
+                        </p>
                       </div>
                     )}
                     {info.nameServers != null && info.nameServers.length > 0 && (
                       <div className="min-w-0 flex-1">
                         <p className="text-xs text-muted-foreground">NameServer</p>
-                        <p className="truncate font-mono text-sm text-foreground">{info.nameServers.join(', ')}</p>
+                        <p className="truncate font-mono text-sm text-foreground">
+                          {info.nameServers.join(', ')}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -301,18 +309,26 @@ export function ClusterView() {
               {/* Broker 列表 */}
               <section>
                 <h2 className="mb-2 text-xs font-medium text-muted-foreground">Broker 列表</h2>
-                <div className="rounded-md border border-border/40 bg-card overflow-hidden">
+                <div className="overflow-hidden rounded-md border border-border/40 bg-card">
                   <div className="overflow-x-auto">
                     <table className="w-full min-w-[520px] text-sm">
                       <thead>
                         <tr className="border-b border-border/40 bg-muted/30">
-                          <th className="px-3 py-2 text-left font-medium text-foreground">Broker</th>
+                          <th className="px-3 py-2 text-left font-medium text-foreground">
+                            Broker
+                          </th>
                           <th className="px-3 py-2 text-left font-medium text-foreground">角色</th>
                           <th className="px-3 py-2 text-left font-medium text-foreground">地址</th>
                           <th className="px-3 py-2 text-left font-medium text-foreground">状态</th>
-                          <th className="px-3 py-2 text-right font-medium text-foreground">Topic</th>
-                          <th className="px-3 py-2 text-right font-medium text-foreground">消费组</th>
-                          <th className="px-3 py-2 text-right font-medium text-foreground">TPS 入/出</th>
+                          <th className="px-3 py-2 text-right font-medium text-foreground">
+                            Topic
+                          </th>
+                          <th className="px-3 py-2 text-right font-medium text-foreground">
+                            消费组
+                          </th>
+                          <th className="px-3 py-2 text-right font-medium text-foreground">
+                            TPS 入/出
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -322,37 +338,51 @@ export function ClusterView() {
                             onClick={() => setSelectedBroker(b)}
                             className={cn(
                               'cursor-pointer border-b border-border/30 transition-colors last:border-0 hover:bg-accent/50',
-                              selectedBroker?.address === b.address && 'bg-accent/50'
+                              selectedBroker?.address === b.address && 'bg-accent/50',
                             )}
                           >
-                            <td className="px-3 py-2 font-mono text-foreground">{b.brokerName ?? '—'}</td>
+                            <td className="px-3 py-2 font-mono text-foreground">
+                              {b.brokerName ?? '—'}
+                            </td>
                             <td className="px-3 py-2">
                               <span
                                 className={cn(
                                   'rounded px-1.5 py-0.5 text-xs',
-                                  b.role === BrokerRole.RoleMaster ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                                  b.role === BrokerRole.RoleMaster
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'bg-muted text-muted-foreground',
                                 )}
                               >
                                 {roleLabel(b.role)}
                               </span>
                             </td>
-                            <td className="max-w-[160px] truncate px-3 py-2 font-mono text-muted-foreground" title={b.address ?? ''}>
+                            <td
+                              className="max-w-[160px] truncate px-3 py-2 font-mono text-muted-foreground"
+                              title={b.address ?? ''}
+                            >
                               {b.address ?? '—'}
                             </td>
                             <td className="px-3 py-2">
                               <span
                                 className={cn(
                                   'rounded px-1.5 py-0.5 text-xs',
-                                  b.status === NodeStatus.NodeOnline && 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-                                  b.status === NodeStatus.NodeWarning && 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-                                  (b.status === NodeStatus.NodeOffline || !b.status) && 'bg-muted text-muted-foreground'
+                                  b.status === NodeStatus.NodeOnline &&
+                                    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+                                  b.status === NodeStatus.NodeWarning &&
+                                    'bg-amber-500/10 text-amber-700 dark:text-amber-400',
+                                  (b.status === NodeStatus.NodeOffline || !b.status) &&
+                                    'bg-muted text-muted-foreground',
                                 )}
                               >
                                 {statusLabel(b.status)}
                               </span>
                             </td>
-                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{formatMetric(b.topics)}</td>
-                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{formatMetric(b.groups)}</td>
+                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                              {formatMetric(b.topics)}
+                            </td>
+                            <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
+                              {formatMetric(b.groups)}
+                            </td>
                             <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">
                               {formatMetric(b.tpsIn)} / {formatMetric(b.tpsOut)}
                             </td>
@@ -381,7 +411,7 @@ export function ClusterView() {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto scroll-thin p-3">
+            <div className="scroll-thin flex-1 overflow-y-auto p-3">
               {detailLoading ? (
                 <div className="flex items-center justify-center py-8 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin" />
@@ -391,7 +421,9 @@ export function ClusterView() {
                   <div className="space-y-1.5">
                     <p>
                       <span className="text-muted-foreground">名称：</span>
-                      <span className="font-mono text-foreground">{effectiveDetail.brokerName ?? '—'}</span>
+                      <span className="font-mono text-foreground">
+                        {effectiveDetail.brokerName ?? '—'}
+                      </span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">集群：</span>
@@ -399,26 +431,40 @@ export function ClusterView() {
                     </p>
                     <p>
                       <span className="text-muted-foreground">角色 / 状态：</span>
-                      <span className="text-foreground">{roleLabel(effectiveDetail.role)} / {statusLabel(effectiveDetail.status)}</span>
+                      <span className="text-foreground">
+                        {roleLabel(effectiveDetail.role)} / {statusLabel(effectiveDetail.status)}
+                      </span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">地址：</span>
-                      <span className="break-all font-mono text-muted-foreground">{effectiveDetail.address ?? '—'}</span>
+                      <span className="break-all font-mono text-muted-foreground">
+                        {effectiveDetail.address ?? '—'}
+                      </span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">Topic / 消费组：</span>
-                      <span className="text-foreground">{formatMetric(effectiveDetail.topics)} / {formatMetric(effectiveDetail.groups)}</span>
+                      <span className="text-foreground">
+                        {formatMetric(effectiveDetail.topics)} /{' '}
+                        {formatMetric(effectiveDetail.groups)}
+                      </span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">TPS 入 / 出：</span>
-                      <span className="tabular-nums text-foreground">{formatMetric(effectiveDetail.tpsIn)} / {formatMetric(effectiveDetail.tpsOut)}</span>
+                      <span className="tabular-nums text-foreground">
+                        {formatMetric(effectiveDetail.tpsIn)} /{' '}
+                        {formatMetric(effectiveDetail.tpsOut)}
+                      </span>
                     </p>
                     <p>
                       <span className="text-muted-foreground">今日消息入 / 出：</span>
                       <span className="tabular-nums text-foreground">
-                        {effectiveDetail.msgInToday != null && effectiveDetail.msgInToday >= 0 ? effectiveDetail.msgInToday.toLocaleString() : '—'}
+                        {effectiveDetail.msgInToday != null && effectiveDetail.msgInToday >= 0
+                          ? effectiveDetail.msgInToday.toLocaleString()
+                          : '—'}
                         {' / '}
-                        {effectiveDetail.msgOutToday != null && effectiveDetail.msgOutToday >= 0 ? effectiveDetail.msgOutToday.toLocaleString() : '—'}
+                        {effectiveDetail.msgOutToday != null && effectiveDetail.msgOutToday >= 0
+                          ? effectiveDetail.msgOutToday.toLocaleString()
+                          : '—'}
                       </span>
                     </p>
                   </div>
@@ -435,7 +481,9 @@ export function ClusterView() {
                   {(effectiveDetail.consumeQueueDiskUsage ?? 0) > 0 && (
                     <p>
                       <span className="text-muted-foreground">ConsumeQueue 磁盘：</span>
-                      <span className="text-foreground">{effectiveDetail.consumeQueueDiskUsage}%</span>
+                      <span className="text-foreground">
+                        {effectiveDetail.consumeQueueDiskUsage}%
+                      </span>
                     </p>
                   )}
                   {effectiveDetail.lastUpdate && (

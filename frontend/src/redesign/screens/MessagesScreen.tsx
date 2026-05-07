@@ -1,14 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import {
-  Search,
-  Copy,
-  X,
-  Send,
-  GitBranch,
-  PlugZap,
-  AlertCircle,
-  Check,
-} from 'lucide-react'
+import { Search, Copy, X, Send, GitBranch, PlugZap, AlertCircle, Check } from 'lucide-react'
 import { Spinner } from '@/components/Spinner'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -204,7 +195,7 @@ export function MessagesScreen() {
         <>
           {/* Query bar */}
           <div
-            className="flex items-center gap-2 px-6 py-3 flex-wrap"
+            className="flex flex-wrap items-center gap-2 px-6 py-3"
             style={{
               borderBottom: '1px solid hsl(var(--border))',
               background: 'hsl(var(--background))',
@@ -332,29 +323,23 @@ export function MessagesScreen() {
 
           <div className="flex min-h-0 flex-1 overflow-hidden">
             <div
-              className="min-w-0 flex-1 overflow-auto scroll-thin"
+              className="scroll-thin min-w-0 flex-1 overflow-auto"
               onClick={handleListBackgroundClick}
             >
               {searching && results.length === 0 ? (
                 <div
-                  className="flex items-center justify-center rl-muted"
+                  className="rl-muted flex items-center justify-center"
                   style={{ padding: 60, gap: 8 }}
                 >
                   <Spinner size={14} />
                   <span className="text-[12px]">{t('messages.form.searching')}</span>
                 </div>
               ) : !hasSearched ? (
-                <div
-                  className="rl-muted text-center"
-                  style={{ padding: 60, fontSize: 12 }}
-                >
+                <div className="rl-muted text-center" style={{ padding: 60, fontSize: 12 }}>
                   {t('messages.form.search')} →
                 </div>
               ) : results.length === 0 ? (
-                <div
-                  className="rl-muted text-center"
-                  style={{ padding: 60, fontSize: 12 }}
-                >
+                <div className="rl-muted text-center" style={{ padding: 60, fontSize: 12 }}>
                   {t('messages.empty')}
                 </div>
               ) : (
@@ -365,9 +350,7 @@ export function MessagesScreen() {
                       <th style={{ width: 110 }}>{t('messages.table.tag')}</th>
                       <th style={{ width: 180 }}>{t('messages.table.key')}</th>
                       <th>{t('messages.table.preview')}</th>
-                      <th style={{ width: 70, textAlign: 'right' }}>
-                        {t('messages.table.queue')}
-                      </th>
+                      <th style={{ width: 70, textAlign: 'right' }}>{t('messages.table.queue')}</th>
                       <th style={{ width: 170 }}>{t('messages.table.storeTime')}</th>
                     </tr>
                   </thead>
@@ -381,7 +364,7 @@ export function MessagesScreen() {
                       >
                         <td>
                           <div
-                            className="font-mono-design text-[12px] truncate"
+                            className="font-mono-design truncate text-[12px]"
                             style={{ maxWidth: 180 }}
                             title={m.messageId}
                           >
@@ -499,8 +482,7 @@ function MessageDetailPanel({
     }
   }, [tab, track, msg.messageId, msg.topic])
 
-  const formattedBody =
-    settings.autoFormatJson !== false ? tryFormatJSON(msg.body) : msg.body
+  const formattedBody = settings.autoFormatJson !== false ? tryFormatJSON(msg.body) : msg.body
 
   const propEntries = Object.entries(msg.properties || {}).filter(
     ([, v]) => v !== undefined && v !== '',
@@ -518,8 +500,8 @@ function MessageDetailPanel({
     >
       <div style={{ padding: 20 }}>
         <div className="flex items-center justify-between gap-2">
-          <div className="font-semibold truncate">{t('messages.detail.title')}</div>
-          <div className="flex gap-1 shrink-0">
+          <div className="truncate font-semibold">{t('messages.detail.title')}</div>
+          <div className="flex shrink-0 gap-1">
             <button
               className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"
               onClick={() => onCopy(msg.messageId)}
@@ -560,7 +542,7 @@ function MessageDetailPanel({
         <div>
           <div className="rl-detail-row">
             <div className="k">{t('messages.detail.msgId')}</div>
-            <div className="v font-mono-design text-[12px] break-all">{msg.messageId}</div>
+            <div className="v font-mono-design break-all text-[12px]">{msg.messageId}</div>
           </div>
           <div className="rl-detail-row">
             <div className="k">{t('messages.detail.topic')}</div>
@@ -620,17 +602,11 @@ function MessageDetailPanel({
 
         {tab === 'body' && (
           <>
-            <div
-              className="mt-5 mb-2 flex items-center justify-between"
-              style={{ marginTop: 20 }}
-            >
+            <div className="mb-2 mt-5 flex items-center justify-between" style={{ marginTop: 20 }}>
               <div className="rl-section-label" style={{ marginBottom: 0 }}>
                 {t('messages.detail.bodyTitle')}
               </div>
-              <button
-                className="rl-btn rl-btn-ghost rl-btn-sm"
-                onClick={() => onCopy(msg.body)}
-              >
+              <button className="rl-btn rl-btn-ghost rl-btn-sm" onClick={() => onCopy(msg.body)}>
                 <Copy size={12} />
                 {t('messages.detail.actions.copyBody')}
               </button>
@@ -642,10 +618,7 @@ function MessageDetailPanel({
         {tab === 'properties' && (
           <div className="mt-4">
             {propEntries.length === 0 ? (
-              <div
-                className="rl-muted text-[12px]"
-                style={{ padding: 16, textAlign: 'center' }}
-              >
+              <div className="rl-muted text-[12px]" style={{ padding: 16, textAlign: 'center' }}>
                 {t('messages.detail.propsEmpty')}
               </div>
             ) : (
@@ -653,7 +626,7 @@ function MessageDetailPanel({
                 {propEntries.map(([k, v]) => (
                   <div className="rl-detail-row" key={k}>
                     <div className="k font-mono-design">{k}</div>
-                    <div className="v font-mono-design text-[12px] break-all">{String(v)}</div>
+                    <div className="v font-mono-design break-all text-[12px]">{String(v)}</div>
                   </div>
                 ))}
               </div>
@@ -666,7 +639,7 @@ function MessageDetailPanel({
             <div className="rl-section-label">{t('messages.detail.trackTitle')}</div>
             {trackLoading ? (
               <div
-                className="flex items-center justify-center rl-muted"
+                className="rl-muted flex items-center justify-center"
                 style={{ padding: 24, gap: 8 }}
               >
                 <Spinner size={14} />
@@ -680,10 +653,7 @@ function MessageDetailPanel({
                 {t('messages.detail.trackError')}: {trackError}
               </div>
             ) : !track || track.length === 0 ? (
-              <div
-                className="rl-muted text-[12px]"
-                style={{ padding: 16, textAlign: 'center' }}
-              >
+              <div className="rl-muted text-[12px]" style={{ padding: 16, textAlign: 'center' }}>
                 {t('messages.detail.trackEmpty')}
               </div>
             ) : (
@@ -698,7 +668,7 @@ function MessageDetailPanel({
                   >
                     <div className="flex items-center gap-2">
                       <GitBranch size={11} className="rl-muted" />
-                      <span className="font-mono-design text-[12px] flex-1">
+                      <span className="font-mono-design flex-1 text-[12px]">
                         {tr.consumerGroup}
                       </span>
                       {tr.trackType && (
@@ -717,9 +687,7 @@ function MessageDetailPanel({
                       )}
                     </div>
                     {tr.consumeStatus && (
-                      <div className="rl-muted mt-1 text-[12px]">
-                        {tr.consumeStatus}
-                      </div>
+                      <div className="rl-muted mt-1 text-[12px]">{tr.consumeStatus}</div>
                     )}
                     {tr.exceptionDesc && (
                       <div
@@ -736,15 +704,12 @@ function MessageDetailPanel({
           </div>
         )}
 
-        <div className="mt-6 flex gap-2 flex-wrap">
+        <div className="mt-6 flex flex-wrap gap-2">
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onResend}>
             <Send size={13} />
             {t('messages.detail.actions.resend')}
           </button>
-          <button
-            className="rl-btn rl-btn-outline rl-btn-sm"
-            onClick={() => setTab('track')}
-          >
+          <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={() => setTab('track')}>
             <GitBranch size={13} />
             {t('messages.detail.actions.track')}
           </button>

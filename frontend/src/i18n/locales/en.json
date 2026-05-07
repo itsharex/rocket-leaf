@@ -9,6 +9,7 @@
     "confirm": "Confirm",
     "delete": "Delete",
     "refresh": "Refresh",
+    "refreshed": "Refreshed",
     "search": "Search",
     "edit": "Edit",
     "create": "Create",
@@ -57,6 +58,7 @@
     "subtitleConnected": "{{cluster}} · refreshed at {{time}}",
     "subtitleNoConn": "Not connected · open Connections to add a cluster",
     "loadError": "Failed to load overview: {{message}}",
+    "disconnectSuccess": "Disconnected from {{cluster}}",
     "throughput": {
       "title": "Live throughput",
       "subtitle": "Last 60 minutes · 1-min samples",

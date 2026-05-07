@@ -1,30 +1,77 @@
-import { useState, useEffect, useCallback } from 'react'
+import {
+  createContext,
+  createElement,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import type { Connection } from '../../bindings/rocket-leaf/internal/model/models.js'
 import * as connectionApi from '@/api/connection'
 import { formatErrorMessage } from '@/lib/utils'
 
-export function useConnections() {
+const POLL_INTERVAL_MS = 30_000
+
+interface ConnectionsContextValue {
+  list: Connection[]
+  loading: boolean
+  error: string | null
+  refresh: () => Promise<void>
+}
+
+const ConnectionsContext = createContext<ConnectionsContextValue | null>(null)
+
+function useConnectionsState(): ConnectionsContextValue {
   const [list, setList] = useState<(Connection | null)[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const cancelledRef = useRef(false)
 
   const refresh = useCallback(async () => {
-    setLoading(true)
     setError(null)
     try {
       const data = await connectionApi.getConnections()
-      setList(data)
+      if (!cancelledRef.current) setList(data)
     } catch (e) {
-      setError(formatErrorMessage(e))
-      setList([])
+      if (!cancelledRef.current) {
+        setError(formatErrorMessage(e))
+        setList([])
+      }
     } finally {
-      setLoading(false)
+      if (!cancelledRef.current) setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    refresh()
+    cancelledRef.current = false
+    void refresh()
+    const id = window.setInterval(refresh, POLL_INTERVAL_MS)
+    return () => {
+      cancelledRef.current = true
+      window.clearInterval(id)
+    }
   }, [refresh])
 
-  return { list: list.filter(Boolean) as Connection[], loading, error, refresh }
+  return {
+    list: list.filter(Boolean) as Connection[],
+    loading,
+    error,
+    refresh,
+  }
+}
+
+export function ConnectionsProvider({ children }: { children: ReactNode }) {
+  const value = useConnectionsState()
+  return createElement(ConnectionsContext.Provider, { value }, children)
+}
+
+/** Reads the shared connections state. Must be called within ConnectionsProvider. */
+export function useConnections(): ConnectionsContextValue {
+  const ctx = useContext(ConnectionsContext)
+  if (!ctx) {
+    throw new Error('useConnections must be used within ConnectionsProvider')
+  }
+  return ctx
 }

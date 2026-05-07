@@ -9,6 +9,7 @@
     "confirm": "确认",
     "delete": "删除",
     "refresh": "刷新",
+    "refreshed": "已刷新",
     "search": "搜索",
     "edit": "编辑",
     "create": "新建",
@@ -57,6 +58,7 @@
     "subtitleConnected": "{{cluster}} · 实时刷新于 {{time}}",
     "subtitleNoConn": "未连接 · 请先在「连接」页面建立连接",
     "loadError": "加载概览数据失败：{{message}}",
+    "disconnectSuccess": "已断开 {{cluster}}",
     "throughput": {
       "title": "实时吞吐",
       "subtitle": "最近 60 分钟 · 每分钟采样",

@@ -66,7 +66,7 @@ export function TitleBar({
             className="rl-ai-pill [--wails-draggable:no-drag]"
             type="button"
           >
-            <span className="ai-spark"><Sparkles size={11} /></span>
+            <span className="ai-spark"><Sparkles size={13} /></span>
             <span>{t('titlebar.aiAssistant')}</span>
             <span className="kbd-mini">⌘K</span>
           </button>

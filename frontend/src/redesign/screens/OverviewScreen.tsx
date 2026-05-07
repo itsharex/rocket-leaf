@@ -26,6 +26,7 @@ import type {
 import { PageHeader } from '../shell'
 import { useOverview, type OverviewSnapshot } from '@/hooks/useOverview'
 import { useSettings } from '@/hooks/useSettings'
+import { useConnections } from '@/hooks/useConnections'
 import * as connectionApi from '@/api/connection'
 import { toast } from 'sonner'
 import type { NavId } from '../Sidebar'
@@ -171,11 +172,13 @@ interface OverviewScreenProps {
 export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
   const { t } = useTranslation()
   const { data, loading, refreshing, error, refresh } = useOverview()
+  const { refresh: refreshConnections } = useConnections()
   const { settings } = useSettings()
   const lagThreshold = settings.lagAlertThreshold || 10000
 
   const cluster = data.cluster
   const conn = data.activeConnection
+  const isOnline = conn?.status === 'online'
 
   const totalLag = useMemo(
     () => data.consumerGroups.reduce((s, g) => s + Number(g.lag ?? 0), 0),
@@ -222,16 +225,25 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
     if (!conn) return
     try {
       await connectionApi.disconnect(conn.id)
-      toast.success(t('common.disconnect') + ' ✓')
-      await refresh()
+      toast.success(t('overview.disconnectSuccess', { cluster: conn.name }))
+      await Promise.all([refresh(), refreshConnections()])
     } catch (e) {
       toast.error((e as Error).message ?? String(e))
     }
   }
 
-  const handleRefresh = () => void refresh()
+  const handleRefresh = async () => {
+    try {
+      await Promise.all([refresh(), refreshConnections()])
+      toast.success(t('common.refreshed'), {
+        description: formatTime(new Date()),
+      })
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    }
+  }
 
-  const subtitle = conn
+  const subtitle = isOnline && conn
     ? t('overview.subtitleConnected', { cluster: conn.name, time: formatTime(data.lastUpdated) })
     : t('overview.subtitleNoConn')
 
@@ -247,7 +259,7 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
           {refreshing ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}
           {t('common.refresh')}
         </button>
-        {conn && (
+        {isOnline && conn && (
           <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={handleDisconnect}>
             <Unlink size={13} />{t('common.disconnect')}
           </button>
@@ -255,7 +267,7 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
       </PageHeader>
 
       <div className="scroll-thin min-h-0 flex-1 overflow-auto p-5">
-        {error && conn && (
+        {error && isOnline && (
           <div
             className="rl-card mb-4 flex items-center gap-2"
             style={{
@@ -337,7 +349,11 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
 
           {/* RIGHT */}
           <div className="flex flex-col gap-4">
-            <CurrentConnectionCard conn={conn} cluster={cluster} onNavigate={onNavigate} />
+            <CurrentConnectionCard
+              conn={isOnline ? conn : null}
+              cluster={cluster}
+              onNavigate={onNavigate}
+            />
             <BrokerStatusCard brokers={data.brokers} />
             <QuickActionsCard onNavigate={onNavigate} />
           </div>

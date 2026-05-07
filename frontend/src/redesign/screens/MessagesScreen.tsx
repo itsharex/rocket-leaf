@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Search,
   Copy,
@@ -75,6 +75,25 @@ export function MessagesScreen() {
 
   // Selection is set inline by handleSearch (and cleared by close).
   // No effect needed — that would cause the close button to re-select instantly.
+
+  const dismissPanel = useCallback(() => setSelectedId(null), [])
+
+  // Esc closes the detail panel
+  useEffect(() => {
+    if (!selectedId) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismissPanel()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [selectedId, dismissPanel])
+
+  // Clicking the result pane outside any row closes the panel
+  const handleListBackgroundClick = (e: React.MouseEvent) => {
+    if (!selectedId) return
+    if ((e.target as HTMLElement).closest('tr')) return
+    dismissPanel()
+  }
 
   const handleSearch = async () => {
     setError(null)
@@ -303,7 +322,10 @@ export function MessagesScreen() {
           )}
 
           <div className="flex min-h-0 flex-1 overflow-hidden">
-            <div className="min-w-0 flex-1 overflow-auto scroll-thin">
+            <div
+              className="min-w-0 flex-1 overflow-auto scroll-thin"
+              onClick={handleListBackgroundClick}
+            >
               {searching && results.length === 0 ? (
                 <div
                   className="flex items-center justify-center rl-muted"
@@ -396,7 +418,7 @@ export function MessagesScreen() {
             {selected && (
               <MessageDetailPanel
                 msg={selected}
-                onClose={() => setSelectedId(null)}
+                onClose={dismissPanel}
                 onCopy={handleCopy}
                 onResend={() => setResendTarget(selected)}
               />

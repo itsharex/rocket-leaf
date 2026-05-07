@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Search,
   RefreshCw,
@@ -122,6 +122,28 @@ export function TopicsScreen() {
     }
   }, [filtered, selectedName, panelDismissed])
 
+  const dismissPanel = useCallback(() => {
+    setSelectedName(null)
+    setPanelDismissed(true)
+  }, [])
+
+  // Esc closes the detail panel
+  useEffect(() => {
+    if (!selectedName) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismissPanel()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [selectedName, dismissPanel])
+
+  // Clicking the list pane outside any row closes the panel
+  const handleListBackgroundClick = (e: React.MouseEvent) => {
+    if (!selectedName) return
+    if ((e.target as HTMLElement).closest('tr')) return
+    dismissPanel()
+  }
+
   // When selected name changes, fetch detail (with routes)
   useEffect(() => {
     let cancelled = false
@@ -243,7 +265,10 @@ export function TopicsScreen() {
       )}
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-auto scroll-thin">
+        <div
+          className="min-w-0 flex-1 overflow-auto scroll-thin"
+          onClick={handleListBackgroundClick}
+        >
           {!hasOnline ? (
             <div
               className="rl-muted flex flex-col items-center justify-center text-center"
@@ -355,10 +380,7 @@ export function TopicsScreen() {
           <TopicDetailPanel
             topic={detail}
             loading={detailLoading}
-            onClose={() => {
-              setSelectedName(null)
-              setPanelDismissed(true)
-            }}
+            onClose={dismissPanel}
             onEdit={(tp) => setEditorOpen({ mode: 'edit', topic: tp })}
             onDelete={(tp) => setConfirmDelete(tp)}
           />

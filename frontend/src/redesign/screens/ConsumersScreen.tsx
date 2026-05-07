@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Search,
   RefreshCw,
@@ -81,6 +81,28 @@ export function ConsumersScreen() {
     const first = filtered[0]
     if (!panelDismissed && !selectedName && first) setSelectedName(first.group)
   }, [filtered, selectedName, panelDismissed])
+
+  const dismissPanel = useCallback(() => {
+    setSelectedName(null)
+    setPanelDismissed(true)
+  }, [])
+
+  // Esc closes the detail panel
+  useEffect(() => {
+    if (!selectedName) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') dismissPanel()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [selectedName, dismissPanel])
+
+  // Clicking the list pane outside any row also closes the panel
+  const handleListBackgroundClick = (e: React.MouseEvent) => {
+    if (!selectedName) return
+    if ((e.target as HTMLElement).closest('tr')) return
+    dismissPanel()
+  }
 
   const selected = useMemo<ConsumerGroupItem | null>(
     () => groups.find((g) => g.group === selectedName) ?? null,
@@ -189,7 +211,10 @@ export function ConsumersScreen() {
       )}
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-auto scroll-thin">
+        <div
+          className="min-w-0 flex-1 overflow-auto scroll-thin"
+          onClick={handleListBackgroundClick}
+        >
           {!hasOnline ? (
             <div
               className="rl-muted flex flex-col items-center justify-center text-center"
@@ -330,10 +355,7 @@ export function ConsumersScreen() {
         {hasOnline && selected && (
           <GroupDetailPanel
             group={selected}
-            onClose={() => {
-              setSelectedName(null)
-              setPanelDismissed(true)
-            }}
+            onClose={dismissPanel}
             onReset={() => setResetTarget(selected)}
             onEdit={() => setEditorOpen({ mode: 'edit', group: selected })}
             onDelete={() => setConfirmDelete(selected)}

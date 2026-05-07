@@ -14,19 +14,21 @@ import { AclScreen } from '@/redesign/screens/AclScreen'
 import { ConnectionsScreen } from '@/redesign/screens/ConnectionsScreen'
 import { SettingsScreen } from '@/redesign/screens/SettingsScreen'
 import { EmptyStateScreen } from '@/redesign/screens/EmptyStateScreen'
+import { useConnections } from '@/hooks/useConnections'
 
 function App(): React.ReactElement {
   const [activeNav, setActiveNav] = useState<NavId>('home')
-  // Demo: assume connected for the redesign preview. Wire real status later.
-  const hasConnected = true
+  const { list: connections } = useConnections()
+  const activeConn = connections.find((c) => c.status === 'online') ?? null
+  const hasConnected = activeConn != null
 
   const renderContent = () => {
-    if (!hasConnected && activeNav !== 'connections' && activeNav !== 'settings') {
+    if (!hasConnected && activeNav !== 'connections' && activeNav !== 'settings' && activeNav !== 'home') {
       return <EmptyStateScreen onAddConnection={() => setActiveNav('connections')} />
     }
     switch (activeNav) {
       case 'home':
-        return <OverviewScreen />
+        return <OverviewScreen onNavigate={setActiveNav} />
       case 'topics':
         return <TopicsScreen />
       case 'consumers':
@@ -46,13 +48,13 @@ function App(): React.ReactElement {
       case 'settings':
         return <SettingsScreen />
       default:
-        return <OverviewScreen />
+        return <OverviewScreen onNavigate={setActiveNav} />
     }
   }
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
-      <TitleBar connected={hasConnected ? 'prod-cluster-01' : null} />
+      <TitleBar connected={activeConn?.name ?? null} />
       <div className="flex min-h-0 flex-1">
         <Sidebar
           active={activeNav}

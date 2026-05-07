@@ -55,40 +55,71 @@
   "overview": {
     "title": "概览",
     "subtitleConnected": "{{cluster}} · 实时刷新于 {{time}}",
+    "subtitleNoConn": "未连接 · 请先在「连接」页面建立连接",
+    "loadError": "加载概览数据失败：{{message}}",
+    "throughput": {
+      "title": "实时吞吐",
+      "subtitle": "最近 60 分钟 · 每分钟采样",
+      "produce": "生产",
+      "consume": "消费",
+      "noData": "暂无吞吐采样数据"
+    },
     "stat": {
       "topics": "Topic",
       "consumers": "消费者组",
       "broker": "Broker",
       "lag": "消息积压",
-      "topicSummary": "活跃 {{active}} · 新增 +{{new}}",
+      "topicSummary": "活跃 {{active}}",
       "consumersSummary": "在线 {{online}} · 离线 {{offline}}",
-      "brokerSummary": "{{master}} 主 + {{slave}} 备 · 全部在线",
-      "lagSummary": "{{count}} 个 Group 异常"
+      "brokerSummary_all": "{{master}} 主 + {{slave}} 备 · 全部在线",
+      "brokerSummary_partial": "在线 {{online}} / {{total}}",
+      "lagSummary": "{{count}} 个 Group 异常",
+      "lagSummary_zero": "全部正常"
     },
     "ai": {
       "title": "AI 智能诊断",
-      "subtitle": "基于 24h 集群指标与历史模式",
+      "subtitle": "基于当前集群指标推断",
+      "subtitleEmpty": "基于当前集群指标推断 · 暂无明显异常",
       "reanalyze": "重新分析",
       "chat": "和 AI 聊聊",
       "high": "高优先级",
       "med": "中优先级",
-      "low": "低优先级"
+      "low": "低优先级",
+      "empty": "当前集群运行良好，未检测到需要立即处理的问题。",
+      "findings": {
+        "highLagTitle": "{{group}} 持续堆积 {{lag}} 条消息",
+        "highLagDesc": "已超过告警阈值（{{threshold}}）。建议检查下游消费速度，或重置该消费组进度。",
+        "offlineGroupTitle": "{{group}} 当前无在线实例",
+        "offlineGroupDesc": "积压 {{lag}} 条消息但无客户端消费。请确认消费者已启动。",
+        "diskTitle": "{{broker}} 磁盘水位 {{usage}}%",
+        "diskDesc": "已超过 75% 阈值。建议扩容或清理过期消息以避免触发只读。",
+        "brokerOfflineTitle": "Broker {{broker}} 已离线",
+        "brokerOfflineDesc": "请检查节点状态与网络连通性，及时恢复以保证集群可用性。",
+        "idleTopicTitle": "{{count}} 个 Topic 长期无消息",
+        "idleTopicDesc": "{{names}} 等长时间无生产，建议归档以释放资源。"
+      }
     },
     "active": {
       "title": "活跃 Topic",
-      "subtitle": "按入流量排序"
+      "subtitle": "按入流量排序",
+      "empty": "暂无入流流量数据"
     },
     "lag": {
       "title": "堆积告警",
-      "subtitle": "堆积 > 100 条的消费组",
-      "rest": "其余 {{count}} 个消费组运行正常"
+      "subtitle": "堆积 > {{threshold}} 条的消费组",
+      "rest": "其余 {{count}} 个消费组运行正常",
+      "empty": "暂无堆积告警"
     },
     "current": {
-      "title": "当前连接"
+      "title": "当前连接",
+      "noConnection": "尚未建立连接",
+      "goToConnections": "前往连接管理"
     },
     "broker": {
       "title": "Broker 状态",
-      "subtitle": "{{count}} 个节点全部在线"
+      "subtitle": "{{count}} 个节点全部在线",
+      "subtitle_partial": "在线 {{online}} / {{total}}",
+      "empty": "暂无 Broker 数据"
     },
     "shortcut": {
       "title": "快捷操作",

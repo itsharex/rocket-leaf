@@ -55,40 +55,71 @@
   "overview": {
     "title": "Overview",
     "subtitleConnected": "{{cluster}} · refreshed at {{time}}",
+    "subtitleNoConn": "Not connected · open Connections to add a cluster",
+    "loadError": "Failed to load overview: {{message}}",
+    "throughput": {
+      "title": "Live throughput",
+      "subtitle": "Last 60 minutes · 1-min samples",
+      "produce": "Produce",
+      "consume": "Consume",
+      "noData": "No throughput samples yet"
+    },
     "stat": {
       "topics": "Topics",
       "consumers": "Consumer groups",
       "broker": "Brokers",
       "lag": "Total lag",
-      "topicSummary": "{{active}} active · +{{new}} new",
+      "topicSummary": "{{active}} active",
       "consumersSummary": "{{online}} online · {{offline}} offline",
-      "brokerSummary": "{{master}} master + {{slave}} slave · all online",
-      "lagSummary": "{{count}} group(s) abnormal"
+      "brokerSummary_all": "{{master}} master + {{slave}} slave · all online",
+      "brokerSummary_partial": "{{online}} / {{total}} online",
+      "lagSummary": "{{count}} group(s) abnormal",
+      "lagSummary_zero": "All normal"
     },
     "ai": {
       "title": "AI diagnostics",
-      "subtitle": "Based on 24h cluster metrics & history",
+      "subtitle": "Inferred from current cluster metrics",
+      "subtitleEmpty": "Inferred from current cluster metrics · no issues detected",
       "reanalyze": "Re-analyze",
       "chat": "Chat with AI",
       "high": "High",
       "med": "Medium",
-      "low": "Low"
+      "low": "Low",
+      "empty": "The cluster is running well. No issues detected at this time.",
+      "findings": {
+        "highLagTitle": "{{group}} has {{lag}} backlogged messages",
+        "highLagDesc": "Above the alert threshold ({{threshold}}). Check downstream consumption speed, or reset this group's offset.",
+        "offlineGroupTitle": "{{group}} has no online instance",
+        "offlineGroupDesc": "{{lag}} messages backlogged with no client. Make sure the consumer is running.",
+        "diskTitle": "{{broker}} disk usage {{usage}}%",
+        "diskDesc": "Above the 75% threshold. Consider scaling up or purging old messages before it goes read-only.",
+        "brokerOfflineTitle": "Broker {{broker}} is offline",
+        "brokerOfflineDesc": "Verify node status and network connectivity to keep the cluster available.",
+        "idleTopicTitle": "{{count}} topic(s) with no recent traffic",
+        "idleTopicDesc": "{{names}} have been idle for a while; consider archiving them."
+      }
     },
     "active": {
       "title": "Active topics",
-      "subtitle": "Sorted by inbound traffic"
+      "subtitle": "Sorted by inbound traffic",
+      "empty": "No inbound traffic data yet"
     },
     "lag": {
       "title": "Lag alerts",
-      "subtitle": "Groups with > 100 lag",
-      "rest": "Other {{count}} group(s) running normally"
+      "subtitle": "Groups with > {{threshold}} lag",
+      "rest": "Other {{count}} group(s) running normally",
+      "empty": "No lag alerts"
     },
     "current": {
-      "title": "Current connection"
+      "title": "Current connection",
+      "noConnection": "No active connection",
+      "goToConnections": "Open Connections"
     },
     "broker": {
       "title": "Broker status",
-      "subtitle": "{{count}} nodes all online"
+      "subtitle": "{{count}} nodes all online",
+      "subtitle_partial": "{{online}} / {{total}} online",
+      "empty": "No broker data"
     },
     "shortcut": {
       "title": "Quick actions",

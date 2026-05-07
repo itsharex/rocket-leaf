@@ -1,137 +1,464 @@
+import { useEffect, useMemo, useState } from 'react'
 import {
   Search,
   RefreshCw,
-  MoreHorizontal,
   AlertCircle,
   Users,
   X,
   Tag,
   RotateCcw,
   Edit,
+  Loader2,
+  PlugZap,
+  Plus,
+  Check,
+  Trash2,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import {
+  ConsumeMode,
+  type ConsumerGroupItem,
+  type GroupSubscription,
+} from '../../../bindings/rocket-leaf/internal/model/models.js'
 import { PageHeader } from '../shell'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
+import { useConsumers } from '@/hooks/useConsumers'
+import { useCluster } from '@/hooks/useCluster'
+import * as consumerApi from '@/api/consumer'
 
-const GROUPS = [
-  { name: 'order-consumer-group', topic: 'order-events', model: 'CLUSTERING', status: '在线', consumers: 4, lag: 0 },
-  { name: 'payment-result-consumer', topic: 'payment-result', model: 'CLUSTERING', status: '在线', consumers: 2, lag: 12 },
-  { name: 'audit-log-collector', topic: 'audit-log', model: 'CLUSTERING', status: '在线', consumers: 6, lag: 0 },
-  { name: 'search-indexer', topic: 'search-index', model: 'CLUSTERING', status: '在线', consumers: 3, lag: 248 },
-  { name: 'im-fanout-broadcast', topic: 'im.message', model: 'BROADCASTING', status: '在线', consumers: 8, lag: 0 },
-  { name: 'inventory-tx-handler', topic: 'inventory-tx', model: 'CLUSTERING', status: '在线', consumers: 2, lag: 0 },
-  { name: 'marketing-campaign-bg', topic: 'user-signup-delay', model: 'CLUSTERING', status: '离线', consumers: 0, lag: 14820 },
-  { name: 'ops-notify-bot', topic: 'ops.notification', model: 'CLUSTERING', status: '在线', consumers: 1, lag: 4 },
-]
+type StatusFilter = 'all' | 'online' | 'warning' | 'offline'
 
-const QUEUE_PROGRESS = [
-  { q: 'broker-a', qid: 0, brk: 12480, cmt: 12480, lag: 0 },
-  { q: 'broker-a', qid: 1, brk: 9821, cmt: 9821, lag: 0 },
-  { q: 'broker-b', qid: 0, brk: 15042, cmt: 14920, lag: 122 },
-  { q: 'broker-b', qid: 1, brk: 8204, cmt: 8078, lag: 126 },
-]
+function formatTps(n: number): string {
+  if (!n || !Number.isFinite(n)) return '0'
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}k`
+  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`
+  return Math.round(n).toLocaleString()
+}
+
+function statusBadgeClass(status: string): string {
+  switch (status) {
+    case 'online':
+      return 'rl-badge rl-badge-success'
+    case 'warning':
+      return 'rl-badge rl-badge-warn'
+    case 'offline':
+      return 'rl-badge rl-badge-danger'
+    default:
+      return 'rl-badge rl-badge-outline'
+  }
+}
 
 export function ConsumersScreen() {
   const { t } = useTranslation()
+  const { groups, loading, refreshing, error, refresh, hasOnline } = useConsumers()
+  const { data: clusterData } = useCluster()
+
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [selectedName, setSelectedName] = useState<string | null>(null)
+  const [editorOpen, setEditorOpen] = useState<{ mode: 'create' } | { mode: 'edit'; group: ConsumerGroupItem } | null>(null)
+  const [resetTarget, setResetTarget] = useState<ConsumerGroupItem | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<ConsumerGroupItem | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return groups.filter((g) => {
+      if (statusFilter !== 'all' && g.status !== statusFilter) return false
+      if (q) {
+        const inName = g.group.toLowerCase().includes(q)
+        const inSubs = (g.subscriptions || []).some((s) => s.topic.toLowerCase().includes(q))
+        if (!inName && !inSubs) return false
+      }
+      return true
+    })
+  }, [groups, search, statusFilter])
+
+  // Auto-select first
+  useEffect(() => {
+    const first = filtered[0]
+    if (!selectedName && first) setSelectedName(first.group)
+  }, [filtered, selectedName])
+
+  const selected = useMemo<ConsumerGroupItem | null>(
+    () => groups.find((g) => g.group === selectedName) ?? null,
+    [groups, selectedName],
+  )
+
+  const handleRefresh = async () => {
+    try {
+      await refresh()
+      toast.success(t('common.refreshed'))
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    // Pick first master broker as the target for delete (RocketMQ requires it)
+    const broker = clusterData.brokers.find(
+      (b) => String(b.role).toUpperCase() === 'MASTER' && b.address,
+    )
+    if (!broker) {
+      toast.error(t('consumers.edit.noBrokers'))
+      return
+    }
+    setDeleting(true)
+    try {
+      await consumerApi.deleteConsumerGroup(confirmDelete.group, broker.address)
+      toast.success(t('consumers.detail.deleteSuccess'))
+      if (selectedName === confirmDelete.group) setSelectedName(null)
+      setConfirmDelete(null)
+      await refresh()
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const subtitle = !hasOnline
+    ? t('consumers.subtitleNoConn')
+    : filtered.length === groups.length
+      ? t('consumers.subtitle', { count: groups.length })
+      : t('consumers.subtitleFiltered', { count: filtered.length, total: groups.length })
+
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <PageHeader title={t('consumers.title')} subtitle={t('consumers.subtitle', { count: 82 })}>
+      <PageHeader title={t('consumers.title')} subtitle={subtitle}>
         <div className="rl-search-input" style={{ width: 240 }}>
-          <span className="icon"><Search size={14} /></span>
-          <input className="rl-input" placeholder={t('consumers.searchPlaceholder')} />
+          <span className="icon">
+            <Search size={14} />
+          </span>
+          <input
+            className="rl-input"
+            placeholder={t('consumers.searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-        <button className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm">
-          <RefreshCw size={14} />
+        <button
+          className="rl-btn rl-btn-outline rl-btn-icon rl-btn-sm"
+          onClick={handleRefresh}
+          disabled={refreshing || !hasOnline}
+          title={t('common.refresh')}
+        >
+          {refreshing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+        </button>
+        <button
+          className="rl-btn rl-btn-primary rl-btn-sm"
+          onClick={() => setEditorOpen({ mode: 'create' })}
+          disabled={!hasOnline}
+        >
+          <Plus size={13} />
+          {t('common.create')}
         </button>
       </PageHeader>
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-auto">
-          <table className="rl-table">
-            <thead>
-              <tr>
-                <th>{t('consumers.table.name')}</th>
-                <th>{t('consumers.table.topic')}</th>
-                <th style={{ width: 130 }}>{t('consumers.table.model')}</th>
-                <th style={{ width: 100 }}>{t('consumers.table.status')}</th>
-                <th style={{ width: 90, textAlign: 'right' }}>{t('consumers.table.instances')}</th>
-                <th style={{ width: 130, textAlign: 'right' }}>{t('consumers.table.lag')}</th>
-                <th style={{ width: 50 }} />
-              </tr>
-            </thead>
-            <tbody>
-              {GROUPS.map((g, i) => (
-                <tr key={g.name} className={i === 3 ? 'selected' : ''}>
-                  <td><div className="font-mono-design">{g.name}</div></td>
-                  <td><span className="font-mono-design rl-muted text-[13px]">{g.topic}</span></td>
-                  <td><span className="rl-badge rl-badge-outline">{g.model}</span></td>
-                  <td>
-                    {g.status === '在线' ? (
-                      <span className="rl-badge rl-badge-success">
-                        <span style={{ width: 5, height: 5, borderRadius: 999, background: 'currentColor' }} />{t('common.online')}
-                      </span>
-                    ) : (
-                      <span className="rl-badge rl-badge-danger">{t('common.offline')}</span>
-                    )}
-                  </td>
-                  <td style={{ textAlign: 'right' }} className="rl-tabular">{g.consumers}</td>
-                  <td style={{ textAlign: 'right' }} className={'rl-tabular ' + (g.lag > 1000 ? '' : 'rl-muted')}>
-                    {g.lag > 1000 && (
-                      <AlertCircle size={11} style={{ display: 'inline', marginRight: 3, color: 'hsl(var(--destructive))' }} />
-                    )}
-                    {g.lag.toLocaleString()}
-                  </td>
-                  <td>
-                    <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm">
-                      <MoreHorizontal size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Detail */}
-        <aside
-          className="scroll-thin"
+      {hasOnline && (
+        <div
+          className="flex items-center gap-2"
           style={{
-            width: 420,
-            borderLeft: '1px solid hsl(var(--border))',
-            overflow: 'auto',
+            padding: '8px 20px',
+            borderBottom: '1px solid hsl(var(--border))',
             background: 'hsl(var(--background))',
-            display: 'flex',
-            flexDirection: 'column',
           }}
         >
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border))' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex min-w-0 flex-1 items-center gap-2">
-                <Users size={15} className="rl-muted" />
-                <span className="font-mono-design font-semibold truncate">search-indexer</span>
-                <span className="rl-badge rl-badge-warn">堆积</span>
-              </div>
-              <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm">
-                <X size={14} />
-              </button>
-            </div>
-            <div className="rl-muted mt-2 flex items-center gap-2 text-[12px]">
-              <Tag size={11} />
-              <span className="font-mono-design">search-index</span>
-              <span style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }} />
-              <span>CLUSTERING</span>
-              <span style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }} />
-              <span>3 实例</span>
-            </div>
-          </div>
+          {([
+            ['all', 'consumers.filterAll'],
+            ['online', 'consumers.filterOnline'],
+            ['warning', 'consumers.filterWarning'],
+            ['offline', 'consumers.filterOffline'],
+          ] as const).map(([k, key]) => (
+            <button
+              key={k}
+              type="button"
+              className={
+                'rl-btn rl-btn-sm ' + (statusFilter === k ? 'rl-btn-primary' : 'rl-btn-ghost')
+              }
+              style={{ height: 24 }}
+              onClick={() => setStatusFilter(k)}
+            >
+              {t(key)}
+            </button>
+          ))}
+        </div>
+      )}
 
-          <div className="rl-utabs" style={{ paddingLeft: 20, paddingRight: 20, borderBottom: '1px solid hsl(var(--border))' }}>
-            <div className="utab active">{t('consumers.tabs.overview')}</div>
-            <div className="utab">{t('consumers.tabs.instances')} <span className="rl-muted" style={{ marginLeft: 4 }}>3</span></div>
-            <div className="utab">{t('consumers.tabs.subscriptions')}</div>
-            <div className="utab">{t('consumers.tabs.config')}</div>
-          </div>
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="min-w-0 flex-1 overflow-auto scroll-thin">
+          {!hasOnline ? (
+            <div
+              className="rl-muted flex flex-col items-center justify-center text-center"
+              style={{ minHeight: 240, padding: 40 }}
+            >
+              <PlugZap size={32} className="mb-3 opacity-40" />
+              <div className="text-[13px]">{t('consumers.subtitleNoConn')}</div>
+            </div>
+          ) : loading && groups.length === 0 ? (
+            <div
+              className="flex items-center justify-center rl-muted"
+              style={{ padding: 60, gap: 8 }}
+            >
+              <Loader2 size={14} className="animate-spin" />
+              <span className="text-[12px]">{t('common.loading')}</span>
+            </div>
+          ) : (
+            <>
+              {error && (
+                <div
+                  className="flex items-center gap-2"
+                  style={{
+                    margin: 16,
+                    padding: '10px 14px',
+                    borderRadius: 8,
+                    background: 'hsl(0 84% 96%)',
+                    color: 'hsl(0 70% 35%)',
+                    border: '1px solid hsl(0 84% 80%)',
+                  }}
+                >
+                  <AlertCircle size={14} />
+                  <span className="text-[12px]">
+                    {t('consumers.loadError', { message: error })}
+                  </span>
+                </div>
+              )}
+              {filtered.length === 0 ? (
+                <div
+                  className="rl-muted text-center"
+                  style={{ padding: 40, fontSize: 12 }}
+                >
+                  {t('consumers.empty')}
+                </div>
+              ) : (
+                <table className="rl-table">
+                  <thead>
+                    <tr>
+                      <th>{t('consumers.table.name')}</th>
+                      <th>{t('consumers.table.topic')}</th>
+                      <th style={{ width: 130 }}>{t('consumers.table.model')}</th>
+                      <th style={{ width: 100 }}>{t('consumers.table.status')}</th>
+                      <th style={{ width: 90, textAlign: 'right' }}>
+                        {t('consumers.table.instances')}
+                      </th>
+                      <th style={{ width: 130, textAlign: 'right' }}>
+                        {t('consumers.table.lag')}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((g) => {
+                      const subTopic =
+                        g.subscriptions[0]?.topic ||
+                        (g.topicCount > 0 ? `${g.topicCount} topics` : '—')
+                      return (
+                        <tr
+                          key={g.group}
+                          className={selectedName === g.group ? 'selected' : ''}
+                          onClick={() => setSelectedName(g.group)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <td>
+                            <div className="font-mono-design">{g.group}</div>
+                          </td>
+                          <td>
+                            <span className="font-mono-design rl-muted text-[13px]">
+                              {subTopic}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="rl-badge rl-badge-outline">
+                              {g.consumeMode || '—'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={statusBadgeClass(g.status)}>
+                              {g.status === 'online' ? (
+                                <>
+                                  <span
+                                    style={{
+                                      width: 5,
+                                      height: 5,
+                                      borderRadius: 999,
+                                      background: 'currentColor',
+                                    }}
+                                  />
+                                  {t('common.online')}
+                                </>
+                              ) : g.status === 'warning' ? (
+                                t('consumers.filterWarning')
+                              ) : (
+                                t('common.offline')
+                              )}
+                            </span>
+                          </td>
+                          <td className="rl-tabular" style={{ textAlign: 'right' }}>
+                            {g.onlineClients}
+                          </td>
+                          <td
+                            className={'rl-tabular ' + (g.lag > 1000 ? '' : 'rl-muted')}
+                            style={{ textAlign: 'right' }}
+                          >
+                            {g.lag > 1000 && (
+                              <AlertCircle
+                                size={11}
+                                style={{
+                                  display: 'inline',
+                                  marginRight: 3,
+                                  color: 'hsl(var(--destructive))',
+                                }}
+                              />
+                            )}
+                            {g.lag.toLocaleString()}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </>
+          )}
+        </div>
 
-          <div className="scroll-thin min-h-0 flex-1 overflow-auto" style={{ padding: '16px 20px' }}>
+        {hasOnline && selected && (
+          <GroupDetailPanel
+            group={selected}
+            onClose={() => setSelectedName(null)}
+            onReset={() => setResetTarget(selected)}
+            onEdit={() => setEditorOpen({ mode: 'edit', group: selected })}
+            onDelete={() => setConfirmDelete(selected)}
+          />
+        )}
+      </div>
+
+      {editorOpen && (
+        <GroupEditor
+          mode={editorOpen.mode}
+          initial={editorOpen.mode === 'edit' ? editorOpen.group : null}
+          brokers={clusterData.brokers}
+          onClose={() => setEditorOpen(null)}
+          onSaved={async () => {
+            setEditorOpen(null)
+            await refresh()
+          }}
+        />
+      )}
+
+      {resetTarget && (
+        <ResetOffsetDialog
+          group={resetTarget}
+          onClose={() => setResetTarget(null)}
+          onDone={async () => {
+            setResetTarget(null)
+            await refresh()
+          }}
+        />
+      )}
+
+      <ConfirmDialog
+        open={confirmDelete != null}
+        title={t('consumers.detail.actions.delete')}
+        description={t('consumers.detail.deleteConfirm', { name: confirmDelete?.group ?? '' })}
+        confirmText={deleting ? t('common.loading') : t('common.delete')}
+        cancelText={t('common.cancel')}
+        variant="destructive"
+        onConfirm={handleDelete}
+        onCancel={() => !deleting && setConfirmDelete(null)}
+      />
+    </div>
+  )
+}
+
+// ---------- Detail Panel ----------
+
+function GroupDetailPanel({
+  group,
+  onClose,
+  onReset,
+  onEdit,
+  onDelete,
+}: {
+  group: ConsumerGroupItem
+  onClose: () => void
+  onReset: () => void
+  onEdit: () => void
+  onDelete: () => void
+}) {
+  const { t } = useTranslation()
+  const [tab, setTab] = useState<'overview' | 'instances' | 'subscriptions' | 'config'>('overview')
+  const tps = useMemo(
+    () => (group.subscriptions || []).reduce((s, sub) => s + (sub.consumeTps || 0), 0),
+    [group.subscriptions],
+  )
+
+  return (
+    <aside
+      className="scroll-thin"
+      style={{
+        width: 420,
+        borderLeft: '1px solid hsl(var(--border))',
+        overflow: 'auto',
+        background: 'hsl(var(--background))',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid hsl(var(--border))' }}>
+        <div className="flex items-center justify-between">
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <Users size={15} className="rl-muted" />
+            <span className="font-mono-design font-semibold truncate">{group.group}</span>
+            {group.lag > 1000 && (
+              <span className="rl-badge rl-badge-warn shrink-0">堆积</span>
+            )}
+          </div>
+          <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm" onClick={onClose}>
+            <X size={14} />
+          </button>
+        </div>
+        <div className="rl-muted mt-2 flex items-center gap-2 text-[12px] flex-wrap">
+          <Tag size={11} />
+          <span>
+            {group.topicCount} {t('topics.title')}
+          </span>
+          <span style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }} />
+          <span>{group.consumeMode || '—'}</span>
+          <span style={{ width: 3, height: 3, borderRadius: 999, background: 'hsl(var(--border))' }} />
+          <span>
+            {group.onlineClients} {t('consumers.detail.instances')}
+          </span>
+        </div>
+      </div>
+
+      <div
+        className="rl-utabs"
+        style={{
+          paddingLeft: 20,
+          paddingRight: 20,
+          borderBottom: '1px solid hsl(var(--border))',
+        }}
+      >
+        {(['overview', 'subscriptions', 'instances', 'config'] as const).map((k) => (
+          <div key={k} className={'utab ' + (tab === k ? 'active' : '')} onClick={() => setTab(k)}>
+            {t(`consumers.tabs.${k === 'subscriptions' ? 'subscriptions' : k}`)}
+            {k === 'instances' && (
+              <span className="rl-muted" style={{ marginLeft: 4 }}>
+                {group.onlineClients}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div
+        className="scroll-thin min-h-0 flex-1 overflow-auto"
+        style={{ padding: '16px 20px' }}
+      >
+        {tab === 'overview' && (
+          <>
             <div
               className="grid"
               style={{
@@ -142,98 +469,527 @@ export function ConsumersScreen() {
               }}
             >
               <div style={{ padding: '12px 14px' }}>
-                <div className="rl-muted text-[12px]">实例</div>
-                <div className="rl-tabular mt-1 font-semibold" style={{ fontSize: 18 }}>3</div>
+                <div className="rl-muted text-[12px]">{t('consumers.stat.instances')}</div>
+                <div className="rl-tabular mt-1 font-semibold" style={{ fontSize: 18 }}>
+                  {group.onlineClients}
+                </div>
               </div>
-              <div style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}>
+              <div
+                style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}
+              >
                 <div className="flex items-center gap-1">
-                  <div className="rl-muted text-[12px]">总堆积</div>
-                  <AlertCircle size={10} style={{ color: 'hsl(28 80% 45%)' }} />
+                  <div className="rl-muted text-[12px]">{t('consumers.stat.lag')}</div>
+                  {group.lag > 1000 && (
+                    <AlertCircle size={10} style={{ color: 'hsl(28 80% 45%)' }} />
+                  )}
                 </div>
-                <div className="rl-tabular mt-1 font-semibold" style={{ fontSize: 18, color: 'hsl(28 80% 38%)' }}>248</div>
+                <div
+                  className="rl-tabular mt-1 font-semibold"
+                  style={{
+                    fontSize: 18,
+                    color: group.lag > 1000 ? 'hsl(28 80% 38%)' : undefined,
+                  }}
+                >
+                  {group.lag.toLocaleString()}
+                </div>
               </div>
-              <div style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}>
-                <div className="rl-muted text-[12px]">消费 TPS</div>
+              <div
+                style={{ padding: '12px 14px', borderLeft: '1px solid hsl(var(--border))' }}
+              >
+                <div className="rl-muted text-[12px]">{t('consumers.stat.tps')}</div>
                 <div className="mt-1 flex items-center gap-1">
-                  <span className="rl-tabular font-semibold" style={{ fontSize: 18 }}>182</span>
-                  <span className="rl-muted text-[12px]" style={{ marginBottom: 1 }}>/s</span>
+                  <span className="rl-tabular font-semibold" style={{ fontSize: 18 }}>
+                    {formatTps(tps)}
+                  </span>
+                  <span className="rl-muted text-[12px]" style={{ marginBottom: 1 }}>
+                    /s
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div className="rl-section-label" style={{ marginTop: 20 }}>订阅主题</div>
-            <div
-              className="flex items-center gap-2"
-              style={{ padding: '8px 12px', border: '1px solid hsl(var(--border))', borderRadius: 8 }}
-            >
-              <Tag size={12} className="rl-muted" />
-              <span className="font-mono-design text-[13px] flex-1">search-index</span>
-              <span className="rl-muted text-[12px]">Tag</span>
-              <span className="font-mono-design text-[12px]">*</span>
+            <div className="rl-section-label" style={{ marginTop: 20 }}>
+              {t('consumers.detail.subscriptions')}
             </div>
+            <SubscriptionList subs={group.subscriptions} />
+          </>
+        )}
 
-            <div className="mb-2 mt-5 flex items-center justify-between">
-              <div className="rl-section-label" style={{ marginBottom: 0 }}>队列消费进度</div>
-              <div className="rl-muted text-[12px]">4 队列 · 2 落后</div>
+        {tab === 'subscriptions' && (
+          <>
+            <div className="rl-section-label" style={{ marginTop: 4 }}>
+              {t('consumers.detail.subscriptions')}
             </div>
-            <div className="rl-card overflow-hidden">
-              {QUEUE_PROGRESS.map((q, i) => {
-                const pct = (q.cmt / q.brk) * 100
-                return (
+            <SubscriptionList subs={group.subscriptions} />
+          </>
+        )}
+
+        {tab === 'instances' && (
+          <>
+            <div className="rl-section-label" style={{ marginTop: 4 }}>
+              {t('consumers.detail.instances')}
+            </div>
+            {group.clients.length === 0 ? (
+              <div
+                className="rl-muted text-[12px]"
+                style={{ padding: 16, textAlign: 'center' }}
+              >
+                {t('consumers.detail.instancesEmpty')}
+              </div>
+            ) : (
+              <div className="rl-card overflow-hidden">
+                {group.clients.map((c, i) => (
                   <div
-                    key={i}
-                    style={{ padding: '10px 14px', borderTop: i ? '1px solid hsl(var(--border))' : undefined }}
+                    key={c.clientId}
+                    style={{
+                      padding: '10px 14px',
+                      borderTop: i ? '1px solid hsl(var(--border))' : undefined,
+                    }}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono-design rl-muted text-[12px]">{q.q}</span>
-                        <span style={{ width: 1, height: 10, background: 'hsl(var(--border))' }} />
-                        <span className="font-mono-design text-[12px]">queue-{q.qid}</span>
-                      </div>
-                      {q.lag === 0 ? (
-                        <span className="text-[12px]" style={{ color: 'hsl(142 60% 28%)' }}>已追平</span>
-                      ) : (
-                        <span className="font-mono-design rl-tabular text-[12px]" style={{ color: 'hsl(28 80% 38%)' }}>+{q.lag}</span>
+                      <span className="font-mono-design text-[12px] truncate">
+                        {c.clientId}
+                      </span>
+                      {c.version && (
+                        <span
+                          className="rl-badge rl-badge-outline"
+                          style={{ height: 18, fontSize: 10 }}
+                        >
+                          {c.version}
+                        </span>
                       )}
                     </div>
-                    <div className="mt-2 flex items-center gap-2">
-                      <div className="rl-progress flex-1" style={{ height: 4 }}>
-                        <div
-                          className="bar"
-                          style={{
-                            width: pct + '%',
-                            background: q.lag === 0 ? 'hsl(142 50% 45%)' : 'hsl(28 80% 55%)',
-                          }}
-                        />
-                      </div>
-                      <span
-                        className="font-mono-design rl-tabular rl-muted text-[12px]"
-                        style={{ minWidth: 120, textAlign: 'right' }}
-                      >
-                        {q.cmt.toLocaleString()}
-                        <span className="rl-muted" style={{ opacity: 0.5 }}> / </span>
-                        {q.brk.toLocaleString()}
-                      </span>
+                    <div
+                      className="rl-muted mt-1 flex items-center gap-2 text-[11px]"
+                      style={{ fontFamily: 'monospace' }}
+                    >
+                      <span>{c.ip}</span>
+                      {c.lastHeartbeat && (
+                        <>
+                          <span>·</span>
+                          <span>{c.lastHeartbeat}</span>
+                        </>
+                      )}
                     </div>
                   </div>
-                )
-              })}
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {tab === 'config' && (
+          <>
+            <div className="rl-section-label" style={{ marginTop: 4 }}>
+              {t('consumers.detail.config')}
+            </div>
+            <div>
+              <div className="rl-detail-row">
+                <div className="k">{t('consumers.detail.configMode')}</div>
+                <div className="v">{group.consumeMode || '—'}</div>
+              </div>
+              <div className="rl-detail-row">
+                <div className="k">{t('consumers.detail.configMaxRetry')}</div>
+                <div className="v rl-tabular">{group.maxRetry}</div>
+              </div>
+              {group.cluster && (
+                <div className="rl-detail-row">
+                  <div className="k">{t('consumers.detail.configCluster')}</div>
+                  <div className="v">{group.cluster}</div>
+                </div>
+              )}
+              {group.lastUpdate && (
+                <div className="rl-detail-row">
+                  <div className="k">{t('consumers.detail.configLastUpdate')}</div>
+                  <div className="v font-mono-design text-[12px]">{group.lastUpdate}</div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div
+        className="flex items-center gap-2 rl-subtle-bg"
+        style={{ padding: '12px 20px', borderTop: '1px solid hsl(var(--border))' }}
+      >
+        <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onReset}>
+          <RotateCcw size={13} />
+          {t('consumers.detail.actions.reset')}
+        </button>
+        <button
+          className="rl-btn rl-btn-outline rl-btn-sm"
+          style={{ marginLeft: 'auto' }}
+          onClick={onEdit}
+        >
+          <Edit size={13} />
+          {t('consumers.detail.actions.edit')}
+        </button>
+        <button
+          className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"
+          style={{ color: 'hsl(var(--destructive))' }}
+          onClick={onDelete}
+        >
+          <Trash2 size={14} />
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+function SubscriptionList({ subs }: { subs: GroupSubscription[] }) {
+  const { t } = useTranslation()
+  if (subs.length === 0) {
+    return (
+      <div
+        className="rl-muted text-[12px]"
+        style={{ padding: 16, textAlign: 'center' }}
+      >
+        {t('consumers.detail.subscriptionsEmpty')}
+      </div>
+    )
+  }
+  return (
+    <div className="rl-card overflow-hidden">
+      {subs.map((s, i) => (
+        <div
+          key={s.topic}
+          className="flex items-center gap-2"
+          style={{
+            padding: '10px 14px',
+            borderTop: i ? '1px solid hsl(var(--border))' : undefined,
+          }}
+        >
+          <Tag size={12} className="rl-muted" />
+          <span className="font-mono-design text-[13px] flex-1 truncate">{s.topic}</span>
+          {s.expression && s.expression !== '*' && (
+            <span
+              className="font-mono-design rl-muted text-[11px]"
+              title="Tag filter"
+              style={{ maxWidth: 120 }}
+            >
+              {s.expression}
+            </span>
+          )}
+          {s.consumeTps > 0 && (
+            <span className="font-mono-design rl-tabular rl-muted text-[12px]">
+              {formatTps(s.consumeTps)}/s
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+// ---------- Reset offset ----------
+
+function ResetOffsetDialog({
+  group,
+  onClose,
+  onDone,
+}: {
+  group: ConsumerGroupItem
+  onClose: () => void
+  onDone: () => void | Promise<void>
+}) {
+  const { t } = useTranslation()
+  const [topic, setTopic] = useState<string>(group.subscriptions[0]?.topic ?? '')
+  const [mode, setMode] = useState<'now' | 'earliest' | 'custom'>('now')
+  const [custom, setCustom] = useState<string>('')
+  const [force, setForce] = useState(true)
+  const [busy, setBusy] = useState(false)
+
+  const handleSubmit = async () => {
+    if (!topic) {
+      toast.error(t('consumers.reset.topicHint'))
+      return
+    }
+    let timestamp = 0
+    if (mode === 'now') timestamp = Date.now()
+    else if (mode === 'custom') {
+      const ms = Date.parse(custom)
+      if (Number.isNaN(ms)) {
+        toast.error(t('consumers.reset.timeCustom'))
+        return
+      }
+      timestamp = ms
+    }
+    setBusy(true)
+    try {
+      await consumerApi.resetOffset(group.group, topic, timestamp, force)
+      toast.success(t('consumers.reset.success'))
+      await onDone()
+    } catch (e) {
+      toast.error(t('consumers.reset.error'), { description: (e as Error).message ?? String(e) })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-md rounded-xl border border-border/50 bg-background p-6 shadow-lg"
+      >
+        <h2 className="text-base font-semibold">{t('consumers.reset.title')}</h2>
+        <div className="mt-4 grid gap-3.5">
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">{t('consumers.reset.topic')}</div>
+            {group.subscriptions.length === 0 ? (
+              <input
+                className="rl-input font-mono-design"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+              />
+            ) : (
+              <select
+                className="rl-select"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+              >
+                {group.subscriptions.map((s) => (
+                  <option key={s.topic} value={s.topic}>
+                    {s.topic}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">{t('consumers.reset.time')}</div>
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  checked={mode === 'now'}
+                  onChange={() => setMode('now')}
+                />
+                {t('consumers.reset.timeNow')}
+              </label>
+              <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  checked={mode === 'earliest'}
+                  onChange={() => setMode('earliest')}
+                />
+                {t('consumers.reset.timeEarliest')}
+              </label>
+              <label className="flex items-center gap-2 text-[13px]" style={{ cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  checked={mode === 'custom'}
+                  onChange={() => setMode('custom')}
+                />
+                {t('consumers.reset.timeCustom')}
+              </label>
+              {mode === 'custom' && (
+                <input
+                  className="rl-input font-mono-design"
+                  type="datetime-local"
+                  value={custom}
+                  onChange={(e) => setCustom(e.target.value)}
+                />
+              )}
             </div>
           </div>
-
-          <div
-            className="flex items-center gap-2 rl-subtle-bg"
-            style={{ padding: '12px 20px', borderTop: '1px solid hsl(var(--border))' }}
+          <label
+            className="flex items-center gap-2 text-[13px]"
+            style={{ cursor: 'pointer' }}
           >
-            <button className="rl-btn rl-btn-outline rl-btn-sm"><RotateCcw size={13} />重置进度</button>
-            <button className="rl-btn rl-btn-outline rl-btn-sm" style={{ marginLeft: 'auto' }}>
-              <Edit size={13} />修改订阅
-            </button>
-            <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm">
-              <MoreHorizontal size={14} />
-            </button>
+            <input
+              type="checkbox"
+              checked={force}
+              onChange={(e) => setForce(e.target.checked)}
+            />
+            {t('consumers.reset.force')}
+          </label>
+        </div>
+        <div className="mt-5 flex justify-end gap-2.5">
+          <button
+            type="button"
+            className="rl-btn rl-btn-outline rl-btn-sm"
+            onClick={onClose}
+            disabled={busy}
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            className="rl-btn rl-btn-primary rl-btn-sm"
+            onClick={handleSubmit}
+            disabled={busy}
+          >
+            {busy ? <Loader2 size={13} className="animate-spin" /> : <RotateCcw size={13} />}
+            {t('consumers.reset.submit')}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------- Editor ----------
+
+function GroupEditor({
+  mode,
+  initial,
+  brokers,
+  onClose,
+  onSaved,
+}: {
+  mode: 'create' | 'edit'
+  initial: ConsumerGroupItem | null
+  brokers: import('../../../bindings/rocket-leaf/internal/model/models.js').BrokerNode[]
+  onClose: () => void
+  onSaved: () => void | Promise<void>
+}) {
+  const { t } = useTranslation()
+  const masterBrokers = useMemo(
+    () =>
+      brokers.filter(
+        (b) => String(b.role).toUpperCase() === 'MASTER' && b.status === 'online' && b.address,
+      ),
+    [brokers],
+  )
+
+  const [name, setName] = useState(initial?.group ?? '')
+  const [brokerAddr, setBrokerAddr] = useState<string>(masterBrokers[0]?.address || '')
+  const [consumeMode, setConsumeMode] = useState<ConsumeMode>(
+    initial?.consumeMode || ConsumeMode.ModeClustering,
+  )
+  const [maxRetry, setMaxRetry] = useState<number>(initial?.maxRetry ?? 16)
+  const [busy, setBusy] = useState(false)
+
+  const isEdit = mode === 'edit'
+
+  const handleSubmit = async () => {
+    if (!name.trim()) {
+      toast.error(t('consumers.edit.namePlaceholder'))
+      return
+    }
+    if (!brokerAddr) {
+      toast.error(t('consumers.edit.noBrokers'))
+      return
+    }
+    setBusy(true)
+    try {
+      if (isEdit) {
+        await consumerApi.updateConsumerGroup(name.trim(), brokerAddr, consumeMode, maxRetry)
+        toast.success(t('consumers.edit.saveSuccess', { name: name.trim() }))
+      } else {
+        await consumerApi.createConsumerGroup(name.trim(), brokerAddr, consumeMode, maxRetry)
+        toast.success(t('consumers.edit.createSuccess', { name: name.trim() }))
+      }
+      await onSaved()
+    } catch (e) {
+      toast.error((e as Error).message ?? String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-md rounded-xl border border-border/50 bg-background p-6 shadow-lg"
+      >
+        <h2 className="text-base font-semibold">
+          {isEdit ? t('consumers.edit.title') : t('consumers.edit.createTitle')}
+        </h2>
+        <div className="mt-4 grid gap-3.5">
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">
+              {t('consumers.edit.name')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+            </div>
+            <input
+              className="rl-input font-mono-design"
+              placeholder={t('consumers.edit.namePlaceholder')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={isEdit}
+            />
           </div>
-        </aside>
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">
+              {t('consumers.edit.broker')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+            </div>
+            {masterBrokers.length === 0 ? (
+              <div className="rl-muted text-[12px]" style={{ padding: 8 }}>
+                {t('consumers.edit.noBrokers')}
+              </div>
+            ) : (
+              <select
+                className="rl-select"
+                value={brokerAddr}
+                onChange={(e) => setBrokerAddr(e.target.value)}
+              >
+                {masterBrokers.map((b) => (
+                  <option key={b.address} value={b.address}>
+                    {b.brokerName} · {b.address}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div className="rl-muted mt-1 text-[11px]">{t('consumers.edit.brokerHint')}</div>
+          </div>
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">{t('consumers.edit.mode')}</div>
+            <select
+              className="rl-select"
+              value={consumeMode}
+              onChange={(e) => setConsumeMode(e.target.value as ConsumeMode)}
+            >
+              <option value={ConsumeMode.ModeClustering}>
+                {t('consumers.detail.modeClustering')}
+              </option>
+              <option value={ConsumeMode.ModeBroadcasting}>
+                {t('consumers.detail.modeBroadcasting')}
+              </option>
+            </select>
+            <div className="rl-muted mt-1 text-[11px]">{t('consumers.edit.modeHint')}</div>
+          </div>
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">{t('consumers.edit.maxRetry')}</div>
+            <input
+              className="rl-input"
+              type="number"
+              min={0}
+              max={64}
+              value={maxRetry}
+              onChange={(e) => setMaxRetry(Number(e.target.value) || 0)}
+            />
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2.5">
+          <button
+            type="button"
+            className="rl-btn rl-btn-outline rl-btn-sm"
+            onClick={onClose}
+            disabled={busy}
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            className="rl-btn rl-btn-primary rl-btn-sm"
+            onClick={handleSubmit}
+            disabled={busy || masterBrokers.length === 0}
+          >
+            {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+            {isEdit ? t('consumers.edit.submit') : t('consumers.edit.createSubmit')}
+          </button>
+        </div>
       </div>
     </div>
   )

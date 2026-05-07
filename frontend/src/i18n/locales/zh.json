@@ -219,7 +219,13 @@
   "consumers": {
     "title": "消费者组",
     "subtitle": "{{count}} 个 Group",
-    "searchPlaceholder": "搜索 Group…",
+    "subtitleFiltered": "{{count}} 个 Group（共 {{total}} 个）",
+    "subtitleNoConn": "未连接 · 请先在「连接」页面建立连接",
+    "searchPlaceholder": "搜索 Group、订阅 Topic…",
+    "filterAll": "全部",
+    "filterOnline": "在线",
+    "filterWarning": "异常",
+    "filterOffline": "离线",
     "tabs": {
       "overview": "概览",
       "instances": "实例",
@@ -234,16 +240,68 @@
       "instances": "实例",
       "lag": "堆积"
     },
-    "detail": {
+    "empty": "暂无消费者组",
+    "loadError": "加载消费者组失败：{{message}}",
+    "newGroup": "新建消费者组",
+    "stat": {
       "instances": "实例",
-      "totalLag": "总堆积",
-      "consumeTps": "消费 TPS",
-      "subscribed": "订阅主题",
-      "queueProgress": "队列消费进度",
-      "behind": "{{queues}} 队列 · {{behind}} 落后",
-      "caughtUp": "已追平",
-      "resetProgress": "重置进度",
-      "editSubscription": "修改订阅"
+      "lag": "总堆积",
+      "tps": "消费 TPS",
+      "retry": "重试 QPS",
+      "dlq": "死信"
+    },
+    "detail": {
+      "subscriptions": "订阅 Topic",
+      "subscriptionsEmpty": "暂无订阅关系",
+      "instances": "在线客户端",
+      "instancesEmpty": "暂无在线客户端",
+      "config": "配置",
+      "configMode": "消费模式",
+      "configMaxRetry": "最大重试次数",
+      "configCluster": "所属集群",
+      "configLastUpdate": "最后更新",
+      "stats": "实时统计",
+      "statsTps": "消费 TPS",
+      "statsLag": "堆积总数",
+      "statsRefresh": "刷新统计",
+      "actions": {
+        "reset": "重置进度",
+        "edit": "修改配置",
+        "delete": "删除"
+      },
+      "deleteConfirm": "删除消费者组 {{name}}？此操作不可撤销。",
+      "deleteSuccess": "已删除消费者组",
+      "modeClustering": "CLUSTERING",
+      "modeBroadcasting": "BROADCASTING"
+    },
+    "reset": {
+      "title": "重置消费进度",
+      "topic": "订阅 Topic",
+      "topicHint": "选择要重置的 Topic",
+      "time": "重置到时间点",
+      "timeNow": "重置到最新位点",
+      "timeEarliest": "重置到最早位点",
+      "timeCustom": "自定义时间",
+      "force": "强制重置（即使有在线消费者）",
+      "submit": "确认重置",
+      "success": "已提交重置请求",
+      "error": "重置失败"
+    },
+    "edit": {
+      "title": "修改消费者组",
+      "createTitle": "新建消费者组",
+      "name": "Group 名称",
+      "namePlaceholder": "例：order-consumer-group",
+      "broker": "目标 Broker",
+      "brokerHint": "选择一个 master Broker",
+      "noBrokers": "未发现可用的 Broker",
+      "mode": "消费模式",
+      "modeHint": "CLUSTERING（队列分摊） · BROADCASTING（广播）",
+      "maxRetry": "最大重试次数",
+      "submit": "保存",
+      "createSubmit": "创建",
+      "createSuccess": "已创建 Group {{name}}",
+      "saveSuccess": "已保存 Group {{name}}"
     }
   },
   "messages": {

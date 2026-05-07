@@ -218,8 +218,14 @@
   },
   "consumers": {
     "title": "Consumer groups",
-    "subtitle": "{{count}} group(s)",
-    "searchPlaceholder": "Search groups…",
+    "subtitle": "{{count}} groups",
+    "subtitleFiltered": "{{count}} of {{total}} groups",
+    "subtitleNoConn": "Not connected · open Connections first",
+    "searchPlaceholder": "Search group or subscribed topic…",
+    "filterAll": "All",
+    "filterOnline": "Online",
+    "filterWarning": "Warning",
+    "filterOffline": "Offline",
     "tabs": {
       "overview": "Overview",
       "instances": "Instances",
@@ -234,16 +240,68 @@
       "instances": "Instances",
       "lag": "Lag"
     },
-    "detail": {
+    "empty": "No consumer groups",
+    "loadError": "Failed to load consumer groups: {{message}}",
+    "newGroup": "New consumer group",
+    "stat": {
       "instances": "Instances",
-      "totalLag": "Total lag",
-      "consumeTps": "Consume TPS",
-      "subscribed": "Subscribed topics",
-      "queueProgress": "Queue consumption progress",
-      "behind": "{{queues}} queues · {{behind}} behind",
-      "caughtUp": "Caught up",
-      "resetProgress": "Reset offset",
-      "editSubscription": "Edit subscription"
+      "lag": "Total lag",
+      "tps": "Consume TPS",
+      "retry": "Retry QPS",
+      "dlq": "Dead letters"
+    },
+    "detail": {
+      "subscriptions": "Subscriptions",
+      "subscriptionsEmpty": "No subscriptions",
+      "instances": "Online clients",
+      "instancesEmpty": "No online clients",
+      "config": "Configuration",
+      "configMode": "Consume mode",
+      "configMaxRetry": "Max retries",
+      "configCluster": "Cluster",
+      "configLastUpdate": "Last update",
+      "stats": "Live stats",
+      "statsTps": "Consume TPS",
+      "statsLag": "Total lag",
+      "statsRefresh": "Refresh stats",
+      "actions": {
+        "reset": "Reset offset",
+        "edit": "Edit config",
+        "delete": "Delete"
+      },
+      "deleteConfirm": "Delete group {{name}}? This cannot be undone.",
+      "deleteSuccess": "Consumer group deleted",
+      "modeClustering": "CLUSTERING",
+      "modeBroadcasting": "BROADCASTING"
+    },
+    "reset": {
+      "title": "Reset consumption offset",
+      "topic": "Subscribed topic",
+      "topicHint": "Pick the topic to reset",
+      "time": "Reset to point",
+      "timeNow": "Latest offset",
+      "timeEarliest": "Earliest offset",
+      "timeCustom": "Custom time",
+      "force": "Force reset (even with online consumers)",
+      "submit": "Confirm reset",
+      "success": "Reset request submitted",
+      "error": "Reset failed"
+    },
+    "edit": {
+      "title": "Edit consumer group",
+      "createTitle": "New consumer group",
+      "name": "Group name",
+      "namePlaceholder": "e.g. order-consumer-group",
+      "broker": "Target broker",
+      "brokerHint": "Pick a master broker",
+      "noBrokers": "No brokers available",
+      "mode": "Consume mode",
+      "modeHint": "CLUSTERING (sharded) · BROADCASTING (fanout)",
+      "maxRetry": "Max retry count",
+      "submit": "Save",
+      "createSubmit": "Create",
+      "createSuccess": "Group {{name}} created",
+      "saveSuccess": "Group {{name}} saved"
     }
   },
   "messages": {

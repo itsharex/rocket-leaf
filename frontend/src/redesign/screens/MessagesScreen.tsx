@@ -1,154 +1,827 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   Search,
   Copy,
-  Download,
   X,
   Send,
   GitBranch,
+  Loader2,
+  PlugZap,
+  AlertCircle,
+  Check,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import type {
+  MessageItem,
+  MessageTrackItem,
+} from '../../../bindings/rocket-leaf/internal/model/models.js'
 import { PageHeader, JSONView } from '../shell'
+import { useTopics } from '@/hooks/useTopics'
+import { useConsumers } from '@/hooks/useConsumers'
+import { useSettings } from '@/hooks/useSettings'
+import * as messageApi from '@/api/message'
 
-const MESSAGES = [
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0001', tag: 'create', key: 'order-2025-091823', body: '{"orderId":"2025-091823","amount":128.5,"status":"PAID"…', q: 0 },
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0002', tag: 'create', key: 'order-2025-091824', body: '{"orderId":"2025-091824","amount":59.9,"status":"PENDIN…', q: 1 },
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0003', tag: 'update', key: 'order-2025-091823', body: '{"orderId":"2025-091823","status":"SHIPPED","ts":17463…', q: 0 },
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0004', tag: 'cancel', key: 'order-2025-091820', body: '{"orderId":"2025-091820","reason":"USER_CANCEL"}', q: 2 },
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0005', tag: 'create', key: 'order-2025-091825', body: '{"orderId":"2025-091825","amount":1280,"status":"PAID"…', q: 1 },
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0006', tag: 'create', key: 'order-2025-091826', body: '{"orderId":"2025-091826","amount":42,"status":"PAID","u…', q: 3 },
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0007', tag: 'update', key: 'order-2025-091824', body: '{"orderId":"2025-091824","status":"PAID"}', q: 1 },
-  { id: 'AC1A0F23000078A4F0B8C1234E2F0008', tag: 'update', key: 'order-2025-091825', body: '{"orderId":"2025-091825","status":"SHIPPED"}', q: 1 },
-]
+type TabKey = 'topic' | 'msgid' | 'retry' | 'dlq'
 
-const SAMPLE_BODY = `{
-  "orderId": "2025-091823",
-  "userId": 778451,
-  "amount": 128.5,
-  "currency": "CNY",
-  "status": "PAID",
-  "paid": true,
-  "couponCode": null,
-  "items": [
-    { "sku": "SKU-A21", "qty": 1 },
-    { "sku": "SKU-B07", "qty": 2 }
-  ],
-  "createdAt": "2025-05-04T10:24:18.218Z"
-}`
+function tryFormatJSON(s: string): string {
+  try {
+    return JSON.stringify(JSON.parse(s), null, 2)
+  } catch {
+    return s
+  }
+}
 
 export function MessagesScreen() {
   const { t } = useTranslation()
-  const [activeTab, setActiveTab] = useState('按主题查询')
+  const { topics, hasOnline } = useTopics()
+  const { groups: consumerGroups } = useConsumers()
+  const { settings } = useSettings()
+  const [tab, setTab] = useState<TabKey>('topic')
+
+  // Form state per tab
+  const [topic, setTopic] = useState<string>('')
+  const [msgId, setMsgId] = useState<string>('')
+  const [keyFilter, setKeyFilter] = useState<string>('')
+  const [tagFilter, setTagFilter] = useState<string>('')
+  const [beginAt, setBeginAt] = useState<string>('')
+  const [endAt, setEndAt] = useState<string>('')
+  const [group, setGroup] = useState<string>('')
+  const [limit, setLimit] = useState<number>(settings.fetchLimit || 32)
+
+  // Result state
+  const [results, setResults] = useState<MessageItem[]>([])
+  const [searching, setSearching] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [hasSearched, setHasSearched] = useState(false)
+
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [resendTarget, setResendTarget] = useState<MessageItem | null>(null)
+
+  const sendableTopics = useMemo(
+    () =>
+      topics
+        .filter((tp) => !tp.topic.startsWith('%RETRY%') && !tp.topic.startsWith('%DLQ%'))
+        .map((tp) => tp.topic)
+        .sort(),
+    [topics],
+  )
+  const sortedGroups = useMemo(() => consumerGroups.map((g) => g.group).sort(), [consumerGroups])
+
+  const selected = useMemo(
+    () => results.find((m) => m.messageId === selectedId) ?? null,
+    [results, selectedId],
+  )
+
+  // Reset selection when results change
+  useEffect(() => {
+    if (results.length > 0 && !selectedId) {
+      setSelectedId(results[0]!.messageId)
+    } else if (results.length === 0) {
+      setSelectedId(null)
+    }
+  }, [results, selectedId])
+
+  const handleSearch = async () => {
+    setError(null)
+    setHasSearched(true)
+    if (tab === 'topic' || tab === 'msgid') {
+      if (!topic) {
+        setError(t('messages.form.validateTopic'))
+        return
+      }
+      if (tab === 'msgid' && !msgId.trim()) {
+        setError(t('messages.form.validateMsgId'))
+        return
+      }
+    } else {
+      if (!group) {
+        setError(t('messages.form.validateGroup'))
+        return
+      }
+    }
+    setSearching(true)
+    setResults([])
+    try {
+      let next: MessageItem[] = []
+      if (tab === 'topic') {
+        const beginMs = beginAt ? new Date(beginAt).getTime() : 0
+        const endMs = endAt ? new Date(endAt).getTime() : 0
+        next = await messageApi.queryMessagesByCondition(
+          topic,
+          {
+            messageKey: keyFilter,
+            messageTag: tagFilter,
+            startTimeMs: beginMs,
+            endTimeMs: endMs,
+          },
+          limit,
+        )
+      } else if (tab === 'msgid') {
+        next = await messageApi.queryMessagesByCondition(topic, { messageId: msgId.trim() })
+      } else if (tab === 'retry') {
+        next = await messageApi.queryRetryMessages(group, limit)
+      } else if (tab === 'dlq') {
+        next = await messageApi.queryDLQMessages(group, limit)
+      }
+      setResults(next)
+      setSelectedId(next[0]?.messageId ?? null)
+      if (next.length === 0) {
+        toast.info(t('messages.empty'))
+      }
+    } catch (e) {
+      const msg = (e as Error).message ?? String(e)
+      setError(msg)
+      toast.error(t('messages.queryError', { message: msg }))
+    } finally {
+      setSearching(false)
+    }
+  }
+
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast.success(t('messages.detail.copySuccess'))
+    } catch {
+      toast.error(t('messages.detail.copyError'))
+    }
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader
         title={t('messages.title')}
-        tabs={['按主题查询', '按 Key 查询', '按 MsgID 查询', '发送消息']}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
+        subtitle={!hasOnline ? t('messages.subtitleNoConn') : undefined}
+        tabs={[
+          t('messages.tabs.topic'),
+          t('messages.tabs.msgid'),
+          t('messages.tabs.retry'),
+          t('messages.tabs.dlq'),
+        ]}
+        activeTab={t(`messages.tabs.${tab}`)}
+        onTabChange={(label) => {
+          if (label === t('messages.tabs.topic')) setTab('topic')
+          else if (label === t('messages.tabs.msgid')) setTab('msgid')
+          else if (label === t('messages.tabs.retry')) setTab('retry')
+          else setTab('dlq')
+          setResults([])
+          setError(null)
+          setHasSearched(false)
+        }}
       />
 
-      <div
-        className="flex items-center gap-2 px-6 py-3"
-        style={{ borderBottom: '1px solid hsl(var(--border))', background: 'hsl(var(--background))' }}
-      >
-        <select className="rl-select" style={{ width: 220 }} defaultValue="order-events">
-          <option>order-events</option>
-        </select>
-        <input className="rl-input" placeholder="开始时间  2025-05-04 09:00" style={{ width: 220 }} />
-        <input className="rl-input" placeholder="结束时间  2025-05-04 11:00" style={{ width: 220 }} />
-        <input className="rl-input" placeholder="Tag (可选)" style={{ width: 140 }} />
-        <button className="rl-btn rl-btn-primary rl-btn-sm">
-          <Search size={13} />查询
-        </button>
-        <div className="rl-muted ml-auto text-[12px]">共 1,284 条 · 第 1 / 26 页</div>
-      </div>
+      {!hasOnline ? (
+        <div
+          className="rl-muted flex flex-col items-center justify-center text-center"
+          style={{ flex: 1, padding: 40 }}
+        >
+          <PlugZap size={32} className="mb-3 opacity-40" />
+          <div className="text-[13px]">{t('messages.subtitleNoConn')}</div>
+        </div>
+      ) : (
+        <>
+          {/* Query bar */}
+          <div
+            className="flex items-center gap-2 px-6 py-3 flex-wrap"
+            style={{
+              borderBottom: '1px solid hsl(var(--border))',
+              background: 'hsl(var(--background))',
+            }}
+          >
+            {(tab === 'topic' || tab === 'msgid') && (
+              <select
+                className="rl-select font-mono-design"
+                style={{ width: 220 }}
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+              >
+                <option value="">{t('messages.form.topicPlaceholder')}</option>
+                {sendableTopics.map((tp) => (
+                  <option key={tp} value={tp}>
+                    {tp}
+                  </option>
+                ))}
+              </select>
+            )}
+            {(tab === 'retry' || tab === 'dlq') && (
+              <select
+                className="rl-select font-mono-design"
+                style={{ width: 240 }}
+                value={group}
+                onChange={(e) => setGroup(e.target.value)}
+              >
+                <option value="">{t('messages.form.groupPlaceholder')}</option>
+                {sortedGroups.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            )}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <div className="min-w-0 flex-1 overflow-auto">
-          <table className="rl-table">
-            <thead>
-              <tr>
-                <th style={{ width: 200 }}>Message ID</th>
-                <th style={{ width: 110 }}>Tag</th>
-                <th style={{ width: 180 }}>Key</th>
-                <th>预览</th>
-                <th style={{ width: 70, textAlign: 'right' }}>队列</th>
-                <th style={{ width: 170 }}>存储时间</th>
-              </tr>
-            </thead>
-            <tbody>
-              {MESSAGES.map((m, i) => (
-                <tr key={i} className={i === 0 ? 'selected' : ''}>
-                  <td><div className="font-mono-design text-[12px]">{m.id.slice(0, 24)}…</div></td>
-                  <td><span className="rl-badge rl-badge-outline">{m.tag}</span></td>
-                  <td><span className="font-mono-design text-[12px]">{m.key}</span></td>
-                  <td>
-                    <div
-                      className="font-mono-design rl-muted text-[12px]"
-                      style={{ maxWidth: 280, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                    >
-                      {m.body}
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'right' }} className="rl-tabular rl-muted">{m.q}</td>
-                  <td className="font-mono-design rl-muted text-[12px]">2025-05-04 10:24:18.{220 + i * 7}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            {tab === 'topic' && (
+              <>
+                <input
+                  className="rl-input font-mono-design"
+                  type="datetime-local"
+                  placeholder={t('messages.form.begin')}
+                  style={{ width: 200 }}
+                  value={beginAt}
+                  onChange={(e) => setBeginAt(e.target.value)}
+                  title={t('messages.form.begin')}
+                />
+                <input
+                  className="rl-input font-mono-design"
+                  type="datetime-local"
+                  placeholder={t('messages.form.end')}
+                  style={{ width: 200 }}
+                  value={endAt}
+                  onChange={(e) => setEndAt(e.target.value)}
+                  title={t('messages.form.end')}
+                />
+                <input
+                  className="rl-input"
+                  placeholder={t('messages.form.key')}
+                  style={{ width: 140 }}
+                  value={keyFilter}
+                  onChange={(e) => setKeyFilter(e.target.value)}
+                />
+                <input
+                  className="rl-input"
+                  placeholder={t('messages.form.tag')}
+                  style={{ width: 120 }}
+                  value={tagFilter}
+                  onChange={(e) => setTagFilter(e.target.value)}
+                />
+              </>
+            )}
+            {tab === 'msgid' && (
+              <input
+                className="rl-input font-mono-design"
+                placeholder={t('messages.form.msgIdPlaceholder')}
+                style={{ flex: 1, minWidth: 240 }}
+                value={msgId}
+                onChange={(e) => setMsgId(e.target.value)}
+              />
+            )}
+            {(tab === 'topic' || tab === 'retry' || tab === 'dlq') && (
+              <input
+                className="rl-input"
+                type="number"
+                min={1}
+                max={500}
+                style={{ width: 90 }}
+                value={limit}
+                onChange={(e) => setLimit(Number(e.target.value) || 32)}
+                title={t('messages.form.limit')}
+              />
+            )}
+            <button
+              className="rl-btn rl-btn-primary rl-btn-sm"
+              onClick={handleSearch}
+              disabled={searching}
+            >
+              {searching ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+              {searching ? t('messages.form.searching') : t('messages.form.search')}
+            </button>
+            {hasSearched && !searching && results.length > 0 && (
+              <div className="rl-muted ml-auto text-[12px]">
+                {t('messages.summary', { count: results.length })}
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div
+              className="flex items-center gap-2"
+              style={{
+                margin: 16,
+                padding: '10px 14px',
+                borderRadius: 8,
+                background: 'hsl(0 84% 96%)',
+                color: 'hsl(0 70% 35%)',
+                border: '1px solid hsl(0 84% 80%)',
+              }}
+            >
+              <AlertCircle size={14} />
+              <span className="text-[12px]">{error}</span>
+            </div>
+          )}
+
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <div className="min-w-0 flex-1 overflow-auto scroll-thin">
+              {searching && results.length === 0 ? (
+                <div
+                  className="flex items-center justify-center rl-muted"
+                  style={{ padding: 60, gap: 8 }}
+                >
+                  <Loader2 size={14} className="animate-spin" />
+                  <span className="text-[12px]">{t('messages.form.searching')}</span>
+                </div>
+              ) : !hasSearched ? (
+                <div
+                  className="rl-muted text-center"
+                  style={{ padding: 60, fontSize: 12 }}
+                >
+                  {t('messages.form.search')} →
+                </div>
+              ) : results.length === 0 ? (
+                <div
+                  className="rl-muted text-center"
+                  style={{ padding: 60, fontSize: 12 }}
+                >
+                  {t('messages.empty')}
+                </div>
+              ) : (
+                <table className="rl-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 200 }}>{t('messages.table.msgId')}</th>
+                      <th style={{ width: 110 }}>{t('messages.table.tag')}</th>
+                      <th style={{ width: 180 }}>{t('messages.table.key')}</th>
+                      <th>{t('messages.table.preview')}</th>
+                      <th style={{ width: 70, textAlign: 'right' }}>
+                        {t('messages.table.queue')}
+                      </th>
+                      <th style={{ width: 170 }}>{t('messages.table.storeTime')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {results.map((m) => (
+                      <tr
+                        key={m.messageId}
+                        className={selectedId === m.messageId ? 'selected' : ''}
+                        onClick={() => setSelectedId(m.messageId)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <td>
+                          <div
+                            className="font-mono-design text-[12px] truncate"
+                            style={{ maxWidth: 180 }}
+                            title={m.messageId}
+                          >
+                            {m.messageId.slice(0, 24)}…
+                          </div>
+                        </td>
+                        <td>
+                          {m.tags ? (
+                            <span className="rl-badge rl-badge-outline">{m.tags}</span>
+                          ) : (
+                            <span className="rl-muted text-[12px]">—</span>
+                          )}
+                        </td>
+                        <td>
+                          <span className="font-mono-design text-[12px]">{m.keys || '—'}</span>
+                        </td>
+                        <td>
+                          <div
+                            className="font-mono-design rl-muted text-[12px]"
+                            style={{
+                              maxWidth: 280,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {m.body}
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right' }} className="rl-tabular rl-muted">
+                          {m.queueId}
+                        </td>
+                        <td className="font-mono-design rl-muted text-[12px]">
+                          {m.storeTime || '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {selected && (
+              <MessageDetailPanel
+                msg={selected}
+                onClose={() => setSelectedId(null)}
+                onCopy={handleCopy}
+                onResend={() => setResendTarget(selected)}
+              />
+            )}
+          </div>
+        </>
+      )}
+
+      {resendTarget && (
+        <ResendDialog
+          msg={resendTarget}
+          groups={sortedGroups}
+          onClose={() => setResendTarget(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ---------- Detail Panel ----------
+
+function MessageDetailPanel({
+  msg,
+  onClose,
+  onCopy,
+  onResend,
+}: {
+  msg: MessageItem
+  onClose: () => void
+  onCopy: (s: string) => void
+  onResend: () => void
+}) {
+  const { t } = useTranslation()
+  const { settings } = useSettings()
+  const [tab, setTab] = useState<'body' | 'properties' | 'track'>('body')
+  const [track, setTrack] = useState<MessageTrackItem[] | null>(null)
+  const [trackLoading, setTrackLoading] = useState(false)
+  const [trackError, setTrackError] = useState<string | null>(null)
+
+  // Reset to body tab when message changes
+  useEffect(() => {
+    setTab('body')
+    setTrack(null)
+    setTrackError(null)
+  }, [msg.messageId])
+
+  // Lazy-load track when track tab opens
+  useEffect(() => {
+    if (tab !== 'track' || track) return
+    let cancelled = false
+    setTrackLoading(true)
+    setTrackError(null)
+    messageApi
+      .getMessageTrack(msg.topic, msg.messageId)
+      .then((data) => {
+        if (!cancelled) setTrack(data)
+      })
+      .catch((e) => {
+        if (!cancelled) setTrackError((e as Error).message ?? String(e))
+      })
+      .finally(() => {
+        if (!cancelled) setTrackLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [tab, track, msg.messageId, msg.topic])
+
+  const formattedBody =
+    settings.autoFormatJson !== false ? tryFormatJSON(msg.body) : msg.body
+
+  const propEntries = Object.entries(msg.properties || {}).filter(
+    ([, v]) => v !== undefined && v !== '',
+  )
+
+  return (
+    <aside
+      className="scroll-thin"
+      style={{
+        width: 460,
+        borderLeft: '1px solid hsl(var(--border))',
+        overflow: 'auto',
+        background: 'hsl(var(--background))',
+      }}
+    >
+      <div style={{ padding: 20 }}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-semibold truncate">{t('messages.detail.title')}</div>
+          <div className="flex gap-1 shrink-0">
+            <button
+              className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"
+              onClick={() => onCopy(msg.messageId)}
+              title={t('messages.detail.actions.copyId')}
+            >
+              <Copy size={13} />
+            </button>
+            <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm" onClick={onClose}>
+              <X size={14} />
+            </button>
+          </div>
         </div>
 
-        {/* Detail */}
-        <aside
-          className="scroll-thin"
+        <div
+          className="rl-utabs"
           style={{
-            width: 460,
-            borderLeft: '1px solid hsl(var(--border))',
-            overflow: 'auto',
-            background: 'hsl(var(--background))',
+            marginTop: 12,
+            marginLeft: -20,
+            marginRight: -20,
+            paddingLeft: 20,
+            paddingRight: 20,
           }}
         >
-          <div style={{ padding: 20 }}>
-            <div className="flex items-center justify-between">
-              <div className="font-semibold">消息详情</div>
-              <div className="flex gap-1">
-                <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"><Copy size={13} /></button>
-                <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"><Download size={13} /></button>
-                <button className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"><X size={14} /></button>
-              </div>
-            </div>
-
+          {(['body', 'properties', 'track'] as const).map((k) => (
             <div
-              className="rl-utabs"
-              style={{ marginTop: 12, marginLeft: -20, marginRight: -20, paddingLeft: 20, paddingRight: 20 }}
+              key={k}
+              className={'utab ' + (tab === k ? 'active' : '')}
+              onClick={() => setTab(k)}
             >
-              <div className="utab active">Body</div>
-              <div className="utab">属性</div>
-              <div className="utab"><GitBranch size={12} />轨迹</div>
+              {t(`messages.detail.tabs.${k}`)}
             </div>
+          ))}
+        </div>
 
-            <div className="rl-section-label" style={{ marginTop: 16 }}>基本信息</div>
-            <div>
-              <div className="rl-detail-row"><div className="k">Message ID</div><div className="v font-mono-design text-[12px]">AC1A0F23000078A4F0B8C1234E2F0001</div></div>
-              <div className="rl-detail-row"><div className="k">Topic</div><div className="v font-mono-design text-[12px]">order-events</div></div>
-              <div className="rl-detail-row"><div className="k">Tag</div><div className="v">create</div></div>
-              <div className="rl-detail-row"><div className="k">Key</div><div className="v font-mono-design text-[12px]">order-2025-091823</div></div>
-              <div className="rl-detail-row"><div className="k">队列</div><div className="v">broker-a / queue-0</div></div>
-              <div className="rl-detail-row"><div className="k">Born Time</div><div className="v font-mono-design text-[12px]">2025-05-04 10:24:18.220</div></div>
-              <div className="rl-detail-row"><div className="k">Store Time</div><div className="v font-mono-design text-[12px]">2025-05-04 10:24:18.224</div></div>
-            </div>
-
-            <div className="rl-section-label" style={{ marginTop: 20 }}>Body</div>
-            <JSONView src={SAMPLE_BODY} maxHeight={300} />
-
-            <div className="mt-6 flex gap-2">
-              <button className="rl-btn rl-btn-outline rl-btn-sm"><Send size={13} />重新发送</button>
-              <button className="rl-btn rl-btn-outline rl-btn-sm"><GitBranch size={13} />查看轨迹</button>
-            </div>
+        <div className="rl-section-label" style={{ marginTop: 16 }}>
+          {t('messages.detail.info')}
+        </div>
+        <div>
+          <div className="rl-detail-row">
+            <div className="k">{t('messages.detail.msgId')}</div>
+            <div className="v font-mono-design text-[12px] break-all">{msg.messageId}</div>
           </div>
-        </aside>
+          <div className="rl-detail-row">
+            <div className="k">{t('messages.detail.topic')}</div>
+            <div className="v font-mono-design text-[12px]">{msg.topic}</div>
+          </div>
+          {msg.tags && (
+            <div className="rl-detail-row">
+              <div className="k">{t('messages.detail.tag')}</div>
+              <div className="v">{msg.tags}</div>
+            </div>
+          )}
+          {msg.keys && (
+            <div className="rl-detail-row">
+              <div className="k">{t('messages.detail.key')}</div>
+              <div className="v font-mono-design text-[12px]">{msg.keys}</div>
+            </div>
+          )}
+          <div className="rl-detail-row">
+            <div className="k">{t('messages.detail.queue')}</div>
+            <div className="v rl-tabular">{msg.queueId}</div>
+          </div>
+          <div className="rl-detail-row">
+            <div className="k">{t('messages.detail.queueOffset')}</div>
+            <div className="v rl-tabular">{msg.queueOffset}</div>
+          </div>
+          {msg.bornHost && (
+            <div className="rl-detail-row">
+              <div className="k">{t('messages.detail.bornHost')}</div>
+              <div className="v font-mono-design text-[12px]">{msg.bornHost}</div>
+            </div>
+          )}
+          {msg.storeHost && (
+            <div className="rl-detail-row">
+              <div className="k">{t('messages.detail.storeHost')}</div>
+              <div className="v font-mono-design text-[12px]">{msg.storeHost}</div>
+            </div>
+          )}
+          {msg.storeTime && (
+            <div className="rl-detail-row">
+              <div className="k">{t('messages.detail.storeTime')}</div>
+              <div className="v font-mono-design text-[12px]">{msg.storeTime}</div>
+            </div>
+          )}
+          {msg.status && (
+            <div className="rl-detail-row">
+              <div className="k">{t('messages.detail.status')}</div>
+              <div className="v">{msg.status}</div>
+            </div>
+          )}
+          {msg.retryTimes > 0 && (
+            <div className="rl-detail-row">
+              <div className="k">{t('messages.detail.retryTimes')}</div>
+              <div className="v rl-tabular">{msg.retryTimes}</div>
+            </div>
+          )}
+        </div>
+
+        {tab === 'body' && (
+          <>
+            <div
+              className="mt-5 mb-2 flex items-center justify-between"
+              style={{ marginTop: 20 }}
+            >
+              <div className="rl-section-label" style={{ marginBottom: 0 }}>
+                {t('messages.detail.bodyTitle')}
+              </div>
+              <button
+                className="rl-btn rl-btn-ghost rl-btn-sm"
+                onClick={() => onCopy(msg.body)}
+              >
+                <Copy size={12} />
+                {t('messages.detail.actions.copyBody')}
+              </button>
+            </div>
+            <JSONView src={formattedBody} maxHeight={300} />
+          </>
+        )}
+
+        {tab === 'properties' && (
+          <div className="mt-4">
+            {propEntries.length === 0 ? (
+              <div
+                className="rl-muted text-[12px]"
+                style={{ padding: 16, textAlign: 'center' }}
+              >
+                {t('messages.detail.propsEmpty')}
+              </div>
+            ) : (
+              <div>
+                {propEntries.map(([k, v]) => (
+                  <div className="rl-detail-row" key={k}>
+                    <div className="k font-mono-design">{k}</div>
+                    <div className="v font-mono-design text-[12px] break-all">{String(v)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {tab === 'track' && (
+          <div className="mt-4">
+            <div className="rl-section-label">{t('messages.detail.trackTitle')}</div>
+            {trackLoading ? (
+              <div
+                className="flex items-center justify-center rl-muted"
+                style={{ padding: 24, gap: 8 }}
+              >
+                <Loader2 size={14} className="animate-spin" />
+                <span className="text-[12px]">{t('messages.detail.trackLoading')}</span>
+              </div>
+            ) : trackError ? (
+              <div
+                className="text-[12px]"
+                style={{ padding: 16, color: 'hsl(var(--destructive))' }}
+              >
+                {t('messages.detail.trackError')}: {trackError}
+              </div>
+            ) : !track || track.length === 0 ? (
+              <div
+                className="rl-muted text-[12px]"
+                style={{ padding: 16, textAlign: 'center' }}
+              >
+                {t('messages.detail.trackEmpty')}
+              </div>
+            ) : (
+              <div className="rl-card overflow-hidden">
+                {track.map((tr, i) => (
+                  <div
+                    key={`${tr.consumerGroup}-${i}`}
+                    style={{
+                      padding: '10px 14px',
+                      borderTop: i ? '1px solid hsl(var(--border))' : undefined,
+                    }}
+                  >
+                    <div className="flex items-center gap-2">
+                      <GitBranch size={11} className="rl-muted" />
+                      <span className="font-mono-design text-[12px] flex-1">
+                        {tr.consumerGroup}
+                      </span>
+                      {tr.trackType && (
+                        <span
+                          className={
+                            'rl-badge ' +
+                            (tr.trackType === 'CONSUMED'
+                              ? 'rl-badge-success'
+                              : tr.trackType === 'NOT_CONSUME_YET'
+                                ? 'rl-badge-warn'
+                                : 'rl-badge-outline')
+                          }
+                        >
+                          {tr.trackType}
+                        </span>
+                      )}
+                    </div>
+                    {tr.consumeStatus && (
+                      <div className="rl-muted mt-1 text-[12px]">
+                        {tr.consumeStatus}
+                      </div>
+                    )}
+                    {tr.exceptionDesc && (
+                      <div
+                        className="mt-1 text-[11px]"
+                        style={{ color: 'hsl(var(--destructive))' }}
+                      >
+                        {tr.exceptionDesc}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-6 flex gap-2 flex-wrap">
+          <button className="rl-btn rl-btn-outline rl-btn-sm" onClick={onResend}>
+            <Send size={13} />
+            {t('messages.detail.actions.resend')}
+          </button>
+          <button
+            className="rl-btn rl-btn-outline rl-btn-sm"
+            onClick={() => setTab('track')}
+          >
+            <GitBranch size={13} />
+            {t('messages.detail.actions.track')}
+          </button>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+// ---------- Resend dialog ----------
+
+function ResendDialog({
+  msg,
+  groups,
+  onClose,
+}: {
+  msg: MessageItem
+  groups: string[]
+  onClose: () => void
+}) {
+  const { t } = useTranslation()
+  const [group, setGroup] = useState(groups[0] ?? '')
+  const [clientId, setClientId] = useState<string>('')
+  const [busy, setBusy] = useState(false)
+
+  const handleResend = async () => {
+    if (!group) {
+      toast.error(t('messages.form.validateGroup'))
+      return
+    }
+    setBusy(true)
+    try {
+      const result = await messageApi.resendMessage(group, clientId, msg.topic, msg.messageId)
+      toast.success(t('messages.detail.resendSuccess', { group }), { description: result })
+      onClose()
+    } catch (e) {
+      toast.error(t('messages.detail.resendError'), {
+        description: (e as Error).message ?? String(e),
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="w-full max-w-sm rounded-xl border border-border/50 bg-background p-6 shadow-lg"
+      >
+        <h2 className="text-base font-semibold">{t('messages.detail.resendTitle')}</h2>
+        <p className="rl-muted mt-2 text-[12px]">{t('messages.detail.resendDesc')}</p>
+        <div className="mt-4 grid gap-3.5">
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">{t('messages.form.group')}</div>
+            {groups.length === 0 ? (
+              <div className="rl-muted text-[12px]" style={{ padding: 8 }}>
+                {t('messages.form.noGroups')}
+              </div>
+            ) : (
+              <select
+                className="rl-select"
+                value={group}
+                onChange={(e) => setGroup(e.target.value)}
+              >
+                {groups.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div>
+            <div className="rl-muted mb-2 text-[12px]">Client ID (optional)</div>
+            <input
+              className="rl-input font-mono-design"
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2.5">
+          <button
+            type="button"
+            className="rl-btn rl-btn-outline rl-btn-sm"
+            onClick={onClose}
+            disabled={busy}
+          >
+            {t('common.cancel')}
+          </button>
+          <button
+            type="button"
+            className="rl-btn rl-btn-primary rl-btn-sm"
+            onClick={handleResend}
+            disabled={busy || !group}
+          >
+            {busy ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+            {t('messages.detail.resendSubmit')}
+          </button>
+        </div>
       </div>
     </div>
   )

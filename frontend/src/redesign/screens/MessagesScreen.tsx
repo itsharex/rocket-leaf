@@ -138,7 +138,9 @@ export function MessagesScreen() {
         next = await messageApi.queryDLQMessages(group, limit)
       }
       setResults(next)
-      setSelectedId(next[0]?.messageId ?? null)
+      // Keep the detail panel closed after a new query — the user
+      // opens it explicitly by clicking a row.
+      setSelectedId(null)
       if (next.length === 0) {
         toast.info(t('messages.empty'))
       }

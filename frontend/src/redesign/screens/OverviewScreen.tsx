@@ -307,13 +307,13 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
             <div className="grid gap-2.5" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
               <KpiStat
                 label={t('overview.stat.topics')}
-                value={(cluster?.totalTopics ?? data.topics.length).toLocaleString()}
+                value={(data.topics.length || cluster?.totalTopics || 0).toLocaleString()}
                 sub={t('overview.stat.topicSummary', { active: activeTopics.length })}
                 icon={LayoutGrid}
               />
               <KpiStat
                 label={t('overview.stat.consumers')}
-                value={(cluster?.totalGroups ?? data.consumerGroups.length).toLocaleString()}
+                value={(data.consumerGroups.length || cluster?.totalGroups || 0).toLocaleString()}
                 sub={t('overview.stat.consumersSummary', {
                   online: onlineGroups,
                   offline: data.consumerGroups.length - onlineGroups,

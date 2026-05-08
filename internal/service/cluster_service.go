@@ -118,6 +118,22 @@ func (s *ClusterService) GetClusterInfo() (*model.ClusterInfo, error) {
 		tmpResult.TotalBrokers = len(tmpResult.Brokers)
 		tmpResult.OnlineBrokers = len(tmpResult.Brokers)
 
+		// 最佳努力：为每个 broker 补齐 runtime 字段（版本号、TPS、磁盘等），
+		// 让 Cluster 屏幕的 KPI 卡片和 broker 列表能显示真实数据。
+		// 失败的单个 broker 仅丢失 runtime 字段，不影响整体返回。
+		diskSum := 0
+		diskCount := 0
+		for _, broker := range tmpResult.Brokers {
+			s.enrichBrokerRuntimeStats(ctx, retryClient, broker)
+			if broker.CommitLogDiskUsage > 0 {
+				diskSum += broker.CommitLogDiskUsage
+				diskCount++
+			}
+		}
+		if diskCount > 0 {
+			tmpResult.AvgDiskUsage = diskSum / diskCount
+		}
+
 		// 最佳努力：补齐 Topic 与 ConsumerGroup 总数，使 Overview / Cluster
 		// 屏幕的 KPI 卡片即便在不单独拉列表的页面也能显示真实数字。
 		// 这两个调用失败不影响 broker 信息返回。
@@ -212,33 +228,8 @@ func (s *ClusterService) GetBrokerDetail(brokerAddr string) (*model.BrokerNode, 
 	defer cancel()
 
 	err = executeWithClientRetry(client, func(retryClient *admin.Client) error {
-		stats, callErr := retryClient.FetchBrokerRuntimeStats(ctx, brokerAddr)
-		if callErr != nil {
-			return callErr
-		}
-
-		if stats != nil && stats.Table != nil {
-			if version, ok := stats.Table["brokerVersionDesc"]; ok {
-				broker.Version = version
-			}
-			if tpsIn, ok := stats.Table["putTps"]; ok {
-				broker.TpsIn = parseIntSafe(extractFirstValue(tpsIn))
-			}
-			if tpsOut, ok := stats.Table["getTransferredTps"]; ok {
-				broker.TpsOut = parseIntSafe(extractFirstValue(tpsOut))
-			}
-			if msgInToday, ok := stats.Table["msgPutTotalTodayNow"]; ok {
-				broker.MsgInToday = parseInt64Safe(msgInToday)
-			}
-			if msgOutToday, ok := stats.Table["msgGetTotalTodayNow"]; ok {
-				broker.MsgOutToday = parseInt64Safe(msgOutToday)
-			}
-			if diskRatio, ok := stats.Table["commitLogDiskRatio"]; ok {
-				broker.CommitLogDiskUsage = int(parseFloatSafe(diskRatio) * 100)
-			}
-			if diskRatio, ok := stats.Table["consumeQueueDiskRatio"]; ok {
-				broker.ConsumeQueueDiskUsage = int(parseFloatSafe(diskRatio) * 100)
-			}
+		if statsErr := s.applyBrokerRuntimeStats(ctx, retryClient, broker); statsErr != nil {
+			return statsErr
 		}
 		return nil
 	})
@@ -247,6 +238,50 @@ func (s *ClusterService) GetBrokerDetail(brokerAddr string) (*model.BrokerNode, 
 	}
 
 	return broker, nil
+}
+
+// enrichBrokerRuntimeStats 静默地补齐 broker 的 runtime 字段。
+// 区别于 applyBrokerRuntimeStats: 失败时不返回错误，让 GetClusterInfo
+// 在批量补齐时跳过单个失败的 broker 而不影响整体。
+func (s *ClusterService) enrichBrokerRuntimeStats(ctx context.Context, client *admin.Client, broker *model.BrokerNode) {
+	if broker == nil || broker.Address == "" {
+		return
+	}
+	_ = s.applyBrokerRuntimeStats(ctx, client, broker)
+}
+
+// applyBrokerRuntimeStats 拉取 broker runtime 统计并写入字段。
+// 网络错误等会返回 error，由调用方决定是否传播。
+func (s *ClusterService) applyBrokerRuntimeStats(ctx context.Context, client *admin.Client, broker *model.BrokerNode) error {
+	stats, err := client.FetchBrokerRuntimeStats(ctx, broker.Address)
+	if err != nil {
+		return err
+	}
+	if stats == nil || stats.Table == nil {
+		return nil
+	}
+	if version, ok := stats.Table["brokerVersionDesc"]; ok {
+		broker.Version = version
+	}
+	if tpsIn, ok := stats.Table["putTps"]; ok {
+		broker.TpsIn = parseIntSafe(extractFirstValue(tpsIn))
+	}
+	if tpsOut, ok := stats.Table["getTransferredTps"]; ok {
+		broker.TpsOut = parseIntSafe(extractFirstValue(tpsOut))
+	}
+	if msgInToday, ok := stats.Table["msgPutTotalTodayNow"]; ok {
+		broker.MsgInToday = parseInt64Safe(msgInToday)
+	}
+	if msgOutToday, ok := stats.Table["msgGetTotalTodayNow"]; ok {
+		broker.MsgOutToday = parseInt64Safe(msgOutToday)
+	}
+	if diskRatio, ok := stats.Table["commitLogDiskRatio"]; ok {
+		broker.CommitLogDiskUsage = int(parseFloatSafe(diskRatio) * 100)
+	}
+	if diskRatio, ok := stats.Table["consumeQueueDiskRatio"]; ok {
+		broker.ConsumeQueueDiskUsage = int(parseFloatSafe(diskRatio) * 100)
+	}
+	return nil
 }
 
 // GetNameServers 获取 NameServer 列表

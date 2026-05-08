@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 
 	"rocket-leaf/internal/model"
 	"rocket-leaf/internal/rocketmq"
@@ -12,10 +13,23 @@ import (
 	admin "github.com/amigoer/rocketmq-admin-go"
 )
 
+// brokerTPSHistory 单 broker 的滚动 TPS 历史，最大 tpsHistoryLen 个采样。
+type brokerTPSHistory struct {
+	tpsIn  []int
+	tpsOut []int
+}
+
+// tpsHistoryLen 决定吞吐趋势图能回放的采样深度；前端按 30s 拉一次时
+// 60 个采样约等于 30 分钟。
+const tpsHistoryLen = 60
+
 // ClusterService 集群状态服务
 type ClusterService struct {
 	connectionService *ConnectionService
 	settingsService   *SettingsService
+
+	historyMu sync.Mutex
+	history   map[string]*brokerTPSHistory // key: broker address
 }
 
 // NewClusterService 创建集群状态服务
@@ -23,7 +37,37 @@ func NewClusterService(connService *ConnectionService, settingsService *Settings
 	return &ClusterService{
 		connectionService: connService,
 		settingsService:   settingsService,
+		history:           make(map[string]*brokerTPSHistory),
 	}
+}
+
+// recordBrokerTPS 把当前 TPS 追加到该 broker 的滚动历史并把历史回写到 broker
+// 对象，方便前端在没有专门的历史接口时也能直接画图。
+func (s *ClusterService) recordBrokerTPS(broker *model.BrokerNode) {
+	if broker == nil || broker.Address == "" {
+		return
+	}
+	s.historyMu.Lock()
+	defer s.historyMu.Unlock()
+	h, ok := s.history[broker.Address]
+	if !ok {
+		h = &brokerTPSHistory{}
+		s.history[broker.Address] = h
+	}
+	h.tpsIn = appendCapped(h.tpsIn, broker.TpsIn, tpsHistoryLen)
+	h.tpsOut = appendCapped(h.tpsOut, broker.TpsOut, tpsHistoryLen)
+	// 拷贝出去防止后续追加污染前端拿到的切片。
+	broker.TpsInHistory = append([]int(nil), h.tpsIn...)
+	broker.TpsOutHistory = append([]int(nil), h.tpsOut...)
+}
+
+// appendCapped 追加并裁剪保持 cap 上限的切片。
+func appendCapped(arr []int, v int, cap int) []int {
+	arr = append(arr, v)
+	if len(arr) > cap {
+		arr = arr[len(arr)-cap:]
+	}
+	return arr
 }
 
 // GetClusterInfo 获取集群信息
@@ -132,6 +176,7 @@ func (s *ClusterService) GetClusterInfo() (*model.ClusterInfo, error) {
 			)
 			s.enrichBrokerRuntimeStats(brokerCtx, retryClient, broker)
 			brokerCancel()
+			s.recordBrokerTPS(broker)
 			if broker.CommitLogDiskUsage > 0 {
 				diskSum += broker.CommitLogDiskUsage
 				diskCount++

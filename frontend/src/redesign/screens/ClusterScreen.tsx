@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 import type { BrokerNode } from '../../../bindings/rocket-leaf/internal/model/models.js'
 import { PageHeader } from '../shell'
 import { useCluster } from '@/hooks/useCluster'
+import { formatErrorMessage } from '@/lib/utils'
 
 const HISTORY_LEN = 60
 
@@ -102,7 +103,7 @@ export function ClusterScreen() {
       await refresh()
       toast.success(t('common.refreshed'))
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     }
   }
 

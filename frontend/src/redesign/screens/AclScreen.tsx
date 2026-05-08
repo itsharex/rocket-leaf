@@ -19,6 +19,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useConnections } from '@/hooks/useConnections'
 import * as aclApi from '@/api/acl'
 import type { AclVersionInfo } from '@/api/acl'
+import { formatErrorMessage } from '@/lib/utils'
 
 const PERMS = ['DENY', 'PUB', 'SUB', 'PUB|SUB'] as const
 
@@ -72,7 +73,7 @@ export function AclScreen() {
       setEnabled(enabled)
       setVersion(ver)
     } catch (e) {
-      setStatusError((e as Error).message ?? String(e))
+      setStatusError(formatErrorMessage(e))
     } finally {
       setStatusLoading(false)
     }
@@ -112,7 +113,7 @@ export function AclScreen() {
       toast.success(t('acl.form.saveSuccess'))
       void refreshStatus()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setSaving(false)
     }
@@ -128,7 +129,7 @@ export function AclScreen() {
       setDeleteAk('')
       void refreshStatus()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setDeleting(false)
     }
@@ -154,7 +155,7 @@ export function AclScreen() {
       await aclApi.updateGlobalWhiteAddrs(whiteList)
       toast.success(t('acl.globalWhite.saveSuccess'))
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setWhiteSaving(false)
     }

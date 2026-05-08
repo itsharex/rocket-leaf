@@ -7,6 +7,7 @@ import { PageHeader } from '../shell'
 import { useOverview } from '@/hooks/useOverview'
 import { useSettings } from '@/hooks/useSettings'
 import type { NavId } from '../Sidebar'
+import { formatErrorMessage } from '@/lib/utils'
 
 type Severity = 'crit' | 'warn' | 'info'
 
@@ -107,7 +108,7 @@ export function AlertsScreen({ onNavigate }: AlertsScreenProps) {
       await refresh()
       toast.success(t('common.refreshed'))
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     }
   }
 

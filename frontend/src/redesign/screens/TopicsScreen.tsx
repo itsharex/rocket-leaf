@@ -26,6 +26,7 @@ import { useTopics } from '@/hooks/useTopics'
 import { useCluster } from '@/hooks/useCluster'
 import { useDelayedUnmount } from '@/hooks/useDelayedUnmount'
 import * as topicApi from '@/api/topic'
+import { formatErrorMessage } from '@/lib/utils'
 
 type TypeFilter = 'all' | 'normal' | 'fifo' | 'delay' | 'retry' | 'dlq'
 
@@ -160,7 +161,7 @@ export function TopicsScreen() {
         if (!cancelled) setDetail(d)
       })
       .catch((e) => {
-        if (!cancelled) toast.error((e as Error).message ?? String(e))
+        if (!cancelled) toast.error(formatErrorMessage(e))
       })
       .finally(() => {
         if (!cancelled) setDetailLoading(false)
@@ -175,7 +176,7 @@ export function TopicsScreen() {
       await refresh()
       toast.success(t('common.refreshed'))
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     }
   }
 
@@ -189,7 +190,7 @@ export function TopicsScreen() {
       if (selectedName === confirmDelete.topic) setSelectedName(null)
       await refresh()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setDeleting(false)
     }
@@ -700,7 +701,7 @@ function TopicEditor({
       }
       await onSaved()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setBusy(false)
     }

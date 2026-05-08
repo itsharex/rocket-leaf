@@ -13,6 +13,7 @@ import { useConsumers } from '@/hooks/useConsumers'
 import { useSettings } from '@/hooks/useSettings'
 import { useDelayedUnmount } from '@/hooks/useDelayedUnmount'
 import * as messageApi from '@/api/message'
+import { formatErrorMessage } from '@/lib/utils'
 
 type TabKey = 'topic' | 'msgid' | 'retry' | 'dlq'
 
@@ -145,7 +146,7 @@ export function MessagesScreen() {
         toast.info(t('messages.empty'))
       }
     } catch (e) {
-      const msg = (e as Error).message ?? String(e)
+      const msg = formatErrorMessage(e)
       setError(msg)
       toast.error(t('messages.queryError', { message: msg }))
     } finally {
@@ -474,7 +475,7 @@ function MessageDetailPanel({
         if (!cancelled) setTrack(data)
       })
       .catch((e) => {
-        if (!cancelled) setTrackError((e as Error).message ?? String(e))
+        if (!cancelled) setTrackError(formatErrorMessage(e))
       })
       .finally(() => {
         if (!cancelled) setTrackLoading(false)
@@ -749,7 +750,7 @@ function ResendDialog({
       onClose()
     } catch (e) {
       toast.error(t('messages.detail.resendError'), {
-        description: (e as Error).message ?? String(e),
+        description: formatErrorMessage(e),
       })
     } finally {
       setBusy(false)

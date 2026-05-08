@@ -30,6 +30,7 @@ import { useConnections } from '@/hooks/useConnections'
 import * as connectionApi from '@/api/connection'
 import { toast } from 'sonner'
 import type { NavId } from '../Sidebar'
+import { formatErrorMessage } from '@/lib/utils'
 
 const HISTORY_BUCKETS = 60
 
@@ -243,7 +244,7 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
       toast.success(t('overview.disconnectSuccess', { cluster: conn.name }))
       await Promise.all([refresh(), refreshConnections()])
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     }
   }
 
@@ -254,7 +255,7 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
         description: formatTime(new Date()),
       })
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     }
   }
 

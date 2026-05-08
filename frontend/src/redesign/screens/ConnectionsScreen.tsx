@@ -7,6 +7,7 @@ import { PageHeader } from '../shell'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useConnections } from '@/hooks/useConnections'
 import * as connectionApi from '@/api/connection'
+import { formatErrorMessage } from '@/lib/utils'
 import {
   ConnectionEnv,
   type Connection,
@@ -166,7 +167,7 @@ export function ConnectionsScreen() {
         await refresh()
       }
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setBusy(null)
     }
@@ -180,7 +181,7 @@ export function ConnectionsScreen() {
       toast.success(t('connections.testSuccess'), { description: result })
     } catch (e) {
       toast.error(t('connections.testFail'), {
-        description: (e as Error).message ?? String(e),
+        description: formatErrorMessage(e),
       })
     } finally {
       setBusy(null)
@@ -195,7 +196,7 @@ export function ConnectionsScreen() {
       toast.success(t('connections.connectSuccess', { name: selected.name }))
       await refresh()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setBusy(null)
     }
@@ -209,7 +210,7 @@ export function ConnectionsScreen() {
       toast.success(t('connections.disconnectSuccess', { name: selected.name }))
       await refresh()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setBusy(null)
     }
@@ -222,7 +223,7 @@ export function ConnectionsScreen() {
       toast.success(t('connections.setDefaultSuccess', { name: selected.name }))
       await refresh()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     }
   }
 
@@ -238,7 +239,7 @@ export function ConnectionsScreen() {
       setSelectedId(remaining[0]?.id ?? null)
       await refresh()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setBusy(null)
     }

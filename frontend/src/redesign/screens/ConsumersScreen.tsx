@@ -27,6 +27,7 @@ import { useConsumers } from '@/hooks/useConsumers'
 import { useCluster } from '@/hooks/useCluster'
 import { useDelayedUnmount } from '@/hooks/useDelayedUnmount'
 import * as consumerApi from '@/api/consumer'
+import { formatErrorMessage } from '@/lib/utils'
 
 type StatusFilter = 'all' | 'online' | 'warning' | 'offline'
 
@@ -116,7 +117,7 @@ export function ConsumersScreen() {
       await refresh()
       toast.success(t('common.refreshed'))
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     }
   }
 
@@ -138,7 +139,7 @@ export function ConsumersScreen() {
       setConfirmDelete(null)
       await refresh()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setDeleting(false)
     }
@@ -736,7 +737,7 @@ function ResetOffsetDialog({
       toast.success(t('consumers.reset.success'))
       await onDone()
     } catch (e) {
-      toast.error(t('consumers.reset.error'), { description: (e as Error).message ?? String(e) })
+      toast.error(t('consumers.reset.error'), { description: formatErrorMessage(e) })
     } finally {
       setBusy(false)
     }
@@ -892,7 +893,7 @@ function GroupEditor({
       }
       await onSaved()
     } catch (e) {
-      toast.error((e as Error).message ?? String(e))
+      toast.error(formatErrorMessage(e))
     } finally {
       setBusy(false)
     }

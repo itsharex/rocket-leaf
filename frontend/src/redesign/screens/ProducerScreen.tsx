@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { PageHeader } from '../shell'
 import { useTopics } from '@/hooks/useTopics'
 import * as messageApi from '@/api/message'
+import { formatErrorMessage } from '@/lib/utils'
 
 const SAMPLE_BODY = `{
   "orderId": "ORD-20250812-08472",
@@ -92,7 +93,7 @@ export function ProducerScreen() {
       setHistory((h) => [entry, ...h].slice(0, 50))
       toast.success(t('producer.sendSuccess'), { description: result })
     } catch (e) {
-      const msg = (e as Error).message ?? String(e)
+      const msg = formatErrorMessage(e)
       const entry: HistoryEntry = {
         ok: false,
         topic,

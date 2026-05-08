@@ -58,7 +58,6 @@ export function ConsumersScreen() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [selectedName, setSelectedName] = useState<string | null>(null)
-  const [panelDismissed, setPanelDismissed] = useState(false)
   const [editorOpen, setEditorOpen] = useState<
     { mode: 'create' } | { mode: 'edit'; group: ConsumerGroupItem } | null
   >(null)
@@ -79,15 +78,8 @@ export function ConsumersScreen() {
     })
   }, [groups, search, statusFilter])
 
-  // Auto-select first (respect explicit user dismissal)
-  useEffect(() => {
-    const first = filtered[0]
-    if (!panelDismissed && !selectedName && first) setSelectedName(first.group)
-  }, [filtered, selectedName, panelDismissed])
-
   const dismissPanel = useCallback(() => {
     setSelectedName(null)
-    setPanelDismissed(true)
   }, [])
 
   // Esc closes the detail panel
@@ -290,10 +282,7 @@ export function ConsumersScreen() {
                         <tr
                           key={g.group}
                           className={selectedName === g.group ? 'selected' : ''}
-                          onClick={() => {
-                            setSelectedName(g.group)
-                            setPanelDismissed(false)
-                          }}
+                          onClick={() => setSelectedName(g.group)}
                           style={{ cursor: 'pointer' }}
                         >
                           <td>

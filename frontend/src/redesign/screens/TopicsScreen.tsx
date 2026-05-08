@@ -90,7 +90,6 @@ export function TopicsScreen() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [selectedName, setSelectedName] = useState<string | null>(null)
-  const [panelDismissed, setPanelDismissed] = useState(false)
   const [detail, setDetail] = useState<TopicItem | null>(null)
   const [detailLoading, setDetailLoading] = useState(false)
   const [editorOpen, setEditorOpen] = useState<
@@ -119,17 +118,8 @@ export function TopicsScreen() {
     })
   }, [derived, search, typeFilter])
 
-  // Auto-select first topic when list loads (respect explicit dismissal)
-  useEffect(() => {
-    const first = filtered[0]
-    if (!panelDismissed && !selectedName && first) {
-      setSelectedName(first.raw.topic)
-    }
-  }, [filtered, selectedName, panelDismissed])
-
   const dismissPanel = useCallback(() => {
     setSelectedName(null)
-    setPanelDismissed(true)
   }, [])
 
   const panelMount = useDelayedUnmount(!!(hasOnline && selectedName))
@@ -345,10 +335,7 @@ export function TopicsScreen() {
                       <tr
                         key={raw.topic}
                         className={selectedName === raw.topic ? 'selected' : ''}
-                        onClick={() => {
-                          setSelectedName(raw.topic)
-                          setPanelDismissed(false)
-                        }}
+                        onClick={() => setSelectedName(raw.topic)}
                         style={{ cursor: 'pointer' }}
                       >
                         <td>

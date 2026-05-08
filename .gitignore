@@ -35,3 +35,7 @@ build/android/app/build/
 **/.DS_Store
 
 .claude/
+
+# Stray script binaries from `go build ./scripts/...`
+/seed-data
+/inspect-cluster

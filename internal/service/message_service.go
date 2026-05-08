@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync/atomic"
@@ -290,16 +291,26 @@ func (s *MessageService) ResendMessage(consumerGroup string, clientID string, to
 	return result, nil
 }
 
-// QueryDLQMessages 查询消费者组的死信队列消息
+// QueryDLQMessages 查询消费者组的死信队列消息。
+// 当 DLQ Topic 还未被创建（说明这个组从未产生过死信）时，返回空列表而非报错。
 func (s *MessageService) QueryDLQMessages(groupName string, maxResults int) ([]*model.MessageItem, error) {
 	dlqTopic := "%DLQ%" + groupName
-	return s.QueryMessages(dlqTopic, "", "", maxResults, 0, 0)
+	msgs, err := s.QueryMessages(dlqTopic, "", "", maxResults, 0, 0)
+	if err != nil && errors.Is(err, admin.ErrTopicNotFound) {
+		return []*model.MessageItem{}, nil
+	}
+	return msgs, err
 }
 
-// QueryRetryMessages 查询消费者组的重试队列消息
+// QueryRetryMessages 查询消费者组的重试队列消息。
+// 当重试 Topic 还未被创建（说明这个组从未产生过重试）时，返回空列表而非报错。
 func (s *MessageService) QueryRetryMessages(groupName string, maxResults int) ([]*model.MessageItem, error) {
 	retryTopic := "%RETRY%" + groupName
-	return s.QueryMessages(retryTopic, "", "", maxResults, 0, 0)
+	msgs, err := s.QueryMessages(retryTopic, "", "", maxResults, 0, 0)
+	if err != nil && errors.Is(err, admin.ErrTopicNotFound) {
+		return []*model.MessageItem{}, nil
+	}
+	return msgs, err
 }
 
 // SendMessage 发送消息到指定 Topic，delayLevel 0 表示不延迟，1-18 对应 RocketMQ 延迟等级

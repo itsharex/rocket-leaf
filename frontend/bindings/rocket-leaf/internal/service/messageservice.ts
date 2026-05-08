@@ -25,7 +25,8 @@ export function GetMessageTrack(topic: string, msgID: string): $CancellablePromi
 }
 
 /**
- * QueryDLQMessages 查询消费者组的死信队列消息
+ * QueryDLQMessages 查询消费者组的死信队列消息。
+ * 当 DLQ Topic 还未被创建（说明这个组从未产生过死信）时，返回空列表而非报错。
  */
 export function QueryDLQMessages(groupName: string, maxResults: number): $CancellablePromise<(model$0.MessageItem | null)[]> {
     return $Call.ByID(1071131889, groupName, maxResults).then(($result: any) => {
@@ -52,7 +53,8 @@ export function QueryMessages(topic: string, key: string, tag: string, maxResult
 }
 
 /**
- * QueryRetryMessages 查询消费者组的重试队列消息
+ * QueryRetryMessages 查询消费者组的重试队列消息。
+ * 当重试 Topic 还未被创建（说明这个组从未产生过重试）时，返回空列表而非报错。
  */
 export function QueryRetryMessages(groupName: string, maxResults: number): $CancellablePromise<(model$0.MessageItem | null)[]> {
     return $Call.ByID(2529028236, groupName, maxResults).then(($result: any) => {

@@ -117,6 +117,42 @@ func (s *ClusterService) GetClusterInfo() (*model.ClusterInfo, error) {
 
 		tmpResult.TotalBrokers = len(tmpResult.Brokers)
 		tmpResult.OnlineBrokers = len(tmpResult.Brokers)
+
+		// 最佳努力：补齐 Topic 与 ConsumerGroup 总数，使 Overview / Cluster
+		// 屏幕的 KPI 卡片即便在不单独拉列表的页面也能显示真实数字。
+		// 这两个调用失败不影响 broker 信息返回。
+		if topicList, topicErr := retryClient.FetchAllTopicList(ctx); topicErr == nil && topicList != nil {
+			count := 0
+			for _, topic := range topicList.TopicList {
+				if !isSystemTopic(topic) {
+					count++
+				}
+			}
+			tmpResult.TotalTopics = count
+		}
+
+		groupSet := make(map[string]struct{})
+		for _, brokerData := range clusterInfo.BrokerAddrTable {
+			if brokerData == nil {
+				continue
+			}
+			masterAddr, ok := brokerData.BrokerAddrs["0"]
+			if !ok {
+				continue
+			}
+			subGroups, groupErr := retryClient.GetAllSubscriptionGroup(ctx, masterAddr)
+			if groupErr != nil || subGroups == nil {
+				continue
+			}
+			for groupName := range subGroups {
+				if isSystemGroup(groupName) {
+					continue
+				}
+				groupSet[groupName] = struct{}{}
+			}
+		}
+		tmpResult.TotalGroups = len(groupSet)
+
 		result = tmpResult
 
 		return nil

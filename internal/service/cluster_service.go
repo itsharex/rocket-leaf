@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 
 	"rocket-leaf/internal/model"
@@ -120,11 +121,17 @@ func (s *ClusterService) GetClusterInfo() (*model.ClusterInfo, error) {
 
 		// 最佳努力：为每个 broker 补齐 runtime 字段（版本号、TPS、磁盘等），
 		// 让 Cluster 屏幕的 KPI 卡片和 broker 列表能显示真实数据。
+		// 每个 broker 用独立的 ctx，避免共享 ctx 的剩余预算被前面的调用耗尽；
 		// 失败的单个 broker 仅丢失 runtime 字段，不影响整体返回。
 		diskSum := 0
 		diskCount := 0
 		for _, broker := range tmpResult.Brokers {
-			s.enrichBrokerRuntimeStats(ctx, retryClient, broker)
+			brokerCtx, brokerCancel := context.WithTimeout(
+				context.Background(),
+				s.settingsService.GetRequestTimeout(),
+			)
+			s.enrichBrokerRuntimeStats(brokerCtx, retryClient, broker)
+			brokerCancel()
 			if broker.CommitLogDiskUsage > 0 {
 				diskSum += broker.CommitLogDiskUsage
 				diskCount++
@@ -242,12 +249,14 @@ func (s *ClusterService) GetBrokerDetail(brokerAddr string) (*model.BrokerNode, 
 
 // enrichBrokerRuntimeStats 静默地补齐 broker 的 runtime 字段。
 // 区别于 applyBrokerRuntimeStats: 失败时不返回错误，让 GetClusterInfo
-// 在批量补齐时跳过单个失败的 broker 而不影响整体。
+// 在批量补齐时跳过单个失败的 broker 而不影响整体。失败原因记录到日志。
 func (s *ClusterService) enrichBrokerRuntimeStats(ctx context.Context, client *admin.Client, broker *model.BrokerNode) {
 	if broker == nil || broker.Address == "" {
 		return
 	}
-	_ = s.applyBrokerRuntimeStats(ctx, client, broker)
+	if err := s.applyBrokerRuntimeStats(ctx, client, broker); err != nil {
+		log.Printf("enrichBrokerRuntimeStats(%s): %v", broker.Address, err)
+	}
 }
 
 // applyBrokerRuntimeStats 拉取 broker runtime 统计并写入字段。
@@ -263,11 +272,13 @@ func (s *ClusterService) applyBrokerRuntimeStats(ctx context.Context, client *ad
 	if version, ok := stats.Table["brokerVersionDesc"]; ok {
 		broker.Version = version
 	}
+	// putTps / getTransferredTps 形如 "0.0 0.0 0.0"（当前/5分钟均/15分钟均），
+	// 取第一个数值并按 float 解析（之前用 parseIntSafe 会把 "0.5" 截成 0）。
 	if tpsIn, ok := stats.Table["putTps"]; ok {
-		broker.TpsIn = parseIntSafe(extractFirstValue(tpsIn))
+		broker.TpsIn = int(parseFloatSafe(extractFirstValue(tpsIn)))
 	}
 	if tpsOut, ok := stats.Table["getTransferredTps"]; ok {
-		broker.TpsOut = parseIntSafe(extractFirstValue(tpsOut))
+		broker.TpsOut = int(parseFloatSafe(extractFirstValue(tpsOut)))
 	}
 	if msgInToday, ok := stats.Table["msgPutTotalTodayNow"]; ok {
 		broker.MsgInToday = parseInt64Safe(msgInToday)

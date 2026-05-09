@@ -70,6 +70,5 @@ jobs:
             release-files/build-test-linux-arm64/*
             release-files/build-test-macos-amd64/*
             release-files/build-test-macos-arm64/*
-            release-files/build-test-macos-universal/*
             release-files/build-test-windows-amd64/*
             release-files/build-test-windows-arm64/*

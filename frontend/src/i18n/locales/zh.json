@@ -563,12 +563,17 @@
     "globalWhite": {
       "title": "全局白名单 IP",
       "subtitle": "白名单 IP 不需要鉴权即可访问",
+      "warning": "保存会用下方列表完整覆盖 broker 上的全局白名单，未列出的地址将被移除。RocketMQ 不支持读取现有白名单，请谨慎确认。",
       "addPlaceholder": "10.0.0.0/24",
       "add": "添加",
-      "save": "保存白名单",
+      "save": "覆盖保存白名单",
       "saving": "保存中…",
       "saveSuccess": "已更新全局白名单",
-      "empty": "暂无全局白名单"
+      "empty": "未添加任何 IP（保存将清空 broker 的现有白名单）",
+      "confirmTitle": "覆盖全局白名单？",
+      "confirmBody": "这会用下方 {{count}} 条 IP 完全替换 broker 上的全局白名单。Broker 当前已配置的、不在此列表中的地址都将被删除。此操作无法撤销。",
+      "confirmEmptyBody": "下方列表为空，保存将清空 broker 上所有全局白名单。Broker 当前已配置的所有地址都将被删除。此操作无法撤销。",
+      "confirmAction": "覆盖保存"
     }
   },
   "connections": {

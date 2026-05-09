@@ -563,12 +563,17 @@
     "globalWhite": {
       "title": "Global allow list",
       "subtitle": "IPs in the allow list bypass ACL authentication",
+      "warning": "Saving fully replaces the broker's global allow list with the entries below. Any address not in this list will be removed. RocketMQ does not expose the current list — confirm carefully.",
       "addPlaceholder": "10.0.0.0/24",
       "add": "Add",
-      "save": "Save allow list",
+      "save": "Replace allow list",
       "saving": "Saving…",
       "saveSuccess": "Global allow list updated",
-      "empty": "No entries"
+      "empty": "No entries (saving clears the broker's existing allow list)",
+      "confirmTitle": "Replace global allow list?",
+      "confirmBody": "This will fully replace the broker's global allow list with the {{count}} entries below. Any address currently configured on the broker that isn't in this list will be deleted. This cannot be undone.",
+      "confirmEmptyBody": "The list below is empty. Saving will clear the broker's entire global allow list. All currently configured addresses will be deleted. This cannot be undone.",
+      "confirmAction": "Replace"
     }
   },
   "connections": {

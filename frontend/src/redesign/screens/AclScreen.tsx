@@ -57,10 +57,16 @@ export function AclScreen() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
-  // Global white list
+  // Global white list. NOTE: RocketMQ's admin protocol exposes only an
+  // overwriting `UpdateGlobalWhiteAddrsConfig` RPC — there is no way to
+  // read the current list, so this state cannot be initialized from the
+  // broker. Saving therefore *replaces* the broker's list with whatever
+  // the user typed here. The save flow is gated behind a confirmation
+  // dialog and a destructive-warning banner to make this explicit.
   const [whiteList, setWhiteList] = useState<string[]>([])
   const [whiteInput, setWhiteInput] = useState('')
   const [whiteSaving, setWhiteSaving] = useState(false)
+  const [confirmReplaceWhite, setConfirmReplaceWhite] = useState(false)
 
   const refreshStatus = async () => {
     setStatusLoading(true)
@@ -149,7 +155,14 @@ export function AclScreen() {
     setWhiteList(whiteList.filter((x) => x !== ip))
   }
 
-  const handleSaveWhite = async () => {
+  // The save button only opens the confirmation. The actual destructive
+  // RPC is in performReplaceWhite, gated behind explicit user confirm.
+  const handleSaveWhite = () => {
+    setConfirmReplaceWhite(true)
+  }
+
+  const performReplaceWhite = async () => {
+    setConfirmReplaceWhite(false)
     setWhiteSaving(true)
     try {
       await aclApi.updateGlobalWhiteAddrs(whiteList)
@@ -440,17 +453,31 @@ export function AclScreen() {
                 </button>
               </div>
               <div
-                className="mt-4 flex justify-end"
+                className="mt-4"
                 style={{ paddingTop: 12, borderTop: '1px solid hsl(var(--border))' }}
               >
-                <button
-                  className="rl-btn rl-btn-primary rl-btn-sm"
-                  onClick={handleSaveWhite}
-                  disabled={whiteSaving}
+                <div
+                  className="mb-3 flex items-start gap-2 text-[12px]"
+                  style={{
+                    padding: '8px 10px',
+                    borderRadius: 6,
+                    background: 'hsl(var(--destructive) / 0.08)',
+                    color: 'hsl(var(--destructive))',
+                  }}
                 >
-                  {whiteSaving ? <Spinner size={13} /> : <Check size={13} />}
-                  {whiteSaving ? t('acl.globalWhite.saving') : t('acl.globalWhite.save')}
-                </button>
+                  <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                  <span>{t('acl.globalWhite.warning')}</span>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    className="rl-btn rl-btn-destructive rl-btn-sm"
+                    onClick={handleSaveWhite}
+                    disabled={whiteSaving}
+                  >
+                    {whiteSaving ? <Spinner size={13} /> : <Check size={13} />}
+                    {whiteSaving ? t('acl.globalWhite.saving') : t('acl.globalWhite.save')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -466,6 +493,21 @@ export function AclScreen() {
         variant="destructive"
         onConfirm={handleDelete}
         onCancel={() => !deleting && setConfirmDelete(null)}
+      />
+
+      <ConfirmDialog
+        open={confirmReplaceWhite}
+        title={t('acl.globalWhite.confirmTitle')}
+        description={
+          whiteList.length === 0
+            ? t('acl.globalWhite.confirmEmptyBody')
+            : t('acl.globalWhite.confirmBody', { count: whiteList.length })
+        }
+        confirmText={t('acl.globalWhite.confirmAction')}
+        cancelText={t('common.cancel')}
+        variant="destructive"
+        onConfirm={performReplaceWhite}
+        onCancel={() => setConfirmReplaceWhite(false)}
       />
     </div>
   )

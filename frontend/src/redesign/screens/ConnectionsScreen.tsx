@@ -530,41 +530,50 @@ export function ConnectionsScreen() {
                       <span className="rl-muted text-[12px]">{t('connections.timeoutUnit')}</span>
                     </div>
                   </div>
-                  <div className="flex flex-col">
-                    <div className="rl-muted mb-2 text-[12px]">{t('connections.enableAcl')}</div>
-                    <label
-                      className="flex items-center gap-2 text-[13px]"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={form.enableACL}
-                        onChange={(e) => setForm({ ...form, enableACL: e.target.checked })}
+                  <div
+                    style={{
+                      gridColumn: '1 / -1',
+                      paddingTop: 12,
+                      borderTop: '1px solid hsl(var(--border))',
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <div className="text-[13px] font-medium">{t('connections.enableAcl')}</div>
+                        <div className="rl-muted mt-1 text-[12px]">
+                          {t('connections.enableAclHint')}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={form.enableACL}
+                        onClick={() => setForm({ ...form, enableACL: !form.enableACL })}
+                        className={'rl-switch ' + (form.enableACL ? 'on' : '')}
                       />
-                      <span className="rl-muted text-[12px]">{t('connections.enableAclHint')}</span>
-                    </label>
+                    </div>
+                    {form.enableACL && (
+                      <div className="mt-3 grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                        <div>
+                          <div className="rl-muted mb-2 text-[12px]">{t('connections.ak')}</div>
+                          <input
+                            className="rl-input font-mono-design"
+                            value={form.accessKey}
+                            onChange={(e) => setForm({ ...form, accessKey: e.target.value })}
+                          />
+                        </div>
+                        <div>
+                          <div className="rl-muted mb-2 text-[12px]">{t('connections.sk')}</div>
+                          <input
+                            className="rl-input font-mono-design"
+                            type="password"
+                            value={form.secretKey}
+                            onChange={(e) => setForm({ ...form, secretKey: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {form.enableACL && (
-                    <>
-                      <div>
-                        <div className="rl-muted mb-2 text-[12px]">{t('connections.ak')}</div>
-                        <input
-                          className="rl-input font-mono-design"
-                          value={form.accessKey}
-                          onChange={(e) => setForm({ ...form, accessKey: e.target.value })}
-                        />
-                      </div>
-                      <div>
-                        <div className="rl-muted mb-2 text-[12px]">{t('connections.sk')}</div>
-                        <input
-                          className="rl-input font-mono-design"
-                          type="password"
-                          value={form.secretKey}
-                          onChange={(e) => setForm({ ...form, secretKey: e.target.value })}
-                        />
-                      </div>
-                    </>
-                  )}
                   <div style={{ gridColumn: '1 / -1' }}>
                     <div className="rl-muted mb-2 text-[12px]">{t('connections.remark')}</div>
                     <input

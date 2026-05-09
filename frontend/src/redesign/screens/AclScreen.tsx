@@ -200,7 +200,7 @@ export function AclScreen() {
             <div className="text-[13px]">{t('acl.subtitleNoConn')}</div>
           </div>
         ) : (
-          <div style={{ maxWidth: 760 }}>
+          <div style={{ maxWidth: 1280 }}>
             {/* Status */}
             <div className="rl-card mb-5 flex items-center gap-3" style={{ padding: 16 }}>
               {statusLoading ? (
@@ -242,241 +242,262 @@ export function AclScreen() {
               </div>
             </div>
 
-            {/* Access config form */}
-            <div className="rl-section-label">{t('acl.form.title')}</div>
-            <div className="rl-card" style={{ padding: 20 }}>
-              <div className="rl-muted mb-4 text-[12px]">{t('acl.form.subtitle')}</div>
-              <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                <div>
-                  <div className="rl-muted mb-2 text-[12px]">
-                    {t('acl.form.ak')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
-                  </div>
-                  <input
-                    className="rl-input font-mono-design"
-                    placeholder={t('acl.form.akPlaceholder')}
-                    value={ak}
-                    onChange={(e) => setAk(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <div className="rl-muted mb-2 text-[12px]">
-                    {t('acl.form.sk')} <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
-                  </div>
-                  <input
-                    className="rl-input font-mono-design"
-                    type="password"
-                    placeholder={t('acl.form.skPlaceholder')}
-                    value={sk}
-                    onChange={(e) => setSk(e.target.value)}
-                  />
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.whiteIp')}</div>
-                  <input
-                    className="rl-input font-mono-design"
-                    placeholder={t('acl.form.whiteIpPlaceholder')}
-                    value={whiteIp}
-                    onChange={(e) => setWhiteIp(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.defaultTopicPerm')}</div>
-                  <select
-                    className="rl-select"
-                    value={defaultTopicPerm}
-                    onChange={(e) => setDefaultTopicPerm(e.target.value as (typeof PERMS)[number])}
-                  >
-                    {PERMS.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.defaultGroupPerm')}</div>
-                  <select
-                    className="rl-select"
-                    value={defaultGroupPerm}
-                    onChange={(e) => setDefaultGroupPerm(e.target.value as (typeof PERMS)[number])}
-                  >
-                    {PERMS.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <label
-                    className="flex items-center gap-2 text-[13px]"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={admin}
-                      onChange={(e) => setAdmin(e.target.checked)}
-                    />
-                    <span>{t('acl.form.admin')}</span>
-                    <span className="rl-muted text-[12px]">· {t('acl.form.adminHint')}</span>
-                  </label>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.topicPerms')}</div>
-                  <textarea
-                    className="rl-input font-mono-design"
-                    style={{
-                      width: '100%',
-                      minHeight: 80,
-                      padding: 10,
-                      fontSize: 12,
-                      resize: 'vertical',
-                    }}
-                    placeholder="ORDER_TOPIC=PUB|SUB&#10;AUDIT_LOG=PUB"
-                    value={topicPerms}
-                    onChange={(e) => setTopicPerms(e.target.value)}
-                  />
-                  <div className="rl-muted mt-1 text-[11px]">{t('acl.form.topicPermsHint')}</div>
-                </div>
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <div className="rl-muted mb-2 text-[12px]">{t('acl.form.groupPerms')}</div>
-                  <textarea
-                    className="rl-input font-mono-design"
-                    style={{
-                      width: '100%',
-                      minHeight: 60,
-                      padding: 10,
-                      fontSize: 12,
-                      resize: 'vertical',
-                    }}
-                    placeholder="GID_ADMIN=SUB"
-                    value={groupPerms}
-                    onChange={(e) => setGroupPerms(e.target.value)}
-                  />
-                  <div className="rl-muted mt-1 text-[11px]">{t('acl.form.groupPermsHint')}</div>
-                </div>
-              </div>
-              <div
-                className="mt-5 flex justify-end"
-                style={{ paddingTop: 16, borderTop: '1px solid hsl(var(--border))' }}
-              >
-                <button
-                  className="rl-btn rl-btn-primary rl-btn-sm"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? <Spinner size={13} /> : <Check size={13} />}
-                  {saving ? t('acl.form.saving') : t('acl.form.submit')}
-                </button>
-              </div>
-            </div>
-
-            {/* Delete by AK */}
-            <div className="rl-section-label" style={{ marginTop: 24 }}>
-              {t('acl.delete.title')}
-            </div>
-            <div className="rl-card" style={{ padding: 20 }}>
-              <div className="rl-muted mb-3 text-[12px]">{t('acl.delete.subtitle')}</div>
-              <div className="flex gap-2">
-                <input
-                  className="rl-input font-mono-design"
-                  placeholder={t('acl.form.akPlaceholder')}
-                  value={deleteAk}
-                  onChange={(e) => setDeleteAk(e.target.value)}
-                  style={{ flex: 1 }}
-                />
-                <button
-                  className="rl-btn rl-btn-outline rl-btn-sm"
-                  style={{ color: 'hsl(var(--destructive))' }}
-                  onClick={() => deleteAk.trim() && setConfirmDelete(deleteAk.trim())}
-                  disabled={!deleteAk.trim()}
-                >
-                  <Trash2 size={13} />
-                  {t('acl.delete.submit')}
-                </button>
-              </div>
-            </div>
-
-            {/* Global white list */}
-            <div className="rl-section-label" style={{ marginTop: 24 }}>
-              {t('acl.globalWhite.title')}
-            </div>
-            <div className="rl-card" style={{ padding: 20 }}>
-              <div className="rl-muted mb-3 text-[12px]">{t('acl.globalWhite.subtitle')}</div>
-              <div className="flex flex-col gap-2">
-                {whiteList.length === 0 ? (
-                  <div className="rl-muted text-[12px]" style={{ padding: '8px 0' }}>
-                    {t('acl.globalWhite.empty')}
-                  </div>
-                ) : (
-                  whiteList.map((ip) => (
-                    <div
-                      key={ip}
-                      className="flex items-center justify-between"
-                      style={{
-                        padding: '6px 10px',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: 6,
-                        background: 'hsl(var(--background))',
-                      }}
-                    >
-                      <span className="font-mono-design text-[12px]">
-                        <Key size={11} className="rl-muted mr-2 inline" />
-                        {ip}
-                      </span>
-                      <button
-                        className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"
-                        onClick={() => handleRemoveWhite(ip)}
+            {/* 双栏布局：账号配置主表单留在左侧主区，
+                删除/全局白名单这类辅助操作折到右边窄列。
+                lg 以下退回单栏，避免窄窗口下表单被挤压。 */}
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-[3fr_2fr]">
+              <div>
+                {/* Access config form */}
+                <div className="rl-section-label">{t('acl.form.title')}</div>
+                <div className="rl-card" style={{ padding: 20 }}>
+                  <div className="rl-muted mb-4 text-[12px]">{t('acl.form.subtitle')}</div>
+                  <div className="grid gap-3.5" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                    <div>
+                      <div className="rl-muted mb-2 text-[12px]">
+                        {t('acl.form.ak')}{' '}
+                        <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                      </div>
+                      <input
+                        className="rl-input font-mono-design"
+                        placeholder={t('acl.form.akPlaceholder')}
+                        value={ak}
+                        onChange={(e) => setAk(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <div className="rl-muted mb-2 text-[12px]">
+                        {t('acl.form.sk')}{' '}
+                        <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                      </div>
+                      <input
+                        className="rl-input font-mono-design"
+                        type="password"
+                        placeholder={t('acl.form.skPlaceholder')}
+                        value={sk}
+                        onChange={(e) => setSk(e.target.value)}
+                      />
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div className="rl-muted mb-2 text-[12px]">{t('acl.form.whiteIp')}</div>
+                      <input
+                        className="rl-input font-mono-design"
+                        placeholder={t('acl.form.whiteIpPlaceholder')}
+                        value={whiteIp}
+                        onChange={(e) => setWhiteIp(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <div className="rl-muted mb-2 text-[12px]">
+                        {t('acl.form.defaultTopicPerm')}
+                      </div>
+                      <select
+                        className="rl-select"
+                        value={defaultTopicPerm}
+                        onChange={(e) =>
+                          setDefaultTopicPerm(e.target.value as (typeof PERMS)[number])
+                        }
                       >
-                        <X size={12} />
+                        {PERMS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <div className="rl-muted mb-2 text-[12px]">
+                        {t('acl.form.defaultGroupPerm')}
+                      </div>
+                      <select
+                        className="rl-select"
+                        value={defaultGroupPerm}
+                        onChange={(e) =>
+                          setDefaultGroupPerm(e.target.value as (typeof PERMS)[number])
+                        }
+                      >
+                        {PERMS.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <label
+                        className="flex items-center gap-2 text-[13px]"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={admin}
+                          onChange={(e) => setAdmin(e.target.checked)}
+                        />
+                        <span>{t('acl.form.admin')}</span>
+                        <span className="rl-muted text-[12px]">· {t('acl.form.adminHint')}</span>
+                      </label>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div className="rl-muted mb-2 text-[12px]">{t('acl.form.topicPerms')}</div>
+                      <textarea
+                        className="rl-input font-mono-design"
+                        style={{
+                          width: '100%',
+                          minHeight: 80,
+                          padding: 10,
+                          fontSize: 12,
+                          resize: 'vertical',
+                        }}
+                        placeholder="ORDER_TOPIC=PUB|SUB&#10;AUDIT_LOG=PUB"
+                        value={topicPerms}
+                        onChange={(e) => setTopicPerms(e.target.value)}
+                      />
+                      <div className="rl-muted mt-1 text-[11px]">
+                        {t('acl.form.topicPermsHint')}
+                      </div>
+                    </div>
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div className="rl-muted mb-2 text-[12px]">{t('acl.form.groupPerms')}</div>
+                      <textarea
+                        className="rl-input font-mono-design"
+                        style={{
+                          width: '100%',
+                          minHeight: 60,
+                          padding: 10,
+                          fontSize: 12,
+                          resize: 'vertical',
+                        }}
+                        placeholder="GID_ADMIN=SUB"
+                        value={groupPerms}
+                        onChange={(e) => setGroupPerms(e.target.value)}
+                      />
+                      <div className="rl-muted mt-1 text-[11px]">
+                        {t('acl.form.groupPermsHint')}
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    className="mt-5 flex justify-end"
+                    style={{ paddingTop: 16, borderTop: '1px solid hsl(var(--border))' }}
+                  >
+                    <button
+                      className="rl-btn rl-btn-primary rl-btn-sm"
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? <Spinner size={13} /> : <Check size={13} />}
+                      {saving ? t('acl.form.saving') : t('acl.form.submit')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-5">
+                <div>
+                  {/* Delete by AK */}
+                  <div className="rl-section-label">{t('acl.delete.title')}</div>
+                  <div className="rl-card" style={{ padding: 20 }}>
+                    <div className="rl-muted mb-3 text-[12px]">{t('acl.delete.subtitle')}</div>
+                    <div className="flex gap-2">
+                      <input
+                        className="rl-input font-mono-design"
+                        placeholder={t('acl.form.akPlaceholder')}
+                        value={deleteAk}
+                        onChange={(e) => setDeleteAk(e.target.value)}
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className="rl-btn rl-btn-outline rl-btn-sm"
+                        style={{ color: 'hsl(var(--destructive))' }}
+                        onClick={() => deleteAk.trim() && setConfirmDelete(deleteAk.trim())}
+                        disabled={!deleteAk.trim()}
+                      >
+                        <Trash2 size={13} />
+                        {t('acl.delete.submit')}
                       </button>
                     </div>
-                  ))
-                )}
-              </div>
-              <div className="mt-3 flex gap-2">
-                <input
-                  className="rl-input font-mono-design"
-                  placeholder={t('acl.globalWhite.addPlaceholder')}
-                  value={whiteInput}
-                  onChange={(e) => setWhiteInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddWhite()}
-                  style={{ flex: 1 }}
-                />
-                <button
-                  className="rl-btn rl-btn-outline rl-btn-sm"
-                  onClick={handleAddWhite}
-                  disabled={!whiteInput.trim()}
-                >
-                  <Plus size={13} />
-                  {t('acl.globalWhite.add')}
-                </button>
-              </div>
-              <div
-                className="mt-4"
-                style={{ paddingTop: 12, borderTop: '1px solid hsl(var(--border))' }}
-              >
-                <div
-                  className="mb-3 flex items-start gap-2 text-[12px]"
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 6,
-                    background: 'hsl(var(--destructive) / 0.08)',
-                    color: 'hsl(var(--destructive))',
-                  }}
-                >
-                  <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                  <span>{t('acl.globalWhite.warning')}</span>
+                  </div>
                 </div>
-                <div className="flex justify-end">
-                  <button
-                    className="rl-btn rl-btn-destructive rl-btn-sm"
-                    onClick={handleSaveWhite}
-                    disabled={whiteSaving}
-                  >
-                    {whiteSaving ? <Spinner size={13} /> : <Check size={13} />}
-                    {whiteSaving ? t('acl.globalWhite.saving') : t('acl.globalWhite.save')}
-                  </button>
+                <div>
+                  {/* Global white list */}
+                  <div className="rl-section-label">{t('acl.globalWhite.title')}</div>
+                  <div className="rl-card" style={{ padding: 20 }}>
+                    <div className="rl-muted mb-3 text-[12px]">{t('acl.globalWhite.subtitle')}</div>
+                    <div className="flex flex-col gap-2">
+                      {whiteList.length === 0 ? (
+                        <div className="rl-muted text-[12px]" style={{ padding: '8px 0' }}>
+                          {t('acl.globalWhite.empty')}
+                        </div>
+                      ) : (
+                        whiteList.map((ip) => (
+                          <div
+                            key={ip}
+                            className="flex items-center justify-between"
+                            style={{
+                              padding: '6px 10px',
+                              border: '1px solid hsl(var(--border))',
+                              borderRadius: 6,
+                              background: 'hsl(var(--background))',
+                            }}
+                          >
+                            <span className="font-mono-design text-[12px]">
+                              <Key size={11} className="rl-muted mr-2 inline" />
+                              {ip}
+                            </span>
+                            <button
+                              className="rl-btn rl-btn-ghost rl-btn-icon rl-btn-sm"
+                              onClick={() => handleRemoveWhite(ip)}
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      <input
+                        className="rl-input font-mono-design"
+                        placeholder={t('acl.globalWhite.addPlaceholder')}
+                        value={whiteInput}
+                        onChange={(e) => setWhiteInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddWhite()}
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className="rl-btn rl-btn-outline rl-btn-sm"
+                        onClick={handleAddWhite}
+                        disabled={!whiteInput.trim()}
+                      >
+                        <Plus size={13} />
+                        {t('acl.globalWhite.add')}
+                      </button>
+                    </div>
+                    <div
+                      className="mt-4"
+                      style={{ paddingTop: 12, borderTop: '1px solid hsl(var(--border))' }}
+                    >
+                      <div
+                        className="mb-3 flex items-start gap-2 text-[12px]"
+                        style={{
+                          padding: '8px 10px',
+                          borderRadius: 6,
+                          background: 'hsl(var(--destructive) / 0.08)',
+                          color: 'hsl(var(--destructive))',
+                        }}
+                      >
+                        <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                        <span>{t('acl.globalWhite.warning')}</span>
+                      </div>
+                      <div className="flex justify-end">
+                        <button
+                          className="rl-btn rl-btn-destructive rl-btn-sm"
+                          onClick={handleSaveWhite}
+                          disabled={whiteSaving}
+                        >
+                          {whiteSaving ? <Spinner size={13} /> : <Check size={13} />}
+                          {whiteSaving ? t('acl.globalWhite.saving') : t('acl.globalWhite.save')}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

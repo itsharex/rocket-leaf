@@ -251,9 +251,7 @@ export function OverviewScreen({ onNavigate }: OverviewScreenProps) {
   const handleRefresh = async () => {
     try {
       await Promise.all([refresh(), refreshConnections()])
-      toast.success(t('common.refreshed'), {
-        description: formatTime(new Date()),
-      })
+      toast.success(t('common.refreshed'))
     } catch (e) {
       toast.error(formatErrorMessage(e))
     }

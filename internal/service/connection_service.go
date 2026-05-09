@@ -295,13 +295,15 @@ func (s *ConnectionService) AddConnection(name string, env string, nameServer st
 	}
 
 	s.connections[s.nextID] = conn
-	s.nextID++
 
 	if err := s.saveConnectionsLocked(); err != nil {
+		// 保存失败时只回滚 map，不要回退 s.nextID——
+		// 如果之前的 nextID 已被加载或已有连接占用（比如 load 时 nextID = max(ID)+1），
+		// 递减后会与已存在的连接 ID 冲突，下一次 Add 会直接覆盖现有数据。
 		delete(s.connections, conn.ID)
-		s.nextID--
 		return nil, fmt.Errorf("保存连接配置失败: %w", err)
 	}
+	s.nextID++
 
 	return conn, nil
 }
@@ -369,13 +371,19 @@ func (s *ConnectionService) DeleteConnection(id int) error {
 
 	delete(s.connections, id)
 
-	// 如果删除后还有连接，设置第一个为默认
+	// 如果删除后还有连接，按 ID 升序选最小的为新默认。
+	// 不能直接 range map 取第一个——map 遍历顺序随机，会导致每次删除后
+	// 接管默认的连接都不一样，行为不可预测。
 	newDefaultID := 0
 	if len(s.connections) > 0 && conn.IsDefault {
-		for _, c := range s.connections {
-			c.IsDefault = true
-			newDefaultID = c.ID
-			break
+		ids := make([]int, 0, len(s.connections))
+		for cid := range s.connections {
+			ids = append(ids, cid)
+		}
+		sort.Ints(ids)
+		if first, ok := s.connections[ids[0]]; ok {
+			first.IsDefault = true
+			newDefaultID = first.ID
 		}
 	}
 

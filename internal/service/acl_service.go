@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,7 +10,22 @@ import (
 	"rocket-leaf/internal/rocketmq"
 
 	admin "github.com/amigoer/rocketmq-admin-go"
+	"github.com/amigoer/rocketmq-admin-go/protocol/remoting"
 )
+
+// isRequestCodeNotSupported 判断错误是否为 broker 上的 "request type X not
+// supported" —— 对应 RemotingSysResponseCode.REQUEST_CODE_NOT_SUPPORTED (3)。
+// 老版本 broker 不支持新的 admin RPC 时会返回这个码。
+func isRequestCodeNotSupported(err error) bool {
+	if err == nil {
+		return false
+	}
+	var ae *admin.AdminError
+	if errors.As(err, &ae) {
+		return ae.Code == remoting.RequestCodeNotSupported
+	}
+	return false
+}
 
 // AclService ACL 管理服务
 type AclService struct {
@@ -103,6 +119,12 @@ func (s *AclService) GetAclVersion() (*model.AclVersionInfo, error) {
 		return nil
 	})
 
+	// 老 broker（未启用 ACL 或不支持该 RPC）会返回 "request code 52 not supported"。
+	// 这是预期内的能力差异——返回 nil 让前端走"无版本信息"的空状态，不再
+	// 在 Wails 日志里打错误。
+	if err != nil && isRequestCodeNotSupported(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, fmt.Errorf("获取 ACL 版本信息失败: %w", err)
 	}

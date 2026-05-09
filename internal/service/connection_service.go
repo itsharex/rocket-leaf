@@ -588,17 +588,43 @@ func (s *ConnectionService) Disconnect(id int) error {
 		c.Status = model.StatusOffline
 		c.LastCheck = formatNow()
 	}
-	var newDefaultNameServer string
+	var (
+		newDefaultNameServer string
+		newDefaultID         int
+	)
 	if wasDefault {
-		for _, c := range s.connections {
-			if c.ID != id {
-				c.IsDefault = true
-				newDefaultNameServer = c.NameServer
-				break
+		// 先把当前连接的 default 标记拿掉，再按 ID 升序选最小的接管。
+		// 否则会同时存在两个 IsDefault=true 写进文件，仅依赖下次加载去重，
+		// 而去重时哪个连接保留 default 也是 map 遍历顺序决定的——不可预测。
+		if c, ok := s.connections[id]; ok {
+			c.IsDefault = false
+		}
+		ids := make([]int, 0, len(s.connections))
+		for cid := range s.connections {
+			if cid != id {
+				ids = append(ids, cid)
 			}
+		}
+		sort.Ints(ids)
+		if len(ids) > 0 {
+			c := s.connections[ids[0]]
+			c.IsDefault = true
+			newDefaultID = c.ID
+			newDefaultNameServer = c.NameServer
 		}
 	}
 	err := s.saveConnectionsLocked()
+	if err != nil && wasDefault {
+		// 回滚：把 default 标记还给被断开的连接，把刚提升的连接降级。
+		if c, ok := s.connections[id]; ok {
+			c.IsDefault = true
+		}
+		if newDefaultID != 0 {
+			if c, ok := s.connections[newDefaultID]; ok {
+				c.IsDefault = false
+			}
+		}
+	}
 	s.mu.Unlock()
 	if err != nil {
 		return err
